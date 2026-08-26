@@ -4,7 +4,10 @@ import { TopSearchBar } from '../common/TopSearchBar';
 import { FilterTabs } from './FilterTabs';
 import type { FilterOption } from './FilterTabs';
 import { ArticleCard } from './ArticleCard';
-import { Feather, Plus } from 'lucide-react';
+import { Feather, Plus, Clock, Sparkles } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+
+export type SortOption = 'latest' | 'upvotes';
 
 interface ArticleListProps {
   articles: Article[];
@@ -25,33 +28,71 @@ export const ArticleList: React.FC<ArticleListProps> = ({
   onShare,
   onNewStory,
 }) => {
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<FilterOption>('all');
+  const [sortBy, setSortBy] = useState<SortOption>('latest');
 
-  const filteredArticles = useMemo(() => {
-    return articles.filter((art) => {
-      if (filter === 'private' && art.visibility !== 'private') return false;
-      if (filter === 'published' && art.visibility !== 'published') return false;
+  // Filter and sort all entries
+  const processedArticles = useMemo(() => {
+    // 1. Filter
+    const filtered = articles.filter((art) => {
+      // In private tab: only show user's private journals
+      if (filter === 'private') {
+        if (art.visibility !== 'private') return false;
+        if (user && art.authorId !== user.id && art.authorUsername !== user.username) return false;
+      }
 
+      // In published tab: show all published stories from any author
+      if (filter === 'published' && art.visibility !== 'published') {
+        return false;
+      }
+
+      // In 'all' tab: show all published stories + user's own private notes
+      if (filter === 'all') {
+        if (art.visibility === 'private' && user && art.authorId !== user.id && art.authorUsername !== user.username) {
+          return false;
+        }
+      }
+
+      // Search query filtering
       if (!searchQuery.trim()) return true;
       const q = searchQuery.toLowerCase();
       return (
         art.title.toLowerCase().includes(q) ||
         (art.subtitle && art.subtitle.toLowerCase().includes(q)) ||
         art.authorName.toLowerCase().includes(q) ||
+        art.authorUsername.toLowerCase().includes(q) ||
         art.tags?.some((t) => t.toLowerCase().includes(q)) ||
         art.content.toLowerCase().includes(q)
       );
     });
-  }, [articles, filter, searchQuery]);
+
+    // 2. Sort
+    return filtered.sort((a, b) => {
+      if (sortBy === 'upvotes') {
+        const diff = (b.upvotes || 0) - (a.upvotes || 0);
+        if (diff !== 0) return diff;
+      }
+      return (b.createdAt || 0) - (a.createdAt || 0);
+    });
+  }, [articles, filter, sortBy, searchQuery, user]);
 
   const counts = useMemo(() => {
+    const userPrivateCount = articles.filter(
+      (a) =>
+        a.visibility === 'private' &&
+        (!user || a.authorId === user.id || a.authorUsername === user.username)
+    ).length;
+
+    const publishedCount = articles.filter((a) => a.visibility === 'published').length;
+
     return {
-      all: articles.length,
-      private: articles.filter((a) => a.visibility === 'private').length,
-      published: articles.filter((a) => a.visibility === 'published').length,
+      all: userPrivateCount + publishedCount,
+      private: userPrivateCount,
+      published: publishedCount,
     };
-  }, [articles]);
+  }, [articles, user]);
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-8 py-10">
@@ -77,15 +118,54 @@ export const ArticleList: React.FC<ArticleListProps> = ({
         </button>
       </div>
 
-      {/* Filter Tabs */}
-      <div className="mb-6">
+      {/* Filter Tabs & Rank / Sort Controls */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 pb-1">
         <FilterTabs current={filter} onChange={setFilter} counts={counts} />
+
+        {/* Minimalist Rank Selector */}
+        <div
+          className="flex items-center p-0.5 rounded-full select-none"
+          style={{
+            backgroundColor: 'var(--color-bg-surface)',
+            border: '1px solid var(--color-border-soft)',
+          }}
+        >
+          <button
+            onClick={() => setSortBy('latest')}
+            title="Rank by latest published date"
+            className="flex items-center gap-1.5 px-3 py-1 text-xs rounded-full transition-colors cursor-pointer"
+            style={{
+              backgroundColor: sortBy === 'latest' ? 'var(--color-bg)' : 'transparent',
+              color: sortBy === 'latest' ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
+              fontWeight: sortBy === 'latest' ? 600 : 400,
+              border: sortBy === 'latest' ? '1px solid var(--color-border-soft)' : '1px solid transparent',
+            }}
+          >
+            <Clock size={12} strokeWidth={1.8} />
+            <span>Latest</span>
+          </button>
+
+          <button
+            onClick={() => setSortBy('upvotes')}
+            title="Rank by most upvotes and resonance"
+            className="flex items-center gap-1.5 px-3 py-1 text-xs rounded-full transition-colors cursor-pointer"
+            style={{
+              backgroundColor: sortBy === 'upvotes' ? 'var(--color-bg)' : 'transparent',
+              color: sortBy === 'upvotes' ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
+              fontWeight: sortBy === 'upvotes' ? 600 : 400,
+              border: sortBy === 'upvotes' ? '1px solid var(--color-border-soft)' : '1px solid transparent',
+            }}
+          >
+            <Sparkles size={12} strokeWidth={1.8} className={sortBy === 'upvotes' ? 'text-amber-500 fill-amber-500' : ''} />
+            <span>Most Resonated</span>
+          </button>
+        </div>
       </div>
 
       {/* Articles Feed */}
-      {filteredArticles.length > 0 ? (
+      {processedArticles.length > 0 ? (
         <div className="divide-y divide-transparent">
-          {filteredArticles.map((art) => (
+          {processedArticles.map((art) => (
             <ArticleCard
               key={art.id}
               article={art}
@@ -113,6 +193,10 @@ export const ArticleList: React.FC<ArticleListProps> = ({
           <h3 className="text-lg font-serif font-medium mb-1.5" style={{ color: 'var(--color-text-primary)' }}>
             {searchQuery
               ? 'No matching thoughts'
+              : filter === 'private'
+              ? 'Your private notebook is quiet.'
+              : filter === 'published'
+              ? 'No published works yet.'
               : 'The page is quiet.'}
           </h3>
           <p className="text-xs max-w-xs mx-auto mb-6 leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>

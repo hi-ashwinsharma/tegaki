@@ -56,11 +56,19 @@ export const ArticlesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     async function loadCloudData() {
       const cloudArticles = await fetchArticlesFromFirestore();
       if (cloudArticles && cloudArticles.length) {
-        setArticles(cloudArticles);
+        setArticles((prev) => {
+          const cloudIds = new Set(cloudArticles.map((a) => a.id));
+          const localOnly = prev.filter((a) => !cloudIds.has(a.id));
+          return [...cloudArticles, ...localOnly];
+        });
       }
       const cloudComments = await fetchCommentsFromFirestore();
       if (cloudComments && cloudComments.length) {
-        setComments(cloudComments);
+        setComments((prev) => {
+          const cloudIds = new Set(cloudComments.map((c) => c.id));
+          const localOnly = prev.filter((c) => !cloudIds.has(c.id));
+          return [...cloudComments, ...localOnly];
+        });
       }
     }
     loadCloudData();
@@ -117,7 +125,7 @@ export const ArticlesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     const newArticle: Article = {
       id: 'art-' + Date.now().toString(36) + Math.random().toString(36).substring(2, 6),
-      title: title.trim() || 'Untitled Journal',
+      title: title.trim() || 'Untitled Thought',
       subtitle: subtitle.trim(),
       content: content,
       encryptedPayload: encryptedPayload,
