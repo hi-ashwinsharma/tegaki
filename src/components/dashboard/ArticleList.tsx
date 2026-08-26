@@ -4,7 +4,7 @@ import { TopSearchBar } from '../common/TopSearchBar';
 import { FilterTabs } from './FilterTabs';
 import type { FilterOption } from './FilterTabs';
 import { ArticleCard } from './ArticleCard';
-import { Feather } from 'lucide-react';
+import { Feather, Plus } from 'lucide-react';
 
 interface ArticleListProps {
   articles: Article[];
@@ -54,18 +54,18 @@ export const ArticleList: React.FC<ArticleListProps> = ({
   }, [articles]);
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-8 py-8">
-      {/* Top Search Bar & Action with whitespace */}
+    <div className="max-w-3xl mx-auto px-4 sm:px-8 py-10">
+      {/* Top Search & Action Bar */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
         <TopSearchBar
           value={searchQuery}
           onChange={setSearchQuery}
-          placeholder="Search stories, journals, tags, or authors..."
+          placeholder="Search stories, journals, tags..."
         />
 
         <button
           onClick={onNewStory}
-          className="w-full sm:w-auto px-5 py-2 rounded-full text-xs font-medium flex items-center justify-center gap-2 transition-opacity hover:opacity-90 whitespace-nowrap cursor-pointer"
+          className="w-full sm:w-auto px-5 py-2 rounded-full text-xs font-medium flex items-center justify-center gap-2 transition-opacity hover:opacity-90 whitespace-nowrap cursor-pointer select-none"
           style={{
             backgroundColor: 'var(--color-text-primary)',
             color: 'var(--color-bg)',
@@ -98,37 +98,43 @@ export const ArticleList: React.FC<ArticleListProps> = ({
           ))}
         </div>
       ) : (
-        <div className="text-center py-20">
+        /* Empty State */
+        <div className="text-center py-24 select-none">
           <div
-            className="w-14 h-14 mx-auto mb-4 rounded-full flex items-center justify-center"
+            className="w-12 h-12 mx-auto mb-4 rounded-full flex items-center justify-center"
             style={{
               backgroundColor: 'var(--color-bg-subtle)',
               border: '1px solid var(--color-border-soft)',
               color: 'var(--color-text-tertiary)',
             }}
           >
-            <Feather size={22} strokeWidth={1.6} />
+            <Feather size={20} strokeWidth={1.6} />
           </div>
-          <h3 className="text-lg font-serif font-medium mb-1.5" style={{ color: 'var(--color-text-primary)' }}>
-            No entries found
-          </h3>
-          <p className="text-xs max-w-sm mx-auto mb-6" style={{ color: 'var(--color-text-secondary)' }}>
+          <h3 className="text-base font-serif font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>
             {searchQuery
-              ? `No journals or stories matching "${searchQuery}"`
+              ? 'No matching results'
               : filter === 'private'
-              ? 'You have no private journals yet.'
-              : 'No published stories available yet.'}
+              ? 'No private journals yet'
+              : filter === 'published'
+              ? 'No published stories yet'
+              : 'Your canvas is empty'}
+          </h3>
+          <p className="text-xs max-w-xs mx-auto mb-6 leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
+            {searchQuery
+              ? `No entries found for "${searchQuery}"`
+              : 'Draft private journals for your eyes only, or publish stories to the world.'}
           </p>
           <button
             onClick={onNewStory}
-            className="px-5 py-2 text-xs font-medium rounded-full transition-opacity hover:opacity-90 cursor-pointer"
+            className="px-5 py-2 text-xs font-medium rounded-full transition-opacity hover:opacity-90 cursor-pointer inline-flex items-center gap-1.5"
             style={{
               backgroundColor: 'var(--color-text-primary)',
               color: 'var(--color-bg)',
               border: '1px solid var(--color-text-primary)',
             }}
           >
-            Start writing
+            <Plus size={13} strokeWidth={2} />
+            <span>Write your first entry</span>
           </button>
         </div>
       )}

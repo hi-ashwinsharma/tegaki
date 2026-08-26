@@ -25,28 +25,21 @@ interface AuthContextType {
   updateBio: (bio: string) => void;
 }
 
-const AUTH_STORAGE_KEY = 'tegaki_current_user';
-
-const DEFAULT_USER: UserProfile = {
-  id: 'u-ashwin',
-  name: 'Ashwin Sharma',
-  username: 'ashwin',
-  email: 'ashwin@tegaki.io',
-  avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-  bio: 'Journaling thoughts in private, publishing craft in public.',
-  authProvider: 'google',
-  createdAt: Date.now() - 86400000 * 30,
-};
+const AUTH_STORAGE_KEY = 'tegaki_current_user_v2';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<UserProfile | null>(() => {
-    const saved = localStorage.getItem(AUTH_STORAGE_KEY);
-    return saved ? JSON.parse(saved) : DEFAULT_USER;
+    try {
+      const saved = localStorage.getItem(AUTH_STORAGE_KEY);
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
   });
 
-  // Listen to Firebase auth changes if configured
+  // Listen to Firebase auth changes
   useEffect(() => {
     if (!isFirebaseConfigured) return;
 
@@ -64,6 +57,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           createdAt: Date.now(),
         };
         setUser(uProfile);
+      } else {
+        // If not in local passkey session, clear
+        const local = localStorage.getItem(AUTH_STORAGE_KEY);
+        if (local) {
+          const parsed = JSON.parse(local);
+          if (parsed.authProvider !== 'passkey') {
+            setUser(null);
+          }
+        } else {
+          setUser(null);
+        }
       }
     });
 
@@ -85,39 +89,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const fbUser = res.user;
         const uProfile: UserProfile = {
           id: fbUser.uid,
-          name: fbUser.displayName || 'Ashwin Sharma',
-          username: (fbUser.displayName || 'ashwin').toLowerCase().replace(/\s+/g, '_'),
-          email: fbUser.email || 'ashwin@gmail.com',
-          avatarUrl: fbUser.photoURL || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+          name: fbUser.displayName || 'Writer',
+          username: (fbUser.displayName || fbUser.email?.split('@')[0] || 'writer')
+            .toLowerCase()
+            .replace(/\s+/g, '_'),
+          email: fbUser.email || '',
+          avatarUrl: fbUser.photoURL || undefined,
           authProvider: 'google',
           createdAt: Date.now(),
         };
         setUser(uProfile);
         return;
       } catch (err) {
-        console.warn('Firebase Google Auth popup error, falling back:', err);
+        console.warn('Firebase Google Auth error:', err);
       }
     }
-
-    // Offline / Demo fallback
-    const googleUser: UserProfile = {
-      id: 'u-google-' + Date.now().toString().slice(-4),
-      name: 'Ashwin Sharma',
-      username: 'ashwin',
-      email: 'ashwin@gmail.com',
-      avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-      bio: 'Writer & thinker.',
-      authProvider: 'google',
-      createdAt: Date.now(),
-    };
-    setUser(googleUser);
   };
 
   const loginWithPasskey = async () => {
     const result = await authenticateWithPasskey();
     if (result.success) {
       const passkeyUser: UserProfile = {
-        id: 'u-pk-' + Date.now().toString().slice(-4),
+        id: 'u-pk-' + Date.now().toString(36),
         name: 'Passkey Writer',
         username: 'passkey_writer',
         email: result.email,
@@ -132,7 +125,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const res = await registerPasskey(username, email);
     if (res.success) {
       const newUser: UserProfile = {
-        id: 'u-pk-' + Date.now().toString().slice(-4),
+        id: 'u-pk-' + Date.now().toString(36),
         name: username,
         username: username.toLowerCase().replace(/\s+/g, '_'),
         email: email,
@@ -153,6 +146,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           name: fbUser.displayName || email.split('@')[0] || 'Writer',
           username: (email.split('@')[0] || 'writer').toLowerCase(),
           email: fbUser.email || email,
+          avatarUrl: fbUser.photoURL || undefined,
           authProvider: 'email',
           createdAt: Date.now(),
         };
@@ -160,18 +154,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       } catch (err) {
         console.warn('Firebase Email Sign-in error:', err);
+        throw err;
       }
     }
-
-    const emailUser: UserProfile = {
-      id: 'u-email-' + Date.now().toString().slice(-4),
-      name: email.split('@')[0] || 'Writer',
-      username: (email.split('@')[0] || 'writer').toLowerCase(),
-      email: email,
-      authProvider: 'email',
-      createdAt: Date.now(),
-    };
-    setUser(emailUser);
   };
 
   const registerWithEmail = async (name: string, email: string, pass: string) => {
@@ -193,18 +178,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       } catch (err) {
         console.warn('Firebase Email Sign-up error:', err);
+        throw err;
       }
     }
-
-    const emailUser: UserProfile = {
-      id: 'u-email-' + Date.now().toString().slice(-4),
-      name: name,
-      username: name.toLowerCase().replace(/\s+/g, '_'),
-      email: email,
-      authProvider: 'email',
-      createdAt: Date.now(),
-    };
-    setUser(emailUser);
   };
 
   const resetPassword = async (email: string): Promise<boolean> => {
@@ -214,6 +190,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return true;
       } catch (err) {
         console.warn('Firebase password reset error:', err);
+        return false;
       }
     }
     return true;
