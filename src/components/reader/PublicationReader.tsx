@@ -3,8 +3,7 @@ import type { Article } from '../../types/article';
 import { ClapButton } from './ClapButton';
 import { CommentsDrawer } from './CommentsDrawer';
 import { ShareModal } from './ShareModal';
-import { ArrowLeft, MessageSquare, Share2, Edit3, ShieldCheck } from 'lucide-react';
-import { CircularLogoIcon } from '../common/Icons';
+import { ArrowLeft, MessageSquare, Share2, Edit3, Lock } from 'lucide-react';
 import { ThemeSelector } from '../common/ThemeSelector';
 import { useArticles } from '../../context/ArticlesContext';
 import { useAuth } from '../../context/AuthContext';
@@ -58,7 +57,7 @@ export const PublicationReader: React.FC<PublicationReaderProps> = ({
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--color-bg)' }}>
       {/* Top Reading Navigation */}
       <header
-        className="sticky top-0 z-30 flex items-center justify-between px-4 sm:px-8 py-3.5"
+        className="sticky top-0 z-30 flex items-center justify-between px-4 sm:px-8 py-3.5 backdrop-blur-none"
         style={{
           backgroundColor: 'var(--color-bg)',
           borderBottom: '1px solid var(--color-border-soft)',
@@ -74,12 +73,9 @@ export const PublicationReader: React.FC<PublicationReaderProps> = ({
             <ArrowLeft size={18} />
           </button>
 
-          <div className="flex items-center gap-2">
-            <CircularLogoIcon size={22} />
-            <span className="text-sm font-serif font-medium hidden sm:inline" style={{ color: 'var(--color-text-primary)' }}>
-              Tegaki
-            </span>
-          </div>
+          <span className="text-sm font-serif font-medium hidden sm:inline" style={{ color: 'var(--color-text-primary)' }}>
+            Tegaki
+          </span>
 
           {article.slug && (
             <span className="hidden md:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-mono" style={{ backgroundColor: 'var(--color-bg-surface)', border: '1px solid var(--color-border-soft)', color: 'var(--color-text-secondary)' }}>
@@ -122,22 +118,7 @@ export const PublicationReader: React.FC<PublicationReaderProps> = ({
       </header>
 
       {/* Main Article Reading Container */}
-      <main className="flex-grow max-w-3xl w-full mx-auto px-6 sm:px-10 py-12">
-        {/* Encrypted Notice Banner if private */}
-        {article.isEncrypted && (
-          <div
-            className="mb-8 p-3 rounded-lg flex items-center gap-3 text-xs font-mono"
-            style={{
-              backgroundColor: 'var(--color-bg-surface)',
-              border: '1px solid var(--color-border-soft)',
-              color: 'var(--color-text-secondary)',
-            }}
-          >
-            <ShieldCheck size={16} style={{ color: 'var(--color-accent)' }} />
-            <span>Private Journal: Decrypted client-side with AES-GCM 256-bit encryption.</span>
-          </div>
-        )}
-
+      <main className="flex-grow max-w-2xl sm:max-w-3xl w-full mx-auto px-6 sm:px-10 py-12">
         {/* Title */}
         <h1
           className="text-3xl sm:text-5xl font-serif font-bold tracking-tight mb-4 leading-tight"
@@ -184,8 +165,14 @@ export const PublicationReader: React.FC<PublicationReaderProps> = ({
               </div>
             )}
             <div>
-              <div className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
-                {article.authorName}
+              <div className="text-sm font-semibold flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
+                <span>{article.authorName}</span>
+                {article.isEncrypted && (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-normal" style={{ color: 'var(--color-text-tertiary)' }}>
+                    <Lock size={11} />
+                    <span>Private</span>
+                  </span>
+                )}
               </div>
               <div className="text-xs flex items-center gap-2" style={{ color: 'var(--color-text-tertiary)' }}>
                 <span>{article.readingTimeMinutes} min read</span>
@@ -196,10 +183,10 @@ export const PublicationReader: React.FC<PublicationReaderProps> = ({
           </div>
 
           <div className="flex items-center gap-3">
-            <ClapButton count={article.upvotes} onClap={() => clapArticle(article.id)} size="sm" />
+            <ClapButton count={article.upvotes} onClap={() => clapArticle(article.id)} />
             <button
               onClick={() => setIsCommentsOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-mono transition-opacity hover:opacity-80 cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs transition-opacity hover:opacity-80 cursor-pointer"
               style={{
                 backgroundColor: 'var(--color-bg-surface)',
                 border: '1px solid var(--color-border-soft)',
@@ -251,31 +238,31 @@ export const PublicationReader: React.FC<PublicationReaderProps> = ({
           style={{ borderTop: '1px solid var(--color-border-soft)' }}
         >
           <div className="flex items-center gap-4">
-            <ClapButton count={article.upvotes} onClap={() => clapArticle(article.id)} size="md" />
+            <ClapButton count={article.upvotes} onClap={() => clapArticle(article.id)} />
             <button
               onClick={() => setIsCommentsOpen(true)}
-              className="flex items-center gap-2 px-4 py-2 rounded-full text-sm transition-opacity hover:opacity-80 cursor-pointer"
+              className="flex items-center gap-2 px-4 py-2 rounded-full text-xs transition-opacity hover:opacity-80 cursor-pointer"
               style={{
                 backgroundColor: 'var(--color-bg-surface)',
                 border: '1px solid var(--color-border-soft)',
                 color: 'var(--color-text-secondary)',
               }}
             >
-              <MessageSquare size={16} />
+              <MessageSquare size={15} />
               <span>Responses ({article.commentCount})</span>
             </button>
           </div>
 
           <button
             onClick={() => setIsShareOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-full text-sm transition-opacity hover:opacity-80 cursor-pointer"
+            className="flex items-center gap-2 px-4 py-2 rounded-full text-xs transition-opacity hover:opacity-80 cursor-pointer"
             style={{
               backgroundColor: 'var(--color-bg-surface)',
               border: '1px solid var(--color-border-soft)',
               color: 'var(--color-text-secondary)',
             }}
           >
-            <Share2 size={16} />
+            <Share2 size={15} />
             <span>Share</span>
           </button>
         </div>

@@ -38,10 +38,10 @@ export const PublishModal: React.FC<PublishModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      setSlug(initialSlug || generateSlug(title || 'my-story'));
+      setSlug(initialSlug || generateSlug(title || 'journal'));
       setCustomSubtitle(subtitle || '');
       setVisibility(initialVisibility);
-      setTags(initialTags.length ? initialTags : ['Writing', 'Thoughts']);
+      setTags(initialTags.length ? initialTags : ['Writing', 'Notes']);
     }
   }, [isOpen, title, subtitle, initialSlug, initialVisibility, initialTags]);
 
@@ -80,7 +80,7 @@ export const PublishModal: React.FC<PublishModalProps> = ({
       <div className="fixed inset-0 bg-black/40 backdrop-blur-none" onClick={onClose} />
 
       <div
-        className="relative w-full max-w-lg p-8 rounded-xl z-10 animate-fade-in"
+        className="relative w-full max-w-lg p-7 rounded-xl z-10 animate-fade-in"
         style={{
           backgroundColor: 'var(--color-bg)',
           border: '1px solid var(--color-border-soft)',
@@ -94,18 +94,18 @@ export const PublishModal: React.FC<PublishModalProps> = ({
           <X size={18} />
         </button>
 
-        <h2 className="text-2xl font-serif font-bold mb-1" style={{ color: 'var(--color-text-primary)' }}>
-          {visibility === 'published' ? 'Story Preview & Publishing' : 'Private Encrypted Journal'}
+        <h2 className="text-xl font-serif font-bold mb-1" style={{ color: 'var(--color-text-primary)' }}>
+          {visibility === 'published' ? 'Publishing Settings' : 'Save Private Journal'}
         </h2>
-        <p className="text-xs mb-6" style={{ color: 'var(--color-text-secondary)' }}>
-          Review how your work appears and customize its unique link.
+        <p className="text-xs mb-5" style={{ color: 'var(--color-text-secondary)' }}>
+          Configure visibility, URL link, and tags.
         </p>
 
-        <form onSubmit={handleConfirm} className="space-y-5">
-          {/* Visibility Mode Selector */}
+        <form onSubmit={handleConfirm} className="space-y-4">
+          {/* Visibility Option */}
           <div>
-            <label className="block text-xs uppercase tracking-wider mb-2 font-medium" style={{ color: 'var(--color-text-tertiary)' }}>
-              Publication Privacy Mode
+            <label className="block text-[11px] uppercase tracking-wider mb-2 font-medium" style={{ color: 'var(--color-text-tertiary)' }}>
+              Visibility
             </label>
             <div className="grid grid-cols-2 gap-3">
               <button
@@ -119,10 +119,10 @@ export const PublishModal: React.FC<PublishModalProps> = ({
               >
                 <div className="flex items-center gap-1.5 text-xs font-semibold mb-1" style={{ color: 'var(--color-text-primary)' }}>
                   <Globe size={14} style={{ color: 'var(--color-accent)' }} />
-                  <span>Public Publication</span>
+                  <span>Public</span>
                 </div>
                 <span className="text-[11px] leading-snug" style={{ color: 'var(--color-text-secondary)' }}>
-                  Accessible to readers worldwide with upvotes and comments.
+                  Visible to readers with custom URL and claps.
                 </span>
               </button>
 
@@ -137,20 +137,20 @@ export const PublishModal: React.FC<PublishModalProps> = ({
               >
                 <div className="flex items-center gap-1.5 text-xs font-semibold mb-1" style={{ color: 'var(--color-text-primary)' }}>
                   <Lock size={14} style={{ color: 'var(--color-accent)' }} />
-                  <span>Private Journal</span>
+                  <span>Private</span>
                 </div>
                 <span className="text-[11px] leading-snug" style={{ color: 'var(--color-text-secondary)' }}>
-                  Stored encrypted on device with AES-GCM 256-bit.
+                  Encrypted and saved privately for your eyes only.
                 </span>
               </button>
             </div>
           </div>
 
-          {/* Custom Slug Configuration */}
+          {/* Custom Slug */}
           <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="block text-xs uppercase tracking-wider font-medium" style={{ color: 'var(--color-text-tertiary)' }}>
-                Custom Link / URL Slug
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-[11px] uppercase tracking-wider font-medium" style={{ color: 'var(--color-text-tertiary)' }}>
+                Story Link Slug
               </label>
               <span className="text-[11px] font-mono" style={{ color: 'var(--color-accent)' }}>
                 /@{currentUsername}/{sanitizeSlug(slug) || '...'}
@@ -172,26 +172,23 @@ export const PublishModal: React.FC<PublishModalProps> = ({
                 required
                 value={slug}
                 onChange={(e) => setSlug(sanitizeSlug(e.target.value))}
-                placeholder="your-custom-slug"
+                placeholder="my-reflection"
                 className="w-full bg-transparent text-xs font-mono focus:outline-none"
                 style={{ color: 'var(--color-text-primary)' }}
               />
             </div>
-            <p className="text-[11px] mt-1" style={{ color: 'var(--color-text-tertiary)' }}>
-              Use lowercase letters, numbers, and hyphens. You have full control over the slug.
-            </p>
           </div>
 
-          {/* Subtitle / Teaser */}
+          {/* Subtitle */}
           <div>
-            <label className="block text-xs uppercase tracking-wider mb-1.5 font-medium" style={{ color: 'var(--color-text-tertiary)' }}>
-              Short Preview Note / Subtitle
+            <label className="block text-[11px] uppercase tracking-wider mb-1 font-medium" style={{ color: 'var(--color-text-tertiary)' }}>
+              Subtitle / Summary
             </label>
             <input
               type="text"
               value={customSubtitle}
               onChange={(e) => setCustomSubtitle(e.target.value)}
-              placeholder="A one-sentence summary for readers..."
+              placeholder="Short preview hook for readers..."
               className="w-full px-3 py-2 text-xs rounded-md focus:outline-none"
               style={{
                 backgroundColor: 'var(--color-bg-surface)',
@@ -203,8 +200,8 @@ export const PublishModal: React.FC<PublishModalProps> = ({
 
           {/* Tags */}
           <div>
-            <label className="block text-xs uppercase tracking-wider mb-1.5 font-medium" style={{ color: 'var(--color-text-tertiary)' }}>
-              Topics / Tags (up to 5)
+            <label className="block text-[11px] uppercase tracking-wider mb-1 font-medium" style={{ color: 'var(--color-text-tertiary)' }}>
+              Tags (up to 5)
             </label>
             <div
               className="flex flex-wrap items-center gap-1.5 p-2 rounded-md"
@@ -238,15 +235,15 @@ export const PublishModal: React.FC<PublishModalProps> = ({
                 value={tagInput}
                 onChange={(e) => setTagInput(e.target.value)}
                 onKeyDown={handleAddTag}
-                placeholder={tags.length < 5 ? 'Add a topic and hit enter...' : ''}
+                placeholder={tags.length < 5 ? 'Add tag and hit enter...' : ''}
                 disabled={tags.length >= 5}
-                className="bg-transparent text-xs focus:outline-none flex-grow min-w-[120px]"
+                className="bg-transparent text-xs focus:outline-none flex-grow min-w-[100px]"
                 style={{ color: 'var(--color-text-primary)' }}
               />
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-3 pt-4" style={{ borderTop: '1px solid var(--color-border-soft)' }}>
+          <div className="flex items-center justify-end gap-3 pt-3" style={{ borderTop: '1px solid var(--color-border-soft)' }}>
             <button
               type="button"
               onClick={onClose}
@@ -258,7 +255,7 @@ export const PublishModal: React.FC<PublishModalProps> = ({
 
             <button
               type="submit"
-              className="px-6 py-2 text-xs font-medium rounded-full flex items-center gap-2 transition-opacity hover:opacity-90 cursor-pointer"
+              className="px-5 py-2 text-xs font-medium rounded-full flex items-center gap-1.5 transition-opacity hover:opacity-90 cursor-pointer"
               style={{
                 backgroundColor: 'var(--color-accent)',
                 color: '#FFFFFF',
@@ -266,7 +263,7 @@ export const PublishModal: React.FC<PublishModalProps> = ({
               }}
             >
               <Check size={14} />
-              <span>{visibility === 'published' ? 'Publish Now' : 'Save Encrypted Journal'}</span>
+              <span>{visibility === 'published' ? 'Publish Now' : 'Save'}</span>
             </button>
           </div>
         </form>

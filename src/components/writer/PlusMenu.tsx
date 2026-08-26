@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Image as ImageIcon, Link as LinkIcon, Code, Minus, Upload } from 'lucide-react';
+import { Plus, Image as ImageIcon, Link2, Code2, Minus, Upload, X } from 'lucide-react';
 
 interface PlusMenuProps {
   top: number;
@@ -26,8 +26,8 @@ export const PlusMenu: React.FC<PlusMenuProps> = ({
 
   const handleImageSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (inputUrl) {
-      onInsertImage(inputUrl, inputCaption);
+    if (inputUrl.trim()) {
+      onInsertImage(inputUrl.trim(), inputCaption.trim());
       setInputUrl('');
       setInputCaption('');
       setModalType(null);
@@ -37,8 +37,8 @@ export const PlusMenu: React.FC<PlusMenuProps> = ({
 
   const handleEmbedSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (inputUrl) {
-      onInsertEmbed(inputUrl, inputCaption || inputUrl);
+    if (inputUrl.trim()) {
+      onInsertEmbed(inputUrl.trim(), inputCaption.trim() || inputUrl.trim());
       setInputUrl('');
       setInputCaption('');
       setModalType(null);
@@ -63,15 +63,15 @@ export const PlusMenu: React.FC<PlusMenuProps> = ({
   return (
     <>
       <div
-        className="absolute left-[-48px] sm:left-[-54px] z-20 flex items-center transition-all duration-150 select-none"
+        className="absolute left-[-44px] sm:left-[-52px] z-20 flex items-center transition-all duration-150 select-none"
         style={{ top: top || 0 }}
       >
         {/* The Left-Side Plus (+) Button */}
         <button
           type="button"
           onClick={onToggle}
-          title="Add an element"
-          className="w-8 h-8 rounded-full flex items-center justify-center transition-transform hover:opacity-85"
+          title="Add block"
+          className="w-7 h-7 rounded-full flex items-center justify-center transition-transform hover:opacity-85 cursor-pointer"
           style={{
             border: '1px solid var(--color-border-soft)',
             backgroundColor: 'var(--color-bg)',
@@ -79,38 +79,38 @@ export const PlusMenu: React.FC<PlusMenuProps> = ({
             transform: isOpen ? 'rotate(45deg)' : 'none',
           }}
         >
-          <Plus size={18} />
+          <Plus size={16} strokeWidth={1.8} />
         </button>
 
         {/* Medium-style 4-tool expansion palette */}
         {isOpen && (
-          <div className="flex items-center gap-2 ml-3 animate-fade-in">
+          <div className="flex items-center gap-2 ml-2.5 animate-fade-in">
             <button
               type="button"
               onClick={() => setModalType('image')}
-              title="Add an Image (URL or upload)"
-              className="w-8 h-8 rounded-full flex items-center justify-center transition-colors hover:opacity-80"
+              title="Add Image"
+              className="w-7 h-7 rounded-full flex items-center justify-center transition-colors hover:opacity-80 cursor-pointer"
               style={{
                 border: '1px solid var(--color-border-soft)',
                 backgroundColor: 'var(--color-bg-surface)',
                 color: 'var(--color-accent)',
               }}
             >
-              <ImageIcon size={15} />
+              <ImageIcon size={14} strokeWidth={1.75} />
             </button>
 
             <button
               type="button"
               onClick={() => setModalType('embed')}
-              title="Embed website or video link"
-              className="w-8 h-8 rounded-full flex items-center justify-center transition-colors hover:opacity-80"
+              title="Embed Web Card"
+              className="w-7 h-7 rounded-full flex items-center justify-center transition-colors hover:opacity-80 cursor-pointer"
               style={{
                 border: '1px solid var(--color-border-soft)',
                 backgroundColor: 'var(--color-bg-surface)',
                 color: 'var(--color-accent)',
               }}
             >
-              <LinkIcon size={15} />
+              <Link2 size={14} strokeWidth={1.75} />
             </button>
 
             <button
@@ -119,15 +119,15 @@ export const PlusMenu: React.FC<PlusMenuProps> = ({
                 onInsertCode();
                 onToggle();
               }}
-              title="Add a Code block"
-              className="w-8 h-8 rounded-full flex items-center justify-center transition-colors hover:opacity-80"
+              title="Add Code Block"
+              className="w-7 h-7 rounded-full flex items-center justify-center transition-colors hover:opacity-80 cursor-pointer"
               style={{
                 border: '1px solid var(--color-border-soft)',
                 backgroundColor: 'var(--color-bg-surface)',
                 color: 'var(--color-accent)',
               }}
             >
-              <Code size={15} />
+              <Code2 size={14} strokeWidth={1.75} />
             </button>
 
             <button
@@ -136,15 +136,15 @@ export const PlusMenu: React.FC<PlusMenuProps> = ({
                 onInsertDivider();
                 onToggle();
               }}
-              title="Add a Separator / Divider"
-              className="w-8 h-8 rounded-full flex items-center justify-center transition-colors hover:opacity-80"
+              title="Add Divider"
+              className="w-7 h-7 rounded-full flex items-center justify-center transition-colors hover:opacity-80 cursor-pointer"
               style={{
                 border: '1px solid var(--color-border-soft)',
                 backgroundColor: 'var(--color-bg-surface)',
                 color: 'var(--color-accent)',
               }}
             >
-              <Minus size={15} />
+              <Minus size={14} strokeWidth={1.75} />
             </button>
           </div>
         )}
@@ -154,21 +154,26 @@ export const PlusMenu: React.FC<PlusMenuProps> = ({
       {modalType && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
           <div
-            className="w-full max-w-md p-6 rounded-lg relative"
+            className="w-full max-w-md p-6 rounded-lg relative animate-fade-in"
             style={{
               backgroundColor: 'var(--color-bg)',
               border: '1px solid var(--color-border-soft)',
             }}
           >
-            <h3 className="text-lg font-serif font-medium mb-3" style={{ color: 'var(--color-text-primary)' }}>
-              {modalType === 'image' ? 'Insert Image' : 'Embed Web Link or Card'}
+            <button
+              onClick={() => setModalType(null)}
+              className="absolute top-4 right-4 p-1 rounded-md hover:opacity-75 cursor-pointer"
+              style={{ color: 'var(--color-text-tertiary)' }}
+            >
+              <X size={16} />
+            </button>
+
+            <h3 className="text-base font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+              {modalType === 'image' ? 'Insert Image' : 'Embed Website Link'}
             </h3>
 
             {modalType === 'image' && (
               <div className="mb-4">
-                <label className="block text-xs uppercase tracking-wider mb-2 font-medium" style={{ color: 'var(--color-text-tertiary)' }}>
-                  Upload from Device
-                </label>
                 <label
                   className="flex flex-col items-center justify-center py-4 px-3 rounded-md cursor-pointer transition-colors"
                   style={{
@@ -177,11 +182,11 @@ export const PlusMenu: React.FC<PlusMenuProps> = ({
                     color: 'var(--color-text-secondary)',
                   }}
                 >
-                  <Upload size={20} className="mb-1 opacity-75" />
-                  <span className="text-xs">Click to browse or drop an image file</span>
+                  <Upload size={18} className="mb-1 opacity-75" />
+                  <span className="text-xs">Upload from device or drag image here</span>
                   <input type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
                 </label>
-                <div className="text-center my-3 text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
+                <div className="text-center my-2 text-[11px]" style={{ color: 'var(--color-text-tertiary)' }}>
                   — OR VIA URL —
                 </div>
               </div>
@@ -189,8 +194,8 @@ export const PlusMenu: React.FC<PlusMenuProps> = ({
 
             <form onSubmit={modalType === 'image' ? handleImageSubmit : handleEmbedSubmit} className="space-y-3">
               <div>
-                <label className="block text-xs uppercase tracking-wider mb-1 font-medium" style={{ color: 'var(--color-text-tertiary)' }}>
-                  {modalType === 'image' ? 'Image Web URL' : 'Website or Article URL'}
+                <label className="block text-[11px] uppercase tracking-wider mb-1 font-medium" style={{ color: 'var(--color-text-tertiary)' }}>
+                  {modalType === 'image' ? 'Image Web URL' : 'Website URL'}
                 </label>
                 <input
                   type="url"
@@ -198,8 +203,8 @@ export const PlusMenu: React.FC<PlusMenuProps> = ({
                   autoFocus
                   value={inputUrl}
                   onChange={(e) => setInputUrl(e.target.value)}
-                  placeholder="https://images.unsplash.com/..."
-                  className="w-full px-3 py-2 text-sm rounded-md focus:outline-none"
+                  placeholder="https://..."
+                  className="w-full px-3 py-2 text-xs rounded-md focus:outline-none"
                   style={{
                     backgroundColor: 'var(--color-bg-surface)',
                     border: '1px solid var(--color-border-soft)',
@@ -209,15 +214,15 @@ export const PlusMenu: React.FC<PlusMenuProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs uppercase tracking-wider mb-1 font-medium" style={{ color: 'var(--color-text-tertiary)' }}>
+                <label className="block text-[11px] uppercase tracking-wider mb-1 font-medium" style={{ color: 'var(--color-text-tertiary)' }}>
                   {modalType === 'image' ? 'Caption (Optional)' : 'Title / Note (Optional)'}
                 </label>
                 <input
                   type="text"
                   value={inputCaption}
                   onChange={(e) => setInputCaption(e.target.value)}
-                  placeholder={modalType === 'image' ? 'Photo by...' : 'Rich website card description'}
-                  className="w-full px-3 py-2 text-sm rounded-md focus:outline-none"
+                  placeholder={modalType === 'image' ? 'Caption...' : 'Website description...'}
+                  className="w-full px-3 py-2 text-xs rounded-md focus:outline-none"
                   style={{
                     backgroundColor: 'var(--color-bg-surface)',
                     border: '1px solid var(--color-border-soft)',
@@ -226,18 +231,18 @@ export const PlusMenu: React.FC<PlusMenuProps> = ({
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3">
+              <div className="flex items-center justify-end gap-2 pt-2">
                 <button
                   type="button"
                   onClick={() => setModalType(null)}
-                  className="px-4 py-2 text-xs font-medium rounded-full hover:opacity-75"
+                  className="px-3 py-1.5 text-xs font-medium rounded-full hover:opacity-75 cursor-pointer"
                   style={{ color: 'var(--color-text-secondary)' }}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 text-xs font-medium rounded-full"
+                  className="px-4 py-1.5 text-xs font-medium rounded-full cursor-pointer"
                   style={{
                     backgroundColor: 'var(--color-text-primary)',
                     color: 'var(--color-bg)',

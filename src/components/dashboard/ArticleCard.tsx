@@ -1,7 +1,6 @@
 import React from 'react';
 import type { Article } from '../../types/article';
-import { EncryptedLockIcon, MediumClapIcon } from '../common/Icons';
-import { MessageSquare, Edit3, Trash2, Globe, ExternalLink } from 'lucide-react';
+import { MessageSquare, Edit3, Trash2, Globe, ExternalLink, Lock, Sparkles } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 interface ArticleCardProps {
@@ -39,7 +38,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
       }}
     >
       {/* Author Bar */}
-      <div className="flex items-center justify-between mb-3 text-xs">
+      <div className="flex items-center justify-between mb-2.5 text-xs">
         <div className="flex items-center gap-2">
           {article.authorAvatar ? (
             <img
@@ -70,16 +69,16 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
 
           {article.isEncrypted && (
             <span
-              className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-mono"
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px]"
               style={{
                 backgroundColor: 'var(--color-bg-subtle)',
                 border: '1px solid var(--color-border-soft)',
                 color: 'var(--color-text-secondary)',
               }}
-              title="Encrypted with AES-GCM 256-bit"
+              title="Private Journal"
             >
-              <EncryptedLockIcon size={11} />
-              <span>AES-256</span>
+              <Lock size={11} strokeWidth={1.8} />
+              <span>Private</span>
             </span>
           )}
 
@@ -92,7 +91,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
                 color: 'var(--color-accent)',
               }}
             >
-              <Globe size={11} />
+              <Globe size={11} strokeWidth={1.8} />
               <span>/@{article.authorUsername}/{article.slug}</span>
             </span>
           )}
@@ -108,7 +107,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
                 className="p-1.5 rounded hover:opacity-75 cursor-pointer"
                 style={{ color: 'var(--color-text-secondary)' }}
               >
-                <Edit3 size={15} />
+                <Edit3 size={15} strokeWidth={1.75} />
               </button>
               <button
                 onClick={() => onDelete(article.id)}
@@ -116,7 +115,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
                 className="p-1.5 rounded hover:text-red-500 hover:opacity-75 cursor-pointer"
                 style={{ color: 'var(--color-text-tertiary)' }}
               >
-                <Trash2 size={15} />
+                <Trash2 size={15} strokeWidth={1.75} />
               </button>
             </>
           )}
@@ -182,9 +181,9 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
             onClick={() => onClap(article.id)}
             className="flex items-center gap-1.5 hover:opacity-80 transition-opacity cursor-pointer"
             style={{ color: 'var(--color-text-secondary)' }}
-            title="Applaud / Upvote"
+            title="Applaud"
           >
-            <MediumClapIcon size={16} active={article.upvotes > 0} />
+            <Sparkles size={14} strokeWidth={1.8} className={article.upvotes > 0 ? 'text-amber-500 fill-amber-500' : ''} />
             <span>{article.upvotes}</span>
           </button>
 
@@ -192,9 +191,9 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
             onClick={() => onRead(article)}
             className="flex items-center gap-1.5 hover:opacity-80 transition-opacity cursor-pointer"
             style={{ color: 'var(--color-text-secondary)' }}
-            title="Comments"
+            title="Responses"
           >
-            <MessageSquare size={14} />
+            <MessageSquare size={14} strokeWidth={1.8} />
             <span>{article.commentCount}</span>
           </button>
 
@@ -204,7 +203,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
             style={{ color: 'var(--color-text-secondary)' }}
             title="Share"
           >
-            <ExternalLink size={14} />
+            <ExternalLink size={14} strokeWidth={1.8} />
           </button>
         </div>
       </div>

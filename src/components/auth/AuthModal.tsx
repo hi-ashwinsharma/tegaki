@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { X, Mail, Lock, User, ArrowRight } from 'lucide-react';
+import { X, Mail, Lock, User, ArrowRight, Fingerprint } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { PasskeyIcon } from '../common/Icons';
 import { ForgotPasswordModal } from './ForgotPasswordModal';
 
 interface AuthModalProps {
@@ -70,7 +69,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         >
           <button
             onClick={onClose}
-            className="absolute top-5 right-5 p-1 rounded-md hover:opacity-75"
+            className="absolute top-5 right-5 p-1 rounded-md hover:opacity-75 cursor-pointer"
             style={{ color: 'var(--color-text-tertiary)' }}
           >
             <X size={18} />
@@ -80,9 +79,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             <h2 className="text-2xl font-serif font-normal tracking-tight mb-2" style={{ color: 'var(--color-text-primary)' }}>
               {mode === 'signin' ? 'Welcome back to Tegaki' : 'Join Tegaki'}
             </h2>
-            <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+            <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
               {mode === 'signin'
-                ? 'Sign in to access your private encrypted journals and published stories.'
+                ? 'Sign in to access your private journals and stories.'
                 : 'Create an account to write privately or publish your craft.'}
             </p>
           </div>
@@ -94,7 +93,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 type="button"
                 onClick={handleGoogle}
                 disabled={loading}
-                className="w-full py-2.5 px-4 text-sm font-medium rounded-full flex items-center justify-center gap-3 transition-colors"
+                className="w-full py-2.5 px-4 text-xs font-medium rounded-full flex items-center justify-center gap-3 transition-colors cursor-pointer"
                 style={{
                   backgroundColor: 'var(--color-bg-surface)',
                   border: '1px solid var(--color-border-soft)',
@@ -127,37 +126,37 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 type="button"
                 onClick={handlePasskey}
                 disabled={loading}
-                className="w-full py-2.5 px-4 text-sm font-medium rounded-full flex items-center justify-center gap-3 transition-colors"
+                className="w-full py-2.5 px-4 text-xs font-medium rounded-full flex items-center justify-center gap-3 transition-colors cursor-pointer"
                 style={{
                   backgroundColor: 'var(--color-bg-surface)',
                   border: '1px solid var(--color-border-soft)',
                   color: 'var(--color-text-primary)',
                 }}
               >
-                <PasskeyIcon size={18} />
-                <span>Continue with Passkey / Face ID</span>
+                <Fingerprint size={16} strokeWidth={1.8} />
+                <span>Continue with Passkey / Biometrics</span>
               </button>
 
               {/* Email Option Switcher */}
               <button
                 type="button"
                 onClick={() => setAuthMethod('email')}
-                className="w-full py-2.5 px-4 text-sm font-medium rounded-full flex items-center justify-center gap-3 transition-colors"
+                className="w-full py-2.5 px-4 text-xs font-medium rounded-full flex items-center justify-center gap-3 transition-colors cursor-pointer"
                 style={{
                   backgroundColor: 'var(--color-bg-surface)',
                   border: '1px solid var(--color-border-soft)',
                   color: 'var(--color-text-primary)',
                 }}
               >
-                <Mail size={16} />
+                <Mail size={15} strokeWidth={1.8} />
                 <span>Continue with Email</span>
               </button>
             </div>
           ) : (
-            <form onSubmit={handleEmailSubmit} className="space-y-3.5">
+            <form onSubmit={handleEmailSubmit} className="space-y-3">
               {mode === 'signup' && (
                 <div>
-                  <label className="block text-xs uppercase tracking-wider mb-1 font-medium" style={{ color: 'var(--color-text-tertiary)' }}>
+                  <label className="block text-[11px] uppercase tracking-wider mb-1 font-medium" style={{ color: 'var(--color-text-tertiary)' }}>
                     Your Name
                   </label>
                   <div
@@ -167,14 +166,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       border: '1px solid var(--color-border-soft)',
                     }}
                   >
-                    <User size={16} className="mr-2" style={{ color: 'var(--color-text-tertiary)' }} />
+                    <User size={15} className="mr-2" style={{ color: 'var(--color-text-tertiary)' }} />
                     <input
                       type="text"
                       required
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="e.g. Haruki Murakami"
-                      className="w-full bg-transparent text-sm focus:outline-none"
+                      className="w-full bg-transparent text-xs focus:outline-none"
                       style={{ color: 'var(--color-text-primary)' }}
                     />
                   </div>
@@ -182,7 +181,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               )}
 
               <div>
-                <label className="block text-xs uppercase tracking-wider mb-1 font-medium" style={{ color: 'var(--color-text-tertiary)' }}>
+                <label className="block text-[11px] uppercase tracking-wider mb-1 font-medium" style={{ color: 'var(--color-text-tertiary)' }}>
                   Email Address
                 </label>
                 <div
@@ -192,14 +191,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     border: '1px solid var(--color-border-soft)',
                   }}
                 >
-                  <Mail size={16} className="mr-2" style={{ color: 'var(--color-text-tertiary)' }} />
+                  <Mail size={15} className="mr-2" style={{ color: 'var(--color-text-tertiary)' }} />
                   <input
                     type="email"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@example.com"
-                    className="w-full bg-transparent text-sm focus:outline-none"
+                    className="w-full bg-transparent text-xs focus:outline-none"
                     style={{ color: 'var(--color-text-primary)' }}
                   />
                 </div>
@@ -207,14 +206,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <label className="block text-xs uppercase tracking-wider font-medium" style={{ color: 'var(--color-text-tertiary)' }}>
+                  <label className="block text-[11px] uppercase tracking-wider font-medium" style={{ color: 'var(--color-text-tertiary)' }}>
                     Password
                   </label>
                   {mode === 'signin' && (
                     <button
                       type="button"
                       onClick={() => setShowForgotPassword(true)}
-                      className="text-xs hover:underline"
+                      className="text-xs hover:underline cursor-pointer"
                       style={{ color: 'var(--color-text-secondary)' }}
                     >
                       Forgot password?
@@ -228,14 +227,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     border: '1px solid var(--color-border-soft)',
                   }}
                 >
-                  <Lock size={16} className="mr-2" style={{ color: 'var(--color-text-tertiary)' }} />
+                  <Lock size={15} className="mr-2" style={{ color: 'var(--color-text-tertiary)' }} />
                   <input
                     type="password"
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full bg-transparent text-sm focus:outline-none"
+                    className="w-full bg-transparent text-xs focus:outline-none"
                     style={{ color: 'var(--color-text-primary)' }}
                   />
                 </div>
@@ -244,7 +243,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-2.5 text-sm font-medium rounded-full transition-colors flex items-center justify-center gap-2 mt-2"
+                className="w-full py-2.5 text-xs font-medium rounded-full transition-colors flex items-center justify-center gap-2 mt-2 cursor-pointer"
                 style={{
                   backgroundColor: 'var(--color-text-primary)',
                   color: 'var(--color-bg)',
@@ -252,14 +251,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 }}
               >
                 <span>{mode === 'signin' ? 'Sign In' : 'Create Account'}</span>
-                <ArrowRight size={15} />
+                <ArrowRight size={14} />
               </button>
 
-              <div className="text-center pt-2">
+              <div className="text-center pt-1">
                 <button
                   type="button"
                   onClick={() => setAuthMethod('quick')}
-                  className="text-xs hover:underline"
+                  className="text-xs hover:underline cursor-pointer"
                   style={{ color: 'var(--color-text-secondary)' }}
                 >
                   ← Other sign in options
@@ -273,7 +272,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               {mode === 'signin' ? "Don't have an account? " : 'Already have an account? '}
               <button
                 onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')}
-                className="font-medium hover:underline"
+                className="font-medium hover:underline cursor-pointer"
                 style={{ color: 'var(--color-text-primary)' }}
               >
                 {mode === 'signin' ? 'Sign up' : 'Sign in'}

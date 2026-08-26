@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MediumClapIcon } from '../common/Icons';
+import { Sparkles } from 'lucide-react';
 
 interface ClapButtonProps {
   count: number;
@@ -7,22 +7,20 @@ interface ClapButtonProps {
   size?: 'sm' | 'md' | 'lg';
 }
 
-export const ClapButton: React.FC<ClapButtonProps> = ({ count, onClap, size = 'md' }) => {
+export const ClapButton: React.FC<ClapButtonProps> = ({ count, onClap }) => {
   const [animating, setAnimating] = useState(false);
 
   const handleClick = () => {
     setAnimating(true);
     onClap();
-    setTimeout(() => setAnimating(false), 300);
+    setTimeout(() => setAnimating(false), 250);
   };
-
-  const iconSizes = { sm: 18, md: 22, lg: 26 };
 
   return (
     <button
       onClick={handleClick}
-      title="Clap / Upvote story"
-      className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full transition-transform ${
+      title="Applaud story"
+      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-transform cursor-pointer select-none ${
         animating ? 'scale-110' : 'hover:scale-105 active:scale-95'
       }`}
       style={{
@@ -31,7 +29,11 @@ export const ClapButton: React.FC<ClapButtonProps> = ({ count, onClap, size = 'm
         color: count > 0 ? 'var(--color-accent)' : 'var(--color-text-secondary)',
       }}
     >
-      <MediumClapIcon size={iconSizes[size]} active={count > 0} />
+      <Sparkles
+        size={16}
+        strokeWidth={1.8}
+        className={count > 0 ? 'text-amber-500 fill-amber-500' : ''}
+      />
       <span className="text-xs font-mono font-medium">{count}</span>
     </button>
   );

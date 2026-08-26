@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Bold, Italic, Link as LinkIcon, Heading1, Heading2, Quote, Code } from 'lucide-react';
+import { Bold, Italic, Link2, Heading1, Heading2, Quote, Code, X, Check } from 'lucide-react';
 
 interface InlineToolbarProps {
   position: { top: number; left: number } | null;
@@ -19,8 +19,9 @@ export const InlineToolbar: React.FC<InlineToolbarProps> = ({
 
   const handleApplyLink = (e: React.FormEvent) => {
     e.preventDefault();
-    if (linkUrl) {
-      onFormat('createLink', linkUrl.startsWith('http') ? linkUrl : `https://${linkUrl}`);
+    if (linkUrl.trim()) {
+      const url = linkUrl.startsWith('http') ? linkUrl : `https://${linkUrl}`;
+      onFormat('createLink', url);
       setLinkUrl('');
       setShowLinkInput(false);
     }
@@ -28,9 +29,9 @@ export const InlineToolbar: React.FC<InlineToolbarProps> = ({
 
   return (
     <div
-      className="fixed z-50 transform -translate-x-1/2 -translate-y-full mb-2 flex items-center px-1 py-1 rounded-lg select-none animate-fade-in"
+      className="fixed z-50 transform -translate-x-1/2 -translate-y-full mb-3 flex items-center px-1.5 py-1 rounded-lg select-none animate-fade-in"
       style={{
-        top: position.top - 10,
+        top: position.top - 8,
         left: position.left,
         backgroundColor: 'var(--color-bg-surface)',
         border: '1px solid var(--color-border-soft)',
@@ -44,37 +45,37 @@ export const InlineToolbar: React.FC<InlineToolbarProps> = ({
             autoFocus
             value={linkUrl}
             onChange={(e) => setLinkUrl(e.target.value)}
-            placeholder="Paste or type a link (https://...)"
+            placeholder="Paste URL (https://...)"
             className="text-xs bg-transparent focus:outline-none w-48 px-1 py-1"
             style={{ color: 'var(--color-text-primary)' }}
           />
           <button
             type="submit"
-            className="text-xs px-2 py-1 rounded font-medium"
-            style={{ backgroundColor: 'var(--color-accent)', color: '#fff' }}
+            className="p-1 rounded hover:opacity-80 cursor-pointer"
+            style={{ color: 'var(--color-accent)' }}
           >
-            Apply
+            <Check size={14} />
           </button>
           <button
             type="button"
             onClick={() => setShowLinkInput(false)}
-            className="text-xs px-1.5 py-1 hover:opacity-75"
+            className="p-1 rounded hover:opacity-70 cursor-pointer"
             style={{ color: 'var(--color-text-tertiary)' }}
           >
-            ✕
+            <X size={14} />
           </button>
         </form>
       ) : (
-        <div className="flex items-center divide-x divide-transparent">
+        <div className="flex items-center gap-0.5">
           <button
             onMouseDown={(e) => {
               e.preventDefault();
               onFormat('bold');
             }}
-            title="Bold (Ctrl+B)"
-            className="p-1.5 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+            title="Bold"
+            className="p-1.5 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
           >
-            <Bold size={15} />
+            <Bold size={15} strokeWidth={2} />
           </button>
 
           <button
@@ -82,10 +83,10 @@ export const InlineToolbar: React.FC<InlineToolbarProps> = ({
               e.preventDefault();
               onFormat('italic');
             }}
-            title="Italic (Ctrl+I)"
-            className="p-1.5 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+            title="Italic"
+            className="p-1.5 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
           >
-            <Italic size={15} />
+            <Italic size={15} strokeWidth={2} />
           </button>
 
           <button
@@ -93,10 +94,21 @@ export const InlineToolbar: React.FC<InlineToolbarProps> = ({
               e.preventDefault();
               setShowLinkInput(true);
             }}
-            title="Hyperlink"
-            className="p-1.5 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+            title="Add Link"
+            className="p-1.5 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
           >
-            <LinkIcon size={15} />
+            <Link2 size={15} strokeWidth={1.8} />
+          </button>
+
+          <button
+            onMouseDown={(e) => {
+              e.preventDefault();
+              onFormat('formatBlock', '<h1>');
+            }}
+            title="Large Heading"
+            className="p-1.5 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer font-serif font-bold text-xs"
+          >
+            <Heading1 size={15} strokeWidth={1.8} />
           </button>
 
           <button
@@ -104,21 +116,10 @@ export const InlineToolbar: React.FC<InlineToolbarProps> = ({
               e.preventDefault();
               onFormat('formatBlock', '<h2>');
             }}
-            title="Title Heading (H1)"
-            className="p-1.5 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors font-serif font-bold text-xs"
+            title="Subheading"
+            className="p-1.5 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
           >
-            <Heading1 size={15} />
-          </button>
-
-          <button
-            onMouseDown={(e) => {
-              e.preventDefault();
-              onFormat('formatBlock', '<h3>');
-            }}
-            title="Subtitle Heading (H2)"
-            className="p-1.5 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
-          >
-            <Heading2 size={15} />
+            <Heading2 size={15} strokeWidth={1.8} />
           </button>
 
           <button
@@ -126,10 +127,10 @@ export const InlineToolbar: React.FC<InlineToolbarProps> = ({
               e.preventDefault();
               onToggleQuote();
             }}
-            title="Editorial Quote with Background"
-            className="p-1.5 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+            title="Editorial Quote"
+            className="p-1.5 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
           >
-            <Quote size={15} />
+            <Quote size={15} strokeWidth={1.8} />
           </button>
 
           <button
@@ -137,10 +138,10 @@ export const InlineToolbar: React.FC<InlineToolbarProps> = ({
               e.preventDefault();
               onFormat('formatBlock', '<pre>');
             }}
-            title="Code snippet"
-            className="p-1.5 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+            title="Code Block"
+            className="p-1.5 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
           >
-            <Code size={15} />
+            <Code size={15} strokeWidth={1.8} />
           </button>
         </div>
       )}

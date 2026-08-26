@@ -1,6 +1,5 @@
 import React from 'react';
-import { ArrowLeft, Globe, CheckCircle2 } from 'lucide-react';
-import { EncryptedLockIcon, CircularLogoIcon } from '../common/Icons';
+import { ArrowLeft, Lock, Globe, Check } from 'lucide-react';
 import { ThemeSelector } from '../common/ThemeSelector';
 
 interface WriterHeaderProps {
@@ -31,28 +30,25 @@ export const WriterHeader: React.FC<WriterHeaderProps> = ({
       <div className="flex items-center gap-3">
         <button
           onClick={onBack}
-          title="Back to Dashboard"
+          title="Back to all stories"
           className="p-1.5 rounded-full hover:opacity-75 transition-opacity cursor-pointer"
           style={{ color: 'var(--color-text-secondary)' }}
         >
           <ArrowLeft size={18} />
         </button>
 
-        <div className="flex items-center gap-2">
-          <CircularLogoIcon size={22} />
-          <span className="text-sm font-serif font-medium hidden sm:inline" style={{ color: 'var(--color-text-primary)' }}>
-            Tegaki Writer
-          </span>
-        </div>
+        <span className="text-sm font-serif font-medium hidden sm:inline" style={{ color: 'var(--color-text-primary)' }}>
+          Tegaki
+        </span>
 
         <span style={{ color: 'var(--color-text-tertiary)' }} className="hidden sm:inline">•</span>
 
-        {/* Privacy Pill Switcher */}
+        {/* Quiet Privacy Toggle */}
         <button
           type="button"
           onClick={onToggleVisibility}
-          title="Click to switch between Private Journal and Public Publication"
-          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono transition-colors hover:opacity-85 cursor-pointer"
+          title="Toggle visibility"
+          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs transition-colors hover:opacity-85 cursor-pointer font-sans"
           style={{
             backgroundColor: 'var(--color-bg-surface)',
             border: '1px solid var(--color-border-soft)',
@@ -61,38 +57,38 @@ export const WriterHeader: React.FC<WriterHeaderProps> = ({
         >
           {visibility === 'private' ? (
             <>
-              <EncryptedLockIcon size={12} />
-              <span>Private (AES-256)</span>
+              <Lock size={12} strokeWidth={1.8} />
+              <span>Private Journal</span>
             </>
           ) : (
             <>
-              <Globe size={12} />
-              <span>Public Draft</span>
+              <Globe size={12} strokeWidth={1.8} />
+              <span>Public Story</span>
             </>
           )}
         </button>
       </div>
 
       <div className="flex items-center gap-3">
-        {/* Real-time sync status */}
-        <div className="flex items-center gap-1.5 text-xs select-none" style={{ color: 'var(--color-text-tertiary)' }}>
+        {/* Subtle Save Status */}
+        <div className="flex items-center gap-1 text-xs select-none" style={{ color: 'var(--color-text-tertiary)' }}>
           {saveStatus === 'saved' && (
             <>
-              <CheckCircle2 size={13} style={{ color: 'var(--color-accent)' }} />
-              <span className="hidden sm:inline font-mono text-[11px]">Encrypted & Stored</span>
+              <Check size={13} style={{ color: 'var(--color-accent)' }} />
+              <span className="hidden sm:inline text-[11px]">Saved</span>
             </>
           )}
           {saveStatus === 'saving' && (
-            <span className="font-mono text-[11px] animate-pulse">Encrypting...</span>
+            <span className="text-[11px] opacity-75">Saving...</span>
           )}
           {saveStatus === 'dirty' && (
-            <span className="font-mono text-[11px]">Unsaved edits</span>
+            <span className="text-[11px] opacity-60">Unsaved</span>
           )}
         </div>
 
         <ThemeSelector compact />
 
-        {/* Publish / Save Button */}
+        {/* Action Button */}
         <button
           onClick={onOpenPublish}
           className="px-4 py-1.5 rounded-full text-xs font-medium transition-opacity hover:opacity-90 flex items-center gap-1.5 cursor-pointer"
@@ -102,7 +98,7 @@ export const WriterHeader: React.FC<WriterHeaderProps> = ({
             border: `1px solid ${visibility === 'published' ? 'var(--color-accent)' : 'var(--color-text-primary)'}`,
           }}
         >
-          <span>{isEditingExisting ? 'Update & Publish' : visibility === 'published' ? 'Publish Story' : 'Save Journal'}</span>
+          <span>{isEditingExisting ? 'Save Changes' : visibility === 'published' ? 'Publish' : 'Save'}</span>
         </button>
       </div>
     </header>

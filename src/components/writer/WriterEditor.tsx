@@ -35,6 +35,7 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
   const [plusMenuTop, setPlusMenuTop] = useState(10);
   const [isPlusMenuOpen, setIsPlusMenuOpen] = useState(false);
 
+  // Load article content
   useEffect(() => {
     async function loadContent() {
       if (initialArticle && editorRef.current) {
@@ -44,11 +45,22 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
         } else {
           editorRef.current.innerHTML = initialArticle.content;
         }
+      } else if (!initialArticle && editorRef.current && !editorRef.current.innerHTML) {
+        editorRef.current.innerHTML = '<p><br></p>';
       }
     }
     loadContent();
   }, [initialArticle, decryptJournal]);
 
+  // Adjust title textarea height on mount & change
+  useEffect(() => {
+    if (titleRef.current) {
+      titleRef.current.style.height = 'auto';
+      titleRef.current.style.height = `${titleRef.current.scrollHeight}px`;
+    }
+  }, [title]);
+
+  // Selection detection for Medium-style floating inline bubble toolbar
   const handleSelectionChange = useCallback(() => {
     const selection = window.getSelection();
     if (!selection || selection.isCollapsed || !editorRef.current) {
@@ -77,6 +89,7 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
     return () => document.removeEventListener('selectionchange', handleSelectionChange);
   }, [handleSelectionChange]);
 
+  // Track cursor position for the Plus Menu on empty lines
   const handleKeyUpOrClick = () => {
     const selection = window.getSelection();
     if (!selection || !editorRef.current) return;
@@ -92,8 +105,9 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
       const nodeRect = parentElem.getBoundingClientRect();
       const relativeTop = nodeRect.top - editorRect.top;
 
-      setPlusMenuTop(Math.max(0, relativeTop));
+      setPlusMenuTop(Math.max(0, relativeTop + 2));
 
+      // Close menu if user types
       if (parentElem.textContent?.trim()) {
         setIsPlusMenuOpen(false);
       }
@@ -128,10 +142,10 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
   const handleInsertImage = (url: string, caption?: string) => {
     if (!editorRef.current) return;
     const figure = document.createElement('figure');
-    figure.className = 'my-6 text-center';
+    figure.className = 'my-6 text-center select-none';
     figure.innerHTML = `
-      <img src="${url}" alt="${caption || 'Image'}" class="w-full max-h-[520px] object-cover rounded" />
-      ${caption ? `<figcaption class="text-xs text-center mt-2 opacity-70 italic">${caption}</figcaption>` : ''}
+      <img src="${url}" alt="${caption || 'Image'}" class="w-full max-h-[500px] object-cover rounded" />
+      ${caption ? `<figcaption class="text-xs text-center mt-2 opacity-70 italic font-sans">${caption}</figcaption>` : ''}
       <p><br></p>
     `;
     insertElementAtCursor(figure);
@@ -164,8 +178,7 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
   const handleInsertDivider = () => {
     if (!editorRef.current) return;
     const hr = document.createElement('hr');
-    hr.className = 'my-8 border-t';
-    hr.style.cssText = 'border-color: var(--color-border-soft);';
+    hr.className = 'editorial-divider';
     insertElementAtCursor(hr);
   };
 
@@ -180,6 +193,14 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
       editorRef.current.appendChild(elem);
     }
     setSaveStatus('dirty');
+  };
+
+  // Keyboard navigation from Title to Body on Enter
+  const handleTitleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      editorRef.current?.focus();
+    }
   };
 
   const handlePublishSubmit = async (params: {
@@ -240,10 +261,10 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
         onToggleQuote={handleToggleQuote}
       />
 
-      {/* Main Canvas with Generous Medium Whitespace */}
-      <main className="flex-grow max-w-3xl w-full mx-auto px-6 sm:px-12 py-12">
+      {/* Main Canvas with Pure Medium Whitespace */}
+      <main className="flex-grow max-w-2xl sm:max-w-3xl w-full mx-auto px-6 sm:px-12 py-12">
         <div className="relative">
-          {/* Medium-style plus menu on the left */}
+          {/* Plus Menu on Left */}
           <PlusMenu
             top={plusMenuTop}
             isOpen={isPlusMenuOpen}
@@ -262,17 +283,16 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
             onChange={(e) => {
               setTitle(e.target.value);
               setSaveStatus('dirty');
-              e.target.style.height = 'auto';
-              e.target.style.height = e.target.scrollHeight + 'px';
             }}
-            placeholder="Title..."
-            className="w-full bg-transparent font-serif font-bold text-3xl sm:text-5xl tracking-tight focus:outline-none resize-none overflow-hidden placeholder:opacity-40 mb-4"
+            onKeyDown={handleTitleKeyDown}
+            placeholder="Title"
+            className="w-full bg-transparent font-serif font-bold text-3xl sm:text-5xl tracking-tight focus:outline-none resize-none overflow-hidden placeholder:opacity-35 mb-2 leading-tight"
             style={{
               color: 'var(--color-text-primary)',
             }}
           />
 
-          {/* Subtitle / Teaser Input (Optional) */}
+          {/* Subtitle (Optional) */}
           <input
             type="text"
             value={subtitle}
@@ -280,15 +300,15 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
               setSubtitle(e.target.value);
               setSaveStatus('dirty');
             }}
-            placeholder="Write a subtitle or preview hook..."
-            className="w-full bg-transparent font-serif text-lg sm:text-xl focus:outline-none placeholder:opacity-35 mb-8 pb-3"
+            placeholder="Tell your story subtitle..."
+            className="w-full bg-transparent font-serif text-lg sm:text-xl focus:outline-none placeholder:opacity-30 mb-8 pb-3"
             style={{
               color: 'var(--color-text-secondary)',
               borderBottom: '1px solid var(--color-border-soft)',
             }}
           />
 
-          {/* Medium Body Editable Canvas */}
+          {/* Content Body */}
           <div
             ref={editorRef}
             contentEditable
@@ -296,8 +316,8 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
             onKeyUp={handleKeyUpOrClick}
             onClick={handleKeyUpOrClick}
             onInput={() => setSaveStatus('dirty')}
-            data-placeholder="Tell your story or write your private journal entry..."
-            className="font-editorial text-lg sm:text-xl leading-relaxed focus:outline-none min-h-[500px] max-w-none"
+            data-placeholder="Tell your story..."
+            className="font-editorial text-lg sm:text-xl leading-relaxed focus:outline-none min-h-[550px] max-w-none"
             style={{
               color: 'var(--color-text-primary)',
             }}

@@ -4,7 +4,7 @@ import { TopSearchBar } from '../common/TopSearchBar';
 import { FilterTabs } from './FilterTabs';
 import type { FilterOption } from './FilterTabs';
 import { ArticleCard } from './ArticleCard';
-import { PeacockFeatherIcon } from '../common/Icons';
+import { Feather } from 'lucide-react';
 
 interface ArticleListProps {
   articles: Article[];
@@ -55,7 +55,7 @@ export const ArticleList: React.FC<ArticleListProps> = ({
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-8 py-8">
-      {/* Top Search Bar & Header with plenty of whitespace */}
+      {/* Top Search Bar & Action with whitespace */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
         <TopSearchBar
           value={searchQuery}
@@ -65,15 +65,15 @@ export const ArticleList: React.FC<ArticleListProps> = ({
 
         <button
           onClick={onNewStory}
-          className="w-full sm:w-auto px-5 py-2 rounded-full text-sm font-medium flex items-center justify-center gap-2 transition-opacity hover:opacity-90 whitespace-nowrap cursor-pointer"
+          className="w-full sm:w-auto px-5 py-2 rounded-full text-xs font-medium flex items-center justify-center gap-2 transition-opacity hover:opacity-90 whitespace-nowrap cursor-pointer"
           style={{
             backgroundColor: 'var(--color-text-primary)',
             color: 'var(--color-bg)',
             border: '1px solid var(--color-text-primary)',
           }}
         >
-          <PeacockFeatherIcon size={16} active />
-          <span>Write Journal</span>
+          <Feather size={14} strokeWidth={1.8} />
+          <span>Write Story</span>
         </button>
       </div>
 
@@ -100,34 +100,35 @@ export const ArticleList: React.FC<ArticleListProps> = ({
       ) : (
         <div className="text-center py-20">
           <div
-            className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
+            className="w-14 h-14 mx-auto mb-4 rounded-full flex items-center justify-center"
             style={{
               backgroundColor: 'var(--color-bg-subtle)',
               border: '1px solid var(--color-border-soft)',
+              color: 'var(--color-text-tertiary)',
             }}
           >
-            <PeacockFeatherIcon size={28} />
+            <Feather size={22} strokeWidth={1.6} />
           </div>
-          <h3 className="text-xl font-serif font-medium mb-1.5" style={{ color: 'var(--color-text-primary)' }}>
+          <h3 className="text-lg font-serif font-medium mb-1.5" style={{ color: 'var(--color-text-primary)' }}>
             No entries found
           </h3>
-          <p className="text-sm max-w-sm mx-auto mb-6" style={{ color: 'var(--color-text-secondary)' }}>
+          <p className="text-xs max-w-sm mx-auto mb-6" style={{ color: 'var(--color-text-secondary)' }}>
             {searchQuery
-              ? `No journals or published stories matching "${searchQuery}"`
+              ? `No journals or stories matching "${searchQuery}"`
               : filter === 'private'
-              ? 'You have no private encrypted journals yet. Write one today.'
+              ? 'You have no private journals yet.'
               : 'No published stories available yet.'}
           </p>
           <button
             onClick={onNewStory}
-            className="px-6 py-2.5 text-sm font-medium rounded-full transition-opacity hover:opacity-90 cursor-pointer"
+            className="px-5 py-2 text-xs font-medium rounded-full transition-opacity hover:opacity-90 cursor-pointer"
             style={{
               backgroundColor: 'var(--color-text-primary)',
               color: 'var(--color-bg)',
               border: '1px solid var(--color-text-primary)',
             }}
           >
-            Start a new entry
+            Start writing
           </button>
         </div>
       )}
