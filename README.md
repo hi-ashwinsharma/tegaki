@@ -3,10 +3,11 @@
 > A minimalist journaling & publication platform replicating the tactile, distraction-free aesthetic of Medium.com writer with **zero gradients**, **zero shadows**, 4 calibrated reading themes, client-side AES-GCM 256-bit encryption for private journals, and custom author slug routing (`/@username/slug`).
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-3178C6.svg)
-![React](https://img.shields.io/badge/React-19-61DAFB.svg)
-![Vite](https://img.shields.io/badge/Vite-6.0+-646CFF.svg)
-![AES-GCM](https://img.shields.io/badge/Crypto-AES--GCM--256-10B981.svg)
+![TypeScript](https://img.shields.io/badge/TypeScript-7.0+-3178C6.svg)
+![React](https://img.shields.io/badge/React-19.2+-61DAFB.svg)
+![Vite](https://img.shields.io/badge/Vite-8.2+-646CFF.svg)
+![TailwindCSS](https://img.shields.io/badge/TailwindCSS-4.3+-38BDF8.svg)
+![Firebase](https://img.shields.io/badge/Firebase-12.18+-FFCA28.svg)
 
 ---
 
@@ -48,11 +49,12 @@
 
 ## 🛠️ Tech Stack
 
-- **Frontend**: React 19, TypeScript, Vite
-- **Styling**: Tailwind CSS + Custom CSS Variables Theme Engine
+- **Frontend**: React 19.2, TypeScript 7.0, Vite 8.2
+- **Styling**: Tailwind CSS 4.3 + Custom CSS Variables Theme Engine
+- **Backend / Database**: Google Cloud Firestore + Firebase Auth 12.18
 - **Cryptography**: Web Crypto API (PBKDF2 + AES-GCM 256-bit)
 - **Authentication**: WebAuthn / Passkeys + Google OAuth + Email
-- **Icons**: Custom SVG Vector Icons + Lucide React
+- **Icons**: Lucide React 1.34
 
 ---
 
