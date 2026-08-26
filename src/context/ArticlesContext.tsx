@@ -61,7 +61,7 @@ export const ArticlesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       if (cloudArticles) {
         setArticles((prev) => {
           const cloudIds = new Set(cloudArticles.map((a) => a.id));
-          // Preserve any local-only private entries that haven't synced
+          // Preserve any local private entries
           const localPrivate = prev.filter(
             (a) => !cloudIds.has(a.id) && a.visibility === 'private'
           );
@@ -80,18 +80,20 @@ export const ArticlesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       }
     });
 
-    // Auto-sync any previously stored local published stories to Firestore
-    articles.forEach((art) => {
-      if (art.visibility === 'published') {
-        syncArticleToFirestore(art);
-      }
-    });
+    // Auto-sync any previously stored local published stories belonging to the user
+    if (user) {
+      articles.forEach((art) => {
+        if (art.visibility === 'published' && (art.authorId === user.id || art.authorUsername === user.username)) {
+          syncArticleToFirestore(art);
+        }
+      });
+    }
 
     return () => {
       if (unsubArticles) unsubArticles();
       if (unsubComments) unsubComments();
     };
-  }, []);
+  }, [user]);
 
   // Save to persistent storage cache
   useEffect(() => {
@@ -270,7 +272,7 @@ export const ArticlesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const clapArticle = (id: string) => {
     setArticles((prev) =>
-      prev.map((a) => (a.id === id ? { ...a, upvotes: a.upvotes + 1 } : a))
+      prev.map((a) => (a.id === id ? { ...a, upvotes: (a.upvotes || 0) + 1 } : a))
     );
     clapArticleInFirestore(id);
   };

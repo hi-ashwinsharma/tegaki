@@ -5,6 +5,7 @@ import {
   getDoc,
   getDocs,
   deleteDoc,
+  updateDoc,
   increment,
   query,
   orderBy,
@@ -53,7 +54,11 @@ export async function syncArticleToFirestore(article: Article): Promise<boolean>
 export function subscribeToArticles(callback: (articles: Article[]) => void): Unsubscribe | null {
   if (!isFirebaseConfigured) return null;
   try {
-    const q = query(collection(db, ARTICLES_COLLECTION), orderBy('createdAt', 'desc'));
+    const q = query(
+      collection(db, ARTICLES_COLLECTION),
+      where('visibility', '==', 'published'),
+      orderBy('createdAt', 'desc')
+    );
     return onSnapshot(
       q,
       (snapshot) => {
@@ -181,14 +186,9 @@ export async function clapArticleInFirestore(id: string): Promise<boolean> {
   if (!isFirebaseConfigured) return false;
   try {
     const articleRef = doc(db, ARTICLES_COLLECTION, id);
-    await setDoc(
-      articleRef,
-      {
-        upvotes: increment(1),
-        updatedAt: Date.now(),
-      },
-      { merge: true }
-    );
+    await updateDoc(articleRef, {
+      upvotes: increment(1),
+    });
     return true;
   } catch (error) {
     console.warn('Firestore clap failed:', error);
@@ -208,14 +208,9 @@ export async function syncCommentToFirestore(comment: Comment): Promise<boolean>
 
     // Increment comment count on article
     const articleRef = doc(db, ARTICLES_COLLECTION, comment.articleId);
-    await setDoc(
-      articleRef,
-      {
-        commentCount: increment(1),
-        updatedAt: Date.now(),
-      },
-      { merge: true }
-    );
+    await updateDoc(articleRef, {
+      commentCount: increment(1),
+    });
     return true;
   } catch (error) {
     console.warn('Firestore sync comment failed:', error);
