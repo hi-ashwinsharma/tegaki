@@ -157,9 +157,10 @@ export const App: React.FC = () => {
   };
 
   const handleDeleteArticle = (id: string) => {
-    if (window.confirm('Are you sure you want to delete this entry?')) {
-      deleteArticle(id);
-      showToast('Story deleted successfully', 'info');
+    deleteArticle(id);
+    showToast('Story deleted successfully', 'info');
+    if (activeArticle?.id === id) {
+      navigateTo(isAuthenticated ? 'home' : 'landing');
     }
   };
 

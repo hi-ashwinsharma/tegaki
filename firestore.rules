@@ -2,15 +2,6 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    function isAuthenticated() {
-      return request.auth != null;
-    }
-
-    function isOwner(authorId) {
-      return (isAuthenticated() && (request.auth.uid == authorId || authorId == 'guest-author' || authorId == 'author-ashwin'))
-             || (!isAuthenticated());
-    }
-
     function isValidArticlePayload() {
       let data = request.resource.data;
       return data.title is string && data.title.size() <= 500
@@ -24,25 +15,20 @@ service cloud.firestore {
     // Articles Collection
     // =========================================================================
     match /articles/{articleId} {
-      // 1. Read: Any published story, or private story by owner
-      allow read: if resource == null 
-                  || resource.data.visibility == 'published'
-                  || isOwner(resource.data.authorId);
+      // 1. Read: Any published story, or private story
+      allow read: if true;
 
       // 2. Create: Valid article payload
       allow create: if isValidArticlePayload();
 
-      // 3. Update:
-      //    - Author full edit / settings / slug
-      //    - Claps (+1 upvotes)
-      //    - Comments (+1 commentCount)
-      allow update: if isOwner(resource.data.authorId)
+      // 3. Update: Valid article payload or atomic counters (claps, comments)
+      allow update: if isValidArticlePayload()
                     || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['upvotes'])
                     || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['upvotes', 'updatedAt'])
                     || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['commentCount', 'updatedAt']);
 
-      // 4. Delete: Owner
-      allow delete: if isOwner(resource.data.authorId);
+      // 4. Delete: Anyone can delete
+      allow delete: if true;
     }
 
     // =========================================================================
@@ -54,11 +40,9 @@ service cloud.firestore {
       allow create: if request.resource.data.content is string 
                     && request.resource.data.content.size() <= 5000;
 
-      allow update: if isOwner(resource.data.authorId)
-                    || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['upvotes'])
-                    || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['upvotes', 'updatedAt']);
+      allow update: if true;
 
-      allow delete: if isOwner(resource.data.authorId);
+      allow delete: if true;
     }
   }
 }

@@ -10,6 +10,7 @@ import { useArticles } from '../../context/ArticlesContext';
 import { useAuth } from '../../context/AuthContext';
 import { DeleteConfirmModal } from '../common/DeleteConfirmModal';
 import { PublishModal } from '../writer/PublishModal';
+import { buildArticlePath } from '../../services/slugService';
 
 interface PublicationReaderProps {
   article: Article;
@@ -79,6 +80,8 @@ export const PublicationReader: React.FC<PublicationReaderProps> = ({
     });
     if (updated) {
       setCurrentArticle(updated);
+      const newPath = buildArticlePath(updated.authorUsername, updated.slug, updated.id);
+      window.history.replaceState(null, '', newPath);
     }
     setIsSettingsModalOpen(false);
   };

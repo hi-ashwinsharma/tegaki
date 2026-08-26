@@ -61,11 +61,13 @@ export const ArticlesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       if (cloudArticles) {
         setArticles((prev) => {
           const cloudIds = new Set(cloudArticles.map((a) => a.id));
-          // Preserve any local private entries
+          // Preserve any local private entries not present in public stream
           const localPrivate = prev.filter(
             (a) => !cloudIds.has(a.id) && a.visibility === 'private'
           );
-          return [...cloudArticles, ...localPrivate];
+          const combined = [...cloudArticles, ...localPrivate];
+          saveStoredArticles(combined);
+          return combined;
         });
       }
     });
@@ -80,7 +82,7 @@ export const ArticlesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       }
     });
 
-    // Auto-sync any previously stored local published stories belonging to the user
+    // Auto-sync any local published stories on mount
     if (user) {
       const localStored = getStoredArticles();
       localStored.forEach((art) => {
@@ -116,20 +118,29 @@ export const ArticlesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, [articles]);
 
   const findArticleBySlugOrFetch = useCallback(async (username: string, slug: string): Promise<Article | null> => {
-    const local = getArticleBySlug(username, slug);
+    const cleanUser = username.toLowerCase().replace(/^@/, '');
+    const cleanSlug = slug.toLowerCase();
+
+    // Check in-memory articles first
+    const local = articles.find(
+      (a) =>
+        a.authorUsername.toLowerCase() === cleanUser &&
+        (a.slug?.toLowerCase() === cleanSlug || a.id === cleanSlug)
+    );
     if (local) return local;
 
     // Fetch directly from Cloud Firestore
     const cloud = await fetchArticleBySlugFromFirestore(username, slug);
     if (cloud) {
       setArticles((prev) => {
-        if (prev.some((a) => a.id === cloud.id)) return prev;
-        return [cloud, ...prev];
+        const next = [cloud, ...prev.filter((a) => a.id !== cloud.id)];
+        saveStoredArticles(next);
+        return next;
       });
       return cloud;
     }
     return null;
-  }, [getArticleBySlug]);
+  }, [articles]);
 
   const findArticleByIdOrFetch = useCallback(async (id: string): Promise<Article | null> => {
     const local = getArticleById(id);
@@ -139,13 +150,14 @@ export const ArticlesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const cloud = await fetchArticleByIdFromFirestore(id);
     if (cloud) {
       setArticles((prev) => {
-        if (prev.some((a) => a.id === cloud.id)) return prev;
-        return [cloud, ...prev];
+        const next = [cloud, ...prev.filter((a) => a.id !== cloud.id)];
+        saveStoredArticles(next);
+        return next;
       });
       return cloud;
     }
     return null;
-  }, [getArticleById]);
+  }, [articles, getArticleById]);
 
   const calculateReadingTime = (text: string) => {
     const words = text.replace(/<[^>]*>/g, '').trim().split(/\s+/).length;
@@ -199,7 +211,11 @@ export const ArticlesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       updatedAt: Date.now(),
     };
 
-    setArticles((prev) => [newArticle, ...prev]);
+    setArticles((prev) => {
+      const next = [newArticle, ...prev];
+      saveStoredArticles(next);
+      return next;
+    });
 
     // Async sync to Cloud Firestore
     await syncArticleToFirestore(newArticle);
@@ -213,10 +229,10 @@ export const ArticlesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   ): Promise<Article | undefined> => {
     let updatedTarget: Article | undefined;
 
-    const newArticles = await Promise.all(
-      articles.map(async (art) => {
-        if (art.id !== id) return art;
-
+    const currentList = [...articles];
+    for (let i = 0; i < currentList.length; i++) {
+      const art = currentList[i];
+      if (art.id === id) {
         let content = params.content !== undefined ? params.content : art.content;
         let isEncrypted = params.visibility ? params.visibility === 'private' : art.isEncrypted;
         let encryptedPayload = art.encryptedPayload;
@@ -240,13 +256,14 @@ export const ArticlesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         }
 
         updatedTarget = updated;
-        return updated;
-      })
-    );
-
-    setArticles(newArticles);
+        currentList[i] = updated;
+        break;
+      }
+    }
 
     if (updatedTarget) {
+      setArticles(currentList);
+      saveStoredArticles(currentList);
       await syncArticleToFirestore(updatedTarget);
     }
 
@@ -254,7 +271,11 @@ export const ArticlesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   const deleteArticle = (id: string) => {
-    setArticles((prev) => prev.filter((a) => a.id !== id));
+    setArticles((prev) => {
+      const next = prev.filter((a) => a.id !== id);
+      saveStoredArticles(next);
+      return next;
+    });
     deleteArticleFromFirestore(id);
   };
 
@@ -272,9 +293,11 @@ export const ArticlesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   const clapArticle = (id: string) => {
-    setArticles((prev) =>
-      prev.map((a) => (a.id === id ? { ...a, upvotes: (a.upvotes || 0) + 1 } : a))
-    );
+    setArticles((prev) => {
+      const next = prev.map((a) => (a.id === id ? { ...a, upvotes: (a.upvotes || 0) + 1 } : a));
+      saveStoredArticles(next);
+      return next;
+    });
     clapArticleInFirestore(id);
   };
 
