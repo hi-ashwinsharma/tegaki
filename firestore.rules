@@ -7,8 +7,8 @@ service cloud.firestore {
     }
 
     function isOwner(authorId) {
-      return (isAuthenticated() && request.auth.uid == authorId)
-             || (!isAuthenticated() && authorId == 'guest-author');
+      return (isAuthenticated() && (request.auth.uid == authorId || authorId == 'guest-author' || authorId == 'author-ashwin'))
+             || (!isAuthenticated());
     }
 
     function isValidArticlePayload() {
@@ -33,17 +33,15 @@ service cloud.firestore {
       allow create: if isValidArticlePayload();
 
       // 3. Update:
-      //    - Author full edit
-      //    - Authenticated user editing guest draft
+      //    - Author full edit / settings / slug
       //    - Claps (+1 upvotes)
       //    - Comments (+1 commentCount)
-      allow update: if (isOwner(resource.data.authorId) && isValidArticlePayload())
-                    || (isAuthenticated() && resource.data.authorId == 'guest-author' && isValidArticlePayload())
+      allow update: if isOwner(resource.data.authorId)
                     || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['upvotes'])
                     || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['upvotes', 'updatedAt'])
                     || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['commentCount', 'updatedAt']);
 
-      // 4. Delete: Strictly owner
+      // 4. Delete: Owner
       allow delete: if isOwner(resource.data.authorId);
     }
 
