@@ -19,7 +19,7 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [theme, setThemeState] = useState<ThemeMode>(() => {
     const saved = localStorage.getItem('tegaki_theme_mode') as ThemeMode;
-    return saved && ['white', 'off-white', 'dark-gray', 'amoled'].includes(saved) ? saved : 'off-white';
+    return saved && ['white', 'off-white', 'dark-gray', 'amoled'].includes(saved) ? saved : 'white';
   });
 
   const setTheme = (newTheme: ThemeMode, event?: React.MouseEvent | MouseEvent) => {
