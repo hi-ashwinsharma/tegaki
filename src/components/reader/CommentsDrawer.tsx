@@ -50,7 +50,7 @@ export const CommentsDrawer: React.FC<CommentsDrawerProps> = ({
           <div className="flex items-center gap-2">
             <MessageSquare size={16} style={{ color: 'var(--color-text-primary)' }} />
             <h3 className="font-serif font-bold text-base" style={{ color: 'var(--color-text-primary)' }}>
-              Responses ({comments.length})
+              Reflections & Dialogue ({comments.length})
             </h3>
           </div>
           <button
@@ -80,7 +80,7 @@ export const CommentsDrawer: React.FC<CommentsDrawerProps> = ({
               rows={3}
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder="What are your thoughts?"
+              placeholder="Add your perspective to the margin..."
               className="w-full p-3 text-xs rounded-md focus:outline-none resize-none font-sans"
               style={{
                 backgroundColor: 'var(--color-bg-surface)',
@@ -103,7 +103,7 @@ export const CommentsDrawer: React.FC<CommentsDrawerProps> = ({
                   border: '1px solid var(--color-accent)',
                 }}
               >
-                <span>Respond</span>
+                <span>Inscribe</span>
                 <Send size={11} />
               </button>
             </div>

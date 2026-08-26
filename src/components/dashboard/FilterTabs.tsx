@@ -23,7 +23,7 @@ export const FilterTabs: React.FC<FilterTabsProps> = ({ current, onChange, count
         }}
       >
         <BookOpen size={14} strokeWidth={1.75} />
-        <span>All Stories</span>
+        <span>All Entries</span>
         <span
           className="text-[11px] px-1.5 py-0.2 rounded-full font-mono"
           style={{
@@ -49,7 +49,7 @@ export const FilterTabs: React.FC<FilterTabsProps> = ({ current, onChange, count
         }}
       >
         <Lock size={13} strokeWidth={1.75} />
-        <span>Private Journals</span>
+        <span>Private Notebook</span>
         <span
           className="text-[11px] px-1.5 py-0.2 rounded-full font-mono"
           style={{
@@ -75,7 +75,7 @@ export const FilterTabs: React.FC<FilterTabsProps> = ({ current, onChange, count
         }}
       >
         <Globe size={14} strokeWidth={1.75} />
-        <span>Published</span>
+        <span>Published Works</span>
         <span
           className="text-[11px] px-1.5 py-0.2 rounded-full font-mono"
           style={{

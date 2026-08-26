@@ -60,7 +60,7 @@ export const ArticleList: React.FC<ArticleListProps> = ({
         <TopSearchBar
           value={searchQuery}
           onChange={setSearchQuery}
-          placeholder="Search stories, journals, tags..."
+          placeholder="Search thoughts, reflections, or authors..."
         />
 
         <button
@@ -73,7 +73,7 @@ export const ArticleList: React.FC<ArticleListProps> = ({
           }}
         >
           <Feather size={14} strokeWidth={1.8} />
-          <span>Write Story</span>
+          <span>New Entry</span>
         </button>
       </div>
 
@@ -110,23 +110,19 @@ export const ArticleList: React.FC<ArticleListProps> = ({
           >
             <Feather size={20} strokeWidth={1.6} />
           </div>
-          <h3 className="text-base font-serif font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>
+          <h3 className="text-lg font-serif font-medium mb-1.5" style={{ color: 'var(--color-text-primary)' }}>
             {searchQuery
-              ? 'No matching results'
-              : filter === 'private'
-              ? 'No private journals yet'
-              : filter === 'published'
-              ? 'No published stories yet'
-              : 'Your canvas is empty'}
+              ? 'No matching thoughts'
+              : 'The page is quiet.'}
           </h3>
           <p className="text-xs max-w-xs mx-auto mb-6 leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
             {searchQuery
-              ? `No entries found for "${searchQuery}"`
-              : 'Draft private journals for your eyes only, or publish stories to the world.'}
+              ? `No reflections found for "${searchQuery}"`
+              : 'No entries yet. Pour your first thought into ink.'}
           </p>
           <button
             onClick={onNewStory}
-            className="px-5 py-2 text-xs font-medium rounded-full transition-opacity hover:opacity-90 cursor-pointer inline-flex items-center gap-1.5"
+            className="px-6 py-2.5 text-xs font-medium rounded-full transition-transform hover:scale-105 active:scale-95 cursor-pointer inline-flex items-center gap-2"
             style={{
               backgroundColor: 'var(--color-text-primary)',
               color: 'var(--color-bg)',
@@ -134,7 +130,7 @@ export const ArticleList: React.FC<ArticleListProps> = ({
             }}
           >
             <Plus size={13} strokeWidth={2} />
-            <span>Write your first entry</span>
+            <span>Dip the Pen</span>
           </button>
         </div>
       )}

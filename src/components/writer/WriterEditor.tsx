@@ -21,222 +21,259 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
 
   const [title, setTitle] = useState(initialArticle?.title || '');
   const [subtitle, setSubtitle] = useState(initialArticle?.subtitle || '');
+  const [content, setContent] = useState('');
   const [visibility, setVisibility] = useState<'private' | 'published'>(
     initialArticle?.visibility || 'private'
   );
-  const [slug] = useState(initialArticle?.slug || '');
-  const [tags] = useState<string[]>(initialArticle?.tags || []);
-  const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'dirty'>('saved');
-  const [showPublishModal, setShowPublishModal] = useState(false);
 
-  const editorRef = useRef<HTMLDivElement>(null);
-  const titleRef = useRef<HTMLTextAreaElement>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
+
+  // Floating toolbar state
   const [toolbarPosition, setToolbarPosition] = useState<{ top: number; left: number } | null>(null);
-  const [plusMenuTop, setPlusMenuTop] = useState(10);
+
+  // Plus menu state
+  const [plusMenuTop, setPlusMenuTop] = useState(0);
   const [isPlusMenuOpen, setIsPlusMenuOpen] = useState(false);
 
-  // Load article content
+  const titleRef = useRef<HTMLTextAreaElement>(null);
+  const subtitleRef = useRef<HTMLTextAreaElement>(null);
+  const editorRef = useRef<HTMLDivElement>(null);
+
+  // Initial decrypted content loading
   useEffect(() => {
     async function loadContent() {
-      if (initialArticle && editorRef.current) {
+      if (initialArticle) {
         if (initialArticle.isEncrypted) {
-          const decrypted = await decryptJournal(initialArticle);
-          editorRef.current.innerHTML = decrypted || initialArticle.content;
+          const dec = await decryptJournal(initialArticle);
+          setContent(dec);
+          if (editorRef.current) {
+            editorRef.current.innerHTML = dec;
+          }
         } else {
-          editorRef.current.innerHTML = initialArticle.content;
+          setContent(initialArticle.content);
+          if (editorRef.current) {
+            editorRef.current.innerHTML = initialArticle.content;
+          }
         }
-      } else if (!initialArticle && editorRef.current && !editorRef.current.innerHTML) {
-        editorRef.current.innerHTML = '<p><br></p>';
+      } else {
+        if (editorRef.current) {
+          editorRef.current.innerHTML = '';
+        }
       }
     }
     loadContent();
   }, [initialArticle, decryptJournal]);
 
-  // Adjust title textarea height on mount & change
+  // Track text selection for floating toolbar
   useEffect(() => {
+    const handleSelection = () => {
+      const selection = window.getSelection();
+      if (!selection || selection.isCollapsed || !editorRef.current) {
+        setToolbarPosition(null);
+        return;
+      }
+
+      // Ensure selection is inside the editor
+      if (!editorRef.current.contains(selection.anchorNode)) {
+        setToolbarPosition(null);
+        return;
+      }
+
+      const range = selection.getRangeAt(0);
+      const rect = range.getBoundingClientRect();
+      if (rect.width > 0) {
+        setToolbarPosition({
+          top: rect.top,
+          left: rect.left + rect.width / 2,
+        });
+      } else {
+        setToolbarPosition(null);
+      }
+    };
+
+    document.addEventListener('selectionchange', handleSelection);
+    return () => document.removeEventListener('selectionchange', handleSelection);
+  }, []);
+
+  // Track cursor position for plus menu
+  const updatePlusMenuPosition = useCallback(() => {
+    const selection = window.getSelection();
+    if (!selection || !editorRef.current) return;
+
+    if (selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0);
+      const rect = range.getBoundingClientRect();
+      const editorRect = editorRef.current.getBoundingClientRect();
+
+      if (rect.top >= editorRect.top && rect.bottom <= editorRect.bottom + 500) {
+        setPlusMenuTop(rect.top - editorRect.top + 2);
+      }
+    }
+  }, []);
+
+  const adjustTitleHeight = () => {
     if (titleRef.current) {
       titleRef.current.style.height = 'auto';
       titleRef.current.style.height = `${titleRef.current.scrollHeight}px`;
     }
-  }, [title]);
+  };
 
-  // Selection detection for Medium-style floating inline bubble toolbar
-  const handleSelectionChange = useCallback(() => {
-    const selection = window.getSelection();
-    if (!selection || selection.isCollapsed || !editorRef.current) {
-      setToolbarPosition(null);
-      return;
+  const handleTitleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setTitle(e.target.value);
+    setHasUnsavedChanges(true);
+    adjustTitleHeight();
+  };
+
+  const handleSubtitleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setSubtitle(e.target.value);
+    setHasUnsavedChanges(true);
+  };
+
+  const handleEditorInput = () => {
+    if (editorRef.current) {
+      setContent(editorRef.current.innerHTML);
+      setHasUnsavedChanges(true);
+      updatePlusMenuPosition();
     }
+  };
 
-    if (!editorRef.current.contains(selection.anchorNode)) {
-      setToolbarPosition(null);
-      return;
-    }
-
-    const range = selection.getRangeAt(0);
-    const rect = range.getBoundingClientRect();
-
-    if (rect.width > 0) {
-      setToolbarPosition({
-        top: rect.top + window.scrollY,
-        left: rect.left + rect.width / 2,
-      });
-    }
-  }, []);
-
-  useEffect(() => {
-    document.addEventListener('selectionchange', handleSelectionChange);
-    return () => document.removeEventListener('selectionchange', handleSelectionChange);
-  }, [handleSelectionChange]);
-
-  // Track cursor position for the Plus Menu on empty lines
-  const handleKeyUpOrClick = () => {
-    const selection = window.getSelection();
-    if (!selection || !editorRef.current) return;
-
-    const range = selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
-    if (!range) return;
-
-    const node = selection.anchorNode;
-    const parentElem = (node instanceof HTMLElement ? node : node?.parentElement) as HTMLElement;
-
-    if (editorRef.current.contains(parentElem)) {
-      const editorRect = editorRef.current.getBoundingClientRect();
-      const nodeRect = parentElem.getBoundingClientRect();
-      const relativeTop = nodeRect.top - editorRect.top;
-
-      setPlusMenuTop(Math.max(0, relativeTop + 2));
-
-      // Close menu if user types
-      if (parentElem.textContent?.trim()) {
-        setIsPlusMenuOpen(false);
+  const handleTitleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (subtitleRef.current) {
+        subtitleRef.current.focus();
+      } else if (editorRef.current) {
+        editorRef.current.focus();
       }
     }
   };
 
+  const calculateWords = () => {
+    const text = (title + ' ' + subtitle + ' ' + content).replace(/<[^>]*>/g, '').trim();
+    if (!text) return 0;
+    return text.split(/\s+/).length;
+  };
+
+  // Formatting actions
   const handleFormat = (command: string, value: string = '') => {
     document.execCommand(command, false, value);
-    setSaveStatus('dirty');
+    if (editorRef.current) {
+      setContent(editorRef.current.innerHTML);
+      setHasUnsavedChanges(true);
+    }
   };
 
   const handleToggleQuote = () => {
     const selection = window.getSelection();
     if (!selection || !editorRef.current) return;
-
-    const range = selection.getRangeAt(0);
-    const selectedText = range.toString();
-
-    if (selectedText) {
-      const blockquote = document.createElement('blockquote');
-      blockquote.className = 'editorial-quote';
-      blockquote.innerHTML = selectedText;
-      range.deleteContents();
-      range.insertNode(blockquote);
-    } else {
-      document.execCommand('formatBlock', false, '<blockquote>');
+    document.execCommand('formatBlock', false, '<blockquote>');
+    if (editorRef.current) {
+      setContent(editorRef.current.innerHTML);
+      setHasUnsavedChanges(true);
     }
-    setSaveStatus('dirty');
-    setToolbarPosition(null);
+  };
+
+  // Plus menu insertions
+  const insertHtmlAtCursor = (html: string) => {
+    if (editorRef.current) {
+      editorRef.current.focus();
+      document.execCommand('insertHTML', false, html);
+      setContent(editorRef.current.innerHTML);
+      setHasUnsavedChanges(true);
+    }
   };
 
   const handleInsertImage = (url: string, caption?: string) => {
-    if (!editorRef.current) return;
-    const figure = document.createElement('figure');
-    figure.className = 'my-6 text-center select-none';
-    figure.innerHTML = `
-      <img src="${url}" alt="${caption || 'Image'}" class="w-full max-h-[500px] object-cover rounded" />
-      ${caption ? `<figcaption class="text-xs text-center mt-2 opacity-70 italic font-sans">${caption}</figcaption>` : ''}
+    const imageHtml = `
+      <figure class="my-6 text-center select-none">
+        <img src="${url}" alt="${caption || 'Image'}" class="max-w-full h-auto rounded-lg mx-auto" />
+        ${caption ? `<figcaption class="text-xs text-stone-500 mt-2 font-serif italic">${caption}</figcaption>` : ''}
+      </figure>
       <p><br></p>
     `;
-    insertElementAtCursor(figure);
+    insertHtmlAtCursor(imageHtml);
   };
 
-  const handleInsertEmbed = (url: string, titleStr?: string) => {
-    if (!editorRef.current) return;
-    const embedCard = document.createElement('div');
-    embedCard.className = 'my-6 p-4 rounded-lg flex items-center justify-between gap-4 select-none';
-    embedCard.style.cssText = 'background-color: var(--color-bg-surface); border: 1px solid var(--color-border-soft);';
-    embedCard.innerHTML = `
-      <div class="space-y-1 overflow-hidden">
-        <div class="text-sm font-semibold truncate" style="color: var(--color-text-primary);">${titleStr || url}</div>
-        <div class="text-xs truncate opacity-70" style="color: var(--color-text-secondary);">${url}</div>
+  const handleInsertEmbed = (url: string, embedTitle?: string) => {
+    const domain = url.replace(/^(?:https?:\/\/)?(?:www\.)?/i, '').split('/')[0];
+    const embedHtml = `
+      <div class="my-6 p-4 rounded-xl border border-stone-200 dark:border-stone-800 bg-stone-50 dark:bg-stone-900/50 flex flex-col gap-1 select-none">
+        <a href="${url}" target="_blank" rel="noopener noreferrer" class="font-serif font-bold text-base hover:underline">${embedTitle || url}</a>
+        <span class="text-xs text-stone-400 font-mono">${domain}</span>
       </div>
-      <a href="${url}" target="_blank" rel="noopener noreferrer" class="text-xs px-3 py-1.5 rounded-full font-medium whitespace-nowrap" style="background-color: var(--color-bg-subtle); color: var(--color-text-primary); border: 1px solid var(--color-border-soft);">Visit link ↗</a>
+      <p><br></p>
     `;
-    insertElementAtCursor(embedCard);
+    insertHtmlAtCursor(embedHtml);
   };
 
   const handleInsertCode = () => {
-    if (!editorRef.current) return;
-    const pre = document.createElement('pre');
-    pre.className = 'p-4 rounded-md my-4 font-mono text-xs overflow-x-auto';
-    pre.style.cssText = 'background-color: var(--color-code-bg); border: 1px solid var(--color-border-soft); color: var(--color-text-primary);';
-    pre.innerHTML = `<code>// Write code snippet here\nfunction calculate() {\n  return 42;\n}</code>`;
-    insertElementAtCursor(pre);
+    insertHtmlAtCursor('<pre class="p-4 rounded-lg bg-stone-900 text-stone-100 font-mono text-xs my-4 overflow-x-auto"><code>// Add code here...</code></pre><p><br></p>');
   };
 
   const handleInsertDivider = () => {
-    if (!editorRef.current) return;
-    const hr = document.createElement('hr');
-    hr.className = 'editorial-divider';
-    insertElementAtCursor(hr);
+    insertHtmlAtCursor('<hr class="editorial-divider my-8" /><p><br></p>');
   };
 
-  const insertElementAtCursor = (elem: HTMLElement) => {
-    const selection = window.getSelection();
-    if (selection && selection.rangeCount > 0 && editorRef.current) {
-      const range = selection.getRangeAt(0);
-      range.collapse(false);
-      range.insertNode(elem);
-      range.collapse(false);
-    } else if (editorRef.current) {
-      editorRef.current.appendChild(elem);
+  const handleSaveJournal = useCallback(async () => {
+    setIsSaving(true);
+    try {
+      if (initialArticle) {
+        const updated = await updateArticle(initialArticle.id, {
+          title: title.trim() || 'Untitled Thought',
+          subtitle: subtitle.trim(),
+          content: content,
+          visibility: 'private',
+        });
+        if (updated) onSaved(updated);
+      } else {
+        const created = await createArticle({
+          title: title.trim() || 'Untitled Thought',
+          subtitle: subtitle.trim(),
+          content: content,
+          visibility: 'private',
+        });
+        onSaved(created);
+      }
+      setHasUnsavedChanges(false);
+    } finally {
+      setIsSaving(false);
     }
-    setSaveStatus('dirty');
-  };
+  }, [initialArticle, title, subtitle, content, updateArticle, createArticle, onSaved]);
 
-  // Keyboard navigation from Title to Body on Enter
-  const handleTitleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      editorRef.current?.focus();
-    }
-  };
-
-  const handlePublishSubmit = async (params: {
+  const handlePublishConfirm = async (params: {
     slug: string;
     visibility: 'private' | 'published';
     tags: string[];
     subtitle: string;
   }) => {
-    const content = editorRef.current?.innerHTML || '';
-    setSaveStatus('saving');
-
-    let savedArticle: Article | undefined;
-
-    if (initialArticle) {
-      savedArticle = await updateArticle(initialArticle.id, {
-        title: title.trim() || 'Untitled Story',
-        subtitle: params.subtitle,
-        content,
-        visibility: params.visibility,
-        slug: params.slug,
-        tags: params.tags,
-      });
-    } else {
-      savedArticle = await createArticle({
-        title: title.trim() || 'Untitled Story',
-        subtitle: params.subtitle,
-        content,
-        visibility: params.visibility,
-        slug: params.slug,
-        tags: params.tags,
-      });
-    }
-
-    setSaveStatus('saved');
-    if (savedArticle) {
-      onSaved(savedArticle);
+    setIsSaving(true);
+    try {
+      if (initialArticle) {
+        const updated = await updateArticle(initialArticle.id, {
+          title: title.trim() || 'Untitled Thought',
+          subtitle: params.subtitle || subtitle.trim(),
+          content: content,
+          visibility: params.visibility,
+          slug: params.slug,
+          tags: params.tags,
+        });
+        if (updated) onSaved(updated);
+      } else {
+        const created = await createArticle({
+          title: title.trim() || 'Untitled Thought',
+          subtitle: params.subtitle || subtitle.trim(),
+          content: content,
+          visibility: params.visibility,
+          slug: params.slug,
+          tags: params.tags,
+        });
+        onSaved(created);
+      }
+      setIsPublishModalOpen(false);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -245,13 +282,13 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
       {/* Top Header */}
       <WriterHeader
         onBack={onBack}
+        onPublishClick={() => setIsPublishModalOpen(true)}
+        onSaveJournal={handleSaveJournal}
+        isSaving={isSaving}
         visibility={visibility}
-        onToggleVisibility={() =>
-          setVisibility((v) => (v === 'private' ? 'published' : 'private'))
-        }
-        onOpenPublish={() => setShowPublishModal(true)}
-        saveStatus={saveStatus}
-        isEditingExisting={!!initialArticle}
+        onToggleVisibility={setVisibility}
+        hasUnsavedChanges={hasUnsavedChanges}
+        wordCount={calculateWords()}
       />
 
       {/* Floating Inline Selection Toolbar */}
@@ -261,80 +298,69 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
         onToggleQuote={handleToggleQuote}
       />
 
-      {/* Main Canvas with Pure Medium Whitespace */}
-      <main className="flex-grow max-w-2xl sm:max-w-3xl w-full mx-auto px-6 sm:px-12 py-12">
-        <div className="relative">
-          {/* Plus Menu on Left */}
-          <PlusMenu
-            top={plusMenuTop}
-            isOpen={isPlusMenuOpen}
-            onToggle={() => setIsPlusMenuOpen(!isPlusMenuOpen)}
-            onInsertImage={handleInsertImage}
-            onInsertEmbed={handleInsertEmbed}
-            onInsertCode={handleInsertCode}
-            onInsertDivider={handleInsertDivider}
-          />
+      {/* Main Distraction-Free Canvas */}
+      <main className="flex-grow max-w-3xl w-full mx-auto px-6 sm:px-12 py-12 relative">
+        {/* Empty Line Plus Menu */}
+        <PlusMenu
+          top={plusMenuTop}
+          isOpen={isPlusMenuOpen}
+          onToggle={() => setIsPlusMenuOpen(!isPlusMenuOpen)}
+          onInsertImage={handleInsertImage}
+          onInsertEmbed={handleInsertEmbed}
+          onInsertCode={handleInsertCode}
+          onInsertDivider={handleInsertDivider}
+        />
 
-          {/* Title Area */}
-          <textarea
-            ref={titleRef}
-            rows={1}
-            value={title}
-            onChange={(e) => {
-              setTitle(e.target.value);
-              setSaveStatus('dirty');
-            }}
-            onKeyDown={handleTitleKeyDown}
-            placeholder="Title"
-            className="w-full bg-transparent font-serif font-bold text-3xl sm:text-5xl tracking-tight focus:outline-none resize-none overflow-hidden placeholder:opacity-35 mb-2 leading-tight"
-            style={{
-              color: 'var(--color-text-primary)',
-            }}
-          />
+        {/* Title */}
+        <textarea
+          ref={titleRef}
+          rows={1}
+          value={title}
+          onChange={handleTitleChange}
+          onKeyDown={handleTitleKeyDown}
+          placeholder="Title of this reflection..."
+          className="w-full bg-transparent resize-none overflow-hidden text-3xl sm:text-5xl font-serif font-bold tracking-tight mb-3 focus:outline-none placeholder:opacity-30 leading-tight"
+          style={{ color: 'var(--color-text-primary)' }}
+        />
 
-          {/* Subtitle (Optional) */}
-          <input
-            type="text"
-            value={subtitle}
-            onChange={(e) => {
-              setSubtitle(e.target.value);
-              setSaveStatus('dirty');
-            }}
-            placeholder="Tell your story subtitle..."
-            className="w-full bg-transparent font-serif text-lg sm:text-xl focus:outline-none placeholder:opacity-30 mb-8 pb-3"
-            style={{
-              color: 'var(--color-text-secondary)',
-              borderBottom: '1px solid var(--color-border-soft)',
-            }}
-          />
+        {/* Optional Subtitle */}
+        <textarea
+          ref={subtitleRef}
+          rows={1}
+          value={subtitle}
+          onChange={handleSubtitleChange}
+          placeholder="An opening line or subtitle (optional)..."
+          className="w-full bg-transparent resize-none overflow-hidden text-lg sm:text-xl font-serif mb-6 focus:outline-none placeholder:opacity-30 leading-relaxed"
+          style={{ color: 'var(--color-text-secondary)' }}
+        />
 
-          {/* Content Body */}
-          <div
-            ref={editorRef}
-            contentEditable
-            suppressContentEditableWarning
-            onKeyUp={handleKeyUpOrClick}
-            onClick={handleKeyUpOrClick}
-            onInput={() => setSaveStatus('dirty')}
-            data-placeholder="Tell your story..."
-            className="font-editorial text-lg sm:text-xl leading-relaxed focus:outline-none min-h-[550px] max-w-none"
-            style={{
-              color: 'var(--color-text-primary)',
-            }}
-          />
-        </div>
+        {/* Medium-style Divider */}
+        <div className="w-full h-px my-4 mb-8" style={{ backgroundColor: 'var(--color-border-soft)' }} />
+
+        {/* Body Canvas in Newsreader Editorial Typography */}
+        <div
+          ref={editorRef}
+          contentEditable
+          suppressContentEditableWarning
+          onInput={handleEditorInput}
+          onClick={updatePlusMenuPosition}
+          onKeyUp={updatePlusMenuPosition}
+          data-placeholder="Begin in solitude. No one is watching..."
+          className="editorial-canvas font-editorial text-lg sm:text-xl leading-relaxed min-h-[500px] focus:outline-none pb-32"
+          style={{ color: 'var(--color-text-primary)' }}
+        />
       </main>
 
-      {/* Publish Dialog */}
+      {/* Custom Slug & Publication Modal */}
       <PublishModal
-        isOpen={showPublishModal}
-        onClose={() => setShowPublishModal(false)}
+        isOpen={isPublishModalOpen}
+        onClose={() => setIsPublishModalOpen(false)}
         title={title}
         subtitle={subtitle}
-        initialSlug={slug}
+        initialSlug={initialArticle?.slug}
         initialVisibility={visibility}
-        initialTags={tags}
-        onConfirmPublish={handlePublishSubmit}
+        initialTags={initialArticle?.tags}
+        onConfirmPublish={handlePublishConfirm}
       />
     </div>
   );

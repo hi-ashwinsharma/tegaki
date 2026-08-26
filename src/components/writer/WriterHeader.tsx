@@ -4,102 +4,130 @@ import { ThemeSelector } from '../common/ThemeSelector';
 
 interface WriterHeaderProps {
   onBack: () => void;
+  onPublishClick: () => void;
+  onSaveJournal: () => void;
+  isSaving: boolean;
   visibility: 'private' | 'published';
-  onToggleVisibility: () => void;
-  onOpenPublish: () => void;
-  saveStatus: 'saved' | 'saving' | 'dirty';
-  isEditingExisting?: boolean;
+  onToggleVisibility: (v: 'private' | 'published') => void;
+  hasUnsavedChanges: boolean;
+  wordCount: number;
 }
 
 export const WriterHeader: React.FC<WriterHeaderProps> = ({
   onBack,
+  onPublishClick,
+  onSaveJournal,
+  isSaving,
   visibility,
   onToggleVisibility,
-  onOpenPublish,
-  saveStatus,
-  isEditingExisting,
+  hasUnsavedChanges,
+  wordCount,
 }) => {
   return (
     <header
-      className="sticky top-0 z-30 flex items-center justify-between px-4 sm:px-8 py-3.5 backdrop-blur-none"
+      className="sticky top-0 z-30 flex items-center justify-between px-6 sm:px-12 py-3.5 backdrop-blur-none select-none"
       style={{
         backgroundColor: 'var(--color-bg)',
         borderBottom: '1px solid var(--color-border-soft)',
       }}
     >
+      {/* Left Back and Status */}
       <div className="flex items-center gap-3">
         <button
           onClick={onBack}
-          title="Back to all stories"
+          title="Return to the desk"
           className="p-1.5 rounded-full hover:opacity-75 transition-opacity cursor-pointer"
           style={{ color: 'var(--color-text-secondary)' }}
         >
           <ArrowLeft size={18} />
         </button>
 
-        <span className="text-sm font-serif font-medium hidden sm:inline" style={{ color: 'var(--color-text-primary)' }}>
-          Tegaki
+        {/* Quiet Save Status */}
+        <div className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
+          {isSaving ? (
+            <span>Inking...</span>
+          ) : hasUnsavedChanges ? (
+            <span>Unsaved draft</span>
+          ) : (
+            <span className="flex items-center gap-1">
+              <Check size={13} style={{ color: 'var(--color-accent)' }} />
+              <span>Preserved</span>
+            </span>
+          )}
+        </div>
+
+        {/* Word Count */}
+        <span className="text-xs hidden md:inline" style={{ color: 'var(--color-text-tertiary)' }}>
+          • {wordCount} {wordCount === 1 ? 'word' : 'words'}
         </span>
+      </div>
 
-        <span style={{ color: 'var(--color-text-tertiary)' }} className="hidden sm:inline">•</span>
-
-        {/* Quiet Privacy Toggle */}
-        <button
-          type="button"
-          onClick={onToggleVisibility}
-          title="Toggle visibility"
-          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs transition-colors hover:opacity-85 cursor-pointer font-sans"
+      {/* Right Controls */}
+      <div className="flex items-center gap-3">
+        {/* Privacy Selector Pill */}
+        <div
+          className="flex items-center p-0.5 rounded-full"
           style={{
             backgroundColor: 'var(--color-bg-surface)',
             border: '1px solid var(--color-border-soft)',
-            color: visibility === 'private' ? 'var(--color-text-secondary)' : 'var(--color-accent)',
           }}
         >
-          {visibility === 'private' ? (
-            <>
-              <Lock size={12} strokeWidth={1.8} />
-              <span>Private Journal</span>
-            </>
-          ) : (
-            <>
-              <Globe size={12} strokeWidth={1.8} />
-              <span>Public Story</span>
-            </>
-          )}
-        </button>
-      </div>
+          <button
+            onClick={() => onToggleVisibility('private')}
+            title="Private Notebook: Kept confidential and encrypted"
+            className="flex items-center gap-1.5 px-3 py-1 text-xs rounded-full transition-colors cursor-pointer"
+            style={{
+              backgroundColor: visibility === 'private' ? 'var(--color-bg)' : 'transparent',
+              color: visibility === 'private' ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
+              fontWeight: visibility === 'private' ? 600 : 400,
+            }}
+          >
+            <Lock size={12} strokeWidth={1.8} />
+            <span>Private</span>
+          </button>
 
-      <div className="flex items-center gap-3">
-        {/* Subtle Save Status */}
-        <div className="flex items-center gap-1 text-xs select-none" style={{ color: 'var(--color-text-tertiary)' }}>
-          {saveStatus === 'saved' && (
-            <>
-              <Check size={13} style={{ color: 'var(--color-accent)' }} />
-              <span className="hidden sm:inline text-[11px]">Saved</span>
-            </>
-          )}
-          {saveStatus === 'saving' && (
-            <span className="text-[11px] opacity-75">Saving...</span>
-          )}
-          {saveStatus === 'dirty' && (
-            <span className="text-[11px] opacity-60">Unsaved</span>
-          )}
+          <button
+            onClick={() => onToggleVisibility('published')}
+            title="Public Story: Released with your custom slug"
+            className="flex items-center gap-1.5 px-3 py-1 text-xs rounded-full transition-colors cursor-pointer"
+            style={{
+              backgroundColor: visibility === 'published' ? 'var(--color-bg)' : 'transparent',
+              color: visibility === 'published' ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
+              fontWeight: visibility === 'published' ? 600 : 400,
+            }}
+          >
+            <Globe size={12} strokeWidth={1.8} />
+            <span>Public</span>
+          </button>
         </div>
 
         <ThemeSelector compact />
 
-        {/* Action Button */}
-        <button
-          onClick={onOpenPublish}
-          className="px-4 py-1.5 rounded-full text-xs font-medium transition-opacity hover:opacity-90 flex items-center gap-1.5 cursor-pointer"
-          style={{
-            backgroundColor: visibility === 'published' ? 'var(--color-accent)' : 'var(--color-text-primary)',
-            color: visibility === 'published' ? '#FFFFFF' : 'var(--color-bg)',
-            border: `1px solid ${visibility === 'published' ? 'var(--color-accent)' : 'var(--color-text-primary)'}`,
-          }}
-        >
-          <span>{isEditingExisting ? 'Save Changes' : visibility === 'published' ? 'Publish' : 'Save'}</span>
-        </button>
+        {visibility === 'published' ? (
+          <button
+            onClick={onPublishClick}
+            className="px-4 py-1.5 text-xs font-medium rounded-full transition-opacity hover:opacity-90 cursor-pointer"
+            style={{
+              backgroundColor: 'var(--color-accent)',
+              color: '#FFFFFF',
+              border: '1px solid var(--color-accent)',
+            }}
+          >
+            Release
+          </button>
+        ) : (
+          <button
+            onClick={onSaveJournal}
+            className="px-4 py-1.5 text-xs font-medium rounded-full transition-opacity hover:opacity-90 cursor-pointer"
+            style={{
+              backgroundColor: 'var(--color-text-primary)',
+              color: 'var(--color-bg)',
+              border: '1px solid var(--color-text-primary)',
+            }}
+          >
+            Preserve
+          </button>
+        )}
       </div>
     </header>
   );
