@@ -16,14 +16,25 @@ import type { Article, Comment } from '../types/article';
 const ARTICLES_COLLECTION = 'articles';
 const COMMENTS_COLLECTION = 'comments';
 
+function cleanUndefined<T extends Record<string, any>>(obj: T): Partial<T> {
+  const cleaned: Record<string, any> = {};
+  Object.keys(obj).forEach((key) => {
+    if (obj[key] !== undefined) {
+      cleaned[key] = obj[key];
+    }
+  });
+  return cleaned as Partial<T>;
+}
+
 export async function syncArticleToFirestore(article: Article): Promise<boolean> {
   if (!isFirebaseConfigured) return false;
   try {
     const articleRef = doc(db, ARTICLES_COLLECTION, article.id);
-    await setDoc(articleRef, {
+    const cleanedData = cleanUndefined({
       ...article,
       updatedAt: Date.now(),
-    }, { merge: true });
+    });
+    await setDoc(articleRef, cleanedData, { merge: true });
     return true;
   } catch (error) {
     console.warn('Firestore sync article failed:', error);
@@ -76,7 +87,8 @@ export async function syncCommentToFirestore(comment: Comment): Promise<boolean>
   if (!isFirebaseConfigured) return false;
   try {
     const commentRef = doc(db, COMMENTS_COLLECTION, comment.id);
-    await setDoc(commentRef, comment);
+    const cleaned = cleanUndefined(comment);
+    await setDoc(commentRef, cleaned);
     
     // Increment comment count on article
     const articleRef = doc(db, ARTICLES_COLLECTION, comment.articleId);
