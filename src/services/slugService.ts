@@ -1,5 +1,5 @@
 /**
- * Slug generator and validator for Medium-style URLs
+ * Slug generator, live input formatter, and sanitizer for Medium-style URLs
  */
 
 export function generateSlug(title: string): string {
@@ -12,13 +12,28 @@ export function generateSlug(title: string): string {
     .slice(0, 60);
 }
 
-export function sanitizeSlug(input: string): string {
+/**
+ * Format live typing in slug input:
+ * - Converts spaces and underscores to hyphens
+ * - Strips forbidden characters (keeps a-z, 0-9, and hyphens)
+ * - Collapses multiple consecutive hyphens into one
+ * - Preserves trailing hyphens so the user can freely type hyphens and spaces
+ */
+export function formatSlugInput(input: string): string {
   return input
     .toLowerCase()
-    .trim()
-    .replace(/[^\w-]/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-+|-+$/g, '');
+    .replace(/[\s_]+/g, '-')
+    .replace(/[^a-z0-9-]/g, '')
+    .replace(/-+/g, '-');
+}
+
+/**
+ * Final sanitization before saving:
+ * - Formats input
+ * - Trims leading and trailing hyphens
+ */
+export function sanitizeSlug(input: string): string {
+  return formatSlugInput(input).replace(/^-+|-+$/g, '');
 }
 
 export function buildArticlePath(username: string, slug?: string, id?: string): string {

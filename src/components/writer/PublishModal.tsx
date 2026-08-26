@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Globe, Lock, Check } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { generateSlug, sanitizeSlug } from '../../services/slugService';
+import { generateSlug, sanitizeSlug, formatSlugInput } from '../../services/slugService';
 
 interface PublishModalProps {
   isOpen: boolean;
@@ -171,7 +171,7 @@ export const PublishModal: React.FC<PublishModalProps> = ({
                 type="text"
                 required
                 value={slug}
-                onChange={(e) => setSlug(sanitizeSlug(e.target.value))}
+                onChange={(e) => setSlug(formatSlugInput(e.target.value))}
                 placeholder="my-reflection"
                 className="w-full bg-transparent text-xs font-mono focus:outline-none"
                 style={{ color: 'var(--color-text-primary)' }}

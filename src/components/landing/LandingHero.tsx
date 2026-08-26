@@ -23,6 +23,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { formatSlugInput } from '../../services/slugService';
 
 interface LandingHeroProps {
   onStartWriting: () => void;
@@ -482,7 +483,7 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
                   <input
                     type="text"
                     value={interactiveSlug}
-                    onChange={(e) => setInteractiveSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                    onChange={(e) => setInteractiveSlug(formatSlugInput(e.target.value))}
                     placeholder="custom-slug"
                     className="px-2 py-1 text-[11px] font-mono rounded bg-transparent focus:outline-none"
                     style={{
