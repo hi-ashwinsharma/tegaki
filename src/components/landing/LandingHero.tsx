@@ -172,10 +172,10 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
       {/* ========================================================================= */}
       {/* 1. HERO SECTION (Full Viewport Height) */}
       {/* ========================================================================= */}
-      <section className="min-h-[calc(100vh-65px)] flex flex-col justify-center max-w-6xl mx-auto px-6 sm:px-12 md:px-16 py-12">
+      <section className="min-h-[calc(100vh-65px)] flex flex-col justify-center max-w-7xl mx-auto px-6 sm:px-12 md:px-16 lg:px-20 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
           {/* Left Column */}
-          <div className="lg:col-span-7 space-y-7">
+          <div className="lg:col-span-8 space-y-7">
             <div
               className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs"
               style={{
@@ -189,20 +189,20 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
             </div>
 
             <h1
-              className="text-4xl sm:text-6xl md:text-7xl font-serif font-bold tracking-tight leading-[1.08]"
+              className="text-4xl sm:text-6xl md:text-7xl lg:text-[76px] xl:text-[82px] font-serif font-bold tracking-tight leading-[1.06]"
               style={{ color: 'var(--color-text-primary)' }}
             >
-              <span className="inline-block whitespace-nowrap sm:whitespace-normal xl:whitespace-nowrap">
+              <span className="inline-block whitespace-normal sm:whitespace-nowrap">
                 First for yourself.
               </span>
               <br />
-              <span className="italic font-normal opacity-90">
+              <span className="inline-block italic font-normal opacity-90 whitespace-normal sm:whitespace-nowrap">
                 Then, for the world.
               </span>
             </h1>
 
             <p
-              className="text-base sm:text-lg font-serif max-w-xl leading-relaxed"
+              className="text-base sm:text-lg lg:text-xl font-serif max-w-2xl leading-relaxed"
               style={{ color: 'var(--color-text-secondary)' }}
             >
               Tegaki is a quiet sanctuary for unhurried thought. A notebook without algorithms, metrics, or premature audience anxiety—where ideas mature in private before entering the world.
@@ -237,7 +237,7 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
 
             {/* 2 Subtle Value Badges */}
             <div
-              className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-6"
+              className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-6 max-w-2xl"
               style={{ borderTop: '1px solid var(--color-border-soft)' }}
             >
               <div className="space-y-1">
@@ -269,7 +269,7 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
           </div>
 
           {/* Right Column: Editorial Line-Art Illustration */}
-          <div className="lg:col-span-5 flex justify-center items-center py-4">
+          <div className="lg:col-span-4 flex justify-center items-center py-4">
             <div
               className="w-full max-w-sm p-8 sm:p-10 rounded-2xl flex flex-col items-center justify-center relative select-none"
               style={{
