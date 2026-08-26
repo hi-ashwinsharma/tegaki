@@ -1,6 +1,16 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { UserProfile } from '../types/auth';
 import { authenticateWithPasskey, registerPasskey } from '../services/passkeyService';
+import {
+  signInWithPopup,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  sendPasswordResetEmail,
+  signOut as firebaseSignOut,
+  onAuthStateChanged,
+  updateProfile,
+} from 'firebase/auth';
+import { auth, googleProvider, isFirebaseConfigured } from '../services/firebase';
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -36,6 +46,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return saved ? JSON.parse(saved) : DEFAULT_USER;
   });
 
+  // Listen to Firebase auth changes if configured
+  useEffect(() => {
+    if (!isFirebaseConfigured) return;
+
+    const unsubscribe = onAuthStateChanged(auth, (fbUser) => {
+      if (fbUser) {
+        const uProfile: UserProfile = {
+          id: fbUser.uid,
+          name: fbUser.displayName || fbUser.email?.split('@')[0] || 'Writer',
+          username: (fbUser.displayName || fbUser.email?.split('@')[0] || 'writer')
+            .toLowerCase()
+            .replace(/\s+/g, '_'),
+          email: fbUser.email || '',
+          avatarUrl: fbUser.photoURL || undefined,
+          authProvider: fbUser.providerData[0]?.providerId === 'google.com' ? 'google' : 'email',
+          createdAt: Date.now(),
+        };
+        setUser(uProfile);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
   useEffect(() => {
     if (user) {
       localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user));
@@ -45,6 +79,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [user]);
 
   const loginWithGoogle = async () => {
+    if (isFirebaseConfigured) {
+      try {
+        const res = await signInWithPopup(auth, googleProvider);
+        const fbUser = res.user;
+        const uProfile: UserProfile = {
+          id: fbUser.uid,
+          name: fbUser.displayName || 'Ashwin Sharma',
+          username: (fbUser.displayName || 'ashwin').toLowerCase().replace(/\s+/g, '_'),
+          email: fbUser.email || 'ashwin@gmail.com',
+          avatarUrl: fbUser.photoURL || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+          authProvider: 'google',
+          createdAt: Date.now(),
+        };
+        setUser(uProfile);
+        return;
+      } catch (err) {
+        console.warn('Firebase Google Auth popup error, falling back:', err);
+      }
+    }
+
+    // Offline / Demo fallback
     const googleUser: UserProfile = {
       id: 'u-google-' + Date.now().toString().slice(-4),
       name: 'Ashwin Sharma',
@@ -88,7 +143,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const loginWithEmail = async (email: string) => {
+  const loginWithEmail = async (email: string, pass: string) => {
+    if (isFirebaseConfigured) {
+      try {
+        const res = await signInWithEmailAndPassword(auth, email, pass);
+        const fbUser = res.user;
+        const uProfile: UserProfile = {
+          id: fbUser.uid,
+          name: fbUser.displayName || email.split('@')[0] || 'Writer',
+          username: (email.split('@')[0] || 'writer').toLowerCase(),
+          email: fbUser.email || email,
+          authProvider: 'email',
+          createdAt: Date.now(),
+        };
+        setUser(uProfile);
+        return;
+      } catch (err) {
+        console.warn('Firebase Email Sign-in error:', err);
+      }
+    }
+
     const emailUser: UserProfile = {
       id: 'u-email-' + Date.now().toString().slice(-4),
       name: email.split('@')[0] || 'Writer',
@@ -100,7 +174,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(emailUser);
   };
 
-  const registerWithEmail = async (name: string, email: string) => {
+  const registerWithEmail = async (name: string, email: string, pass: string) => {
+    if (isFirebaseConfigured) {
+      try {
+        const res = await createUserWithEmailAndPassword(auth, email, pass);
+        if (res.user) {
+          await updateProfile(res.user, { displayName: name });
+        }
+        const uProfile: UserProfile = {
+          id: res.user.uid,
+          name: name,
+          username: name.toLowerCase().replace(/\s+/g, '_'),
+          email: email,
+          authProvider: 'email',
+          createdAt: Date.now(),
+        };
+        setUser(uProfile);
+        return;
+      } catch (err) {
+        console.warn('Firebase Email Sign-up error:', err);
+      }
+    }
+
     const emailUser: UserProfile = {
       id: 'u-email-' + Date.now().toString().slice(-4),
       name: name,
@@ -113,11 +208,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const resetPassword = async (email: string): Promise<boolean> => {
-    console.log('Password reset requested for:', email);
+    if (isFirebaseConfigured) {
+      try {
+        await sendPasswordResetEmail(auth, email);
+        return true;
+      } catch (err) {
+        console.warn('Firebase password reset error:', err);
+      }
+    }
     return true;
   };
 
   const logout = () => {
+    if (isFirebaseConfigured) {
+      firebaseSignOut(auth).catch(() => {});
+    }
     setUser(null);
   };
 

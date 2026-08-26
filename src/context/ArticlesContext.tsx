@@ -6,6 +6,14 @@ import {
   getStoredComments,
   saveComment,
 } from '../services/storageService';
+import {
+  syncArticleToFirestore,
+  fetchArticlesFromFirestore,
+  deleteArticleFromFirestore,
+  clapArticleInFirestore,
+  syncCommentToFirestore,
+  fetchCommentsFromFirestore,
+} from '../services/firestoreService';
 import { encryptContent, decryptContent } from '../services/cryptoService';
 import { generateSlug, sanitizeSlug } from '../services/slugService';
 import { useAuth } from './AuthContext';
@@ -43,6 +51,22 @@ export const ArticlesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [articles, setArticles] = useState<Article[]>(() => getStoredArticles());
   const [comments, setComments] = useState<Comment[]>(() => getStoredComments());
 
+  // Attempt initial sync from Cloud Firestore if online & configured
+  useEffect(() => {
+    async function loadCloudData() {
+      const cloudArticles = await fetchArticlesFromFirestore();
+      if (cloudArticles && cloudArticles.length) {
+        setArticles(cloudArticles);
+      }
+      const cloudComments = await fetchCommentsFromFirestore();
+      if (cloudComments && cloudComments.length) {
+        setComments(cloudComments);
+      }
+    }
+    loadCloudData();
+  }, []);
+
+  // Save to persistent storage cache
   useEffect(() => {
     saveStoredArticles(articles);
   }, [articles]);
@@ -83,7 +107,7 @@ export const ArticlesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     tags?: string[];
     coverImage?: string;
   }): Promise<Article> => {
-    const finalSlug = slug ? sanitizeSlug(slug) : generateSlug(title || 'untitled-journal');
+    const finalSlug = slug ? sanitizeSlug(slug) : generateSlug(title || 'journal');
     const isEncrypted = visibility === 'private';
     let encryptedPayload: string | undefined;
 
@@ -114,6 +138,10 @@ export const ArticlesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     };
 
     setArticles((prev) => [newArticle, ...prev]);
+
+    // Async sync to Cloud Firestore
+    syncArticleToFirestore(newArticle);
+
     return newArticle;
   };
 
@@ -155,11 +183,17 @@ export const ArticlesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     );
 
     setArticles(newArticles);
+
+    if (updatedTarget) {
+      syncArticleToFirestore(updatedTarget);
+    }
+
     return updatedTarget;
   };
 
   const deleteArticle = (id: string) => {
     setArticles((prev) => prev.filter((a) => a.id !== id));
+    deleteArticleFromFirestore(id);
   };
 
   const toggleVisibility = async (id: string, newSlug?: string): Promise<Article | undefined> => {
@@ -179,6 +213,7 @@ export const ArticlesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setArticles((prev) =>
       prev.map((a) => (a.id === id ? { ...a, upvotes: a.upvotes + 1 } : a))
     );
+    clapArticleInFirestore(id);
   };
 
   const getCommentsForArticle = (articleId: string) => {
@@ -201,11 +236,15 @@ export const ArticlesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const updated = saveComment(newComment);
     setComments(updated);
 
+    // Increment local article comment count
     setArticles((prev) =>
       prev.map((a) =>
         a.id === articleId ? { ...a, commentCount: a.commentCount + 1 } : a
       )
     );
+
+    // Sync to Firestore
+    syncCommentToFirestore(newComment);
 
     return newComment;
   };

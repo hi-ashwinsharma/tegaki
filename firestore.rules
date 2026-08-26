@@ -1,0 +1,26 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Articles & Journals
+    match /articles/{articleId} {
+      // Anyone can read published stories; only authors can read private encrypted journals
+      allow read: if resource.data.visibility == 'published' || 
+                     (request.auth != null && request.auth.uid == resource.data.authorId);
+      
+      // Only authenticated authors can create and update their entries
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null && request.auth.uid == resource.data.authorId;
+      
+      // Allow clapping on published stories
+      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['upvotes']);
+    }
+
+    // Comments & Responses
+    match /comments/{commentId} {
+      allow read: if true;
+      allow create: if true;
+      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['upvotes']);
+      allow delete: if request.auth != null && request.auth.uid == resource.data.authorId;
+    }
+  }
+}
