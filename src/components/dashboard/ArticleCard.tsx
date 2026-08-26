@@ -1,7 +1,7 @@
 import React from 'react';
 import type { Article } from '../../types/article';
 import { UserAvatar } from '../common/UserAvatar';
-import { MessageSquare, Edit3, Trash2, Globe, ExternalLink, Lock, Sparkles } from 'lucide-react';
+import { MessageSquare, Edit3, Trash2, Globe, ExternalLink, Lock, Flame } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 interface ArticleCardProps {
@@ -168,7 +168,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
             style={{ color: article.upvotes > 0 ? 'var(--color-text-primary)' : 'var(--color-text-secondary)' }}
             title="Applaud"
           >
-            <Sparkles size={14} strokeWidth={1.8} />
+            <Flame size={14} strokeWidth={1.8} />
             <span>{article.upvotes}</span>
           </button>
 

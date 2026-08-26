@@ -16,7 +16,7 @@ import {
   Link2,
   Quote,
   Plus,
-  Sparkles,
+  Flame,
   MessageSquare,
   Share2,
   BellOff,
@@ -722,7 +722,7 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
                     <span>/@your-name/essay-slug</span>
                   </span>
                   <span className="px-3 py-1 rounded-full flex items-center gap-1.5" style={{ backgroundColor: 'var(--color-bg-subtle)', border: '1px solid var(--color-border-soft)' }}>
-                    <Sparkles size={12} />
+                    <Flame size={12} />
                     <span>Resonated Claps</span>
                   </span>
                   <span className="px-3 py-1 rounded-full flex items-center gap-1.5" style={{ backgroundColor: 'var(--color-bg-subtle)', border: '1px solid var(--color-border-soft)' }}>
@@ -752,7 +752,7 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
                 <div className="flex items-center justify-between pt-2 text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
                   <div className="flex items-center gap-3">
                     <span className="flex items-center gap-1 font-mono" style={{ color: 'var(--color-text-primary)' }}>
-                      <Sparkles size={13} /> 148 claps
+                      <Flame size={13} /> 148 claps
                     </span>
                     <span className="flex items-center gap-1">
                       <MessageSquare size={13} /> 12 responses

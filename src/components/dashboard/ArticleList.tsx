@@ -4,7 +4,7 @@ import { TopSearchBar } from '../common/TopSearchBar';
 import { FilterTabs } from './FilterTabs';
 import type { FilterOption } from './FilterTabs';
 import { ArticleCard } from './ArticleCard';
-import { Feather, Plus, Clock, Sparkles } from 'lucide-react';
+import { Feather, Plus, Clock, Flame } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 export type SortOption = 'latest' | 'upvotes';
@@ -168,7 +168,7 @@ export const ArticleList: React.FC<ArticleListProps> = ({
                 fontWeight: sortBy === 'upvotes' ? 600 : 400,
               }}
             >
-              <Sparkles size={13} strokeWidth={1.75} />
+              <Flame size={13} strokeWidth={1.75} />
               <span>Most Resonated</span>
             </button>
           </div>

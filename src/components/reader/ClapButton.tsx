@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sparkles } from 'lucide-react';
+import { Flame } from 'lucide-react';
 
 interface ClapButtonProps {
   count: number;
@@ -26,10 +26,10 @@ export const ClapButton: React.FC<ClapButtonProps> = ({ count, onClap }) => {
       style={{
         backgroundColor: 'var(--color-bg-surface)',
         border: '1px solid var(--color-border-soft)',
-        color: count > 0 ? 'var(--color-accent)' : 'var(--color-text-secondary)',
+        color: count > 0 ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
       }}
     >
-      <Sparkles
+      <Flame
         size={16}
         strokeWidth={1.8}
       />
