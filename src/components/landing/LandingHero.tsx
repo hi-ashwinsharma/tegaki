@@ -175,19 +175,7 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
       <section className="min-h-[calc(100vh-65px)] flex flex-col justify-center max-w-7xl mx-auto px-6 sm:px-12 md:px-16 lg:px-20 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
           {/* Left Column */}
-          <div className="lg:col-span-8 space-y-7">
-            <div
-              className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs"
-              style={{
-                backgroundColor: 'var(--color-bg-surface)',
-                border: '1px solid var(--color-border-soft)',
-                color: 'var(--color-text-secondary)',
-              }}
-            >
-              <Lock size={12} strokeWidth={1.8} />
-              <span>Private Notebook • Deliberate Publishing</span>
-            </div>
-
+          <div className="lg:col-span-8 space-y-8">
             <h1
               className="text-4xl sm:text-6xl md:text-7xl lg:text-[76px] xl:text-[82px] font-serif font-bold tracking-tight leading-[1.06]"
               style={{ color: 'var(--color-text-primary)' }}
