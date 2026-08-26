@@ -82,7 +82,8 @@ export const ArticlesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     // Auto-sync any previously stored local published stories belonging to the user
     if (user) {
-      articles.forEach((art) => {
+      const localStored = getStoredArticles();
+      localStored.forEach((art) => {
         if (art.visibility === 'published' && (art.authorId === user.id || art.authorUsername === user.username)) {
           syncArticleToFirestore(art);
         }
