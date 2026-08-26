@@ -4,7 +4,6 @@ import {
   setDoc,
   getDocs,
   deleteDoc,
-  updateDoc,
   increment,
   query,
   orderBy,
@@ -73,9 +72,14 @@ export async function clapArticleInFirestore(id: string): Promise<boolean> {
   if (!isFirebaseConfigured) return false;
   try {
     const articleRef = doc(db, ARTICLES_COLLECTION, id);
-    await updateDoc(articleRef, {
-      upvotes: increment(1),
-    });
+    await setDoc(
+      articleRef,
+      {
+        upvotes: increment(1),
+        updatedAt: Date.now(),
+      },
+      { merge: true }
+    );
     return true;
   } catch (error) {
     console.warn('Firestore clap failed:', error);
@@ -88,13 +92,18 @@ export async function syncCommentToFirestore(comment: Comment): Promise<boolean>
   try {
     const commentRef = doc(db, COMMENTS_COLLECTION, comment.id);
     const cleaned = cleanUndefined(comment);
-    await setDoc(commentRef, cleaned);
+    await setDoc(commentRef, cleaned, { merge: true });
     
     // Increment comment count on article
     const articleRef = doc(db, ARTICLES_COLLECTION, comment.articleId);
-    await updateDoc(articleRef, {
-      commentCount: increment(1),
-    });
+    await setDoc(
+      articleRef,
+      {
+        commentCount: increment(1),
+        updatedAt: Date.now(),
+      },
+      { merge: true }
+    );
     return true;
   } catch (error) {
     console.warn('Firestore sync comment failed:', error);
