@@ -1,77 +1,77 @@
 @import "tailwindcss";
 
 /* 
- * TEGAKI STRICT DESIGN SYSTEM
- * Zero Gradients. Zero Box Shadows. Hairline (1px) borders with theme-adaptive colors.
+ * TEGAKI STRICT MINIMALIST DESIGN SYSTEM
+ * Zero Gradients. Zero Shadows. Subtle 1px Hairline Theme-Matched Borders.
  */
 
 :root,
 [data-theme="white"] {
   --color-bg: #FFFFFF;
-  --color-bg-surface: #F9F9F9;
+  --color-bg-surface: #FAFAFA;
   --color-bg-subtle: #F2F2F2;
   --color-bg-quote: #F7F7F7;
-  --color-border-soft: #E6E6E6;
-  --color-border-hover: #D1D1D1;
-  --color-text-primary: #242424;
-  --color-text-secondary: #6B6B6B;
-  --color-text-tertiary: #9E9E9E;
+  --color-border-soft: #E8E8E8;
+  --color-border-hover: #D0D0D0;
+  --color-text-primary: #1F1F1F;
+  --color-text-secondary: #5A5A5A;
+  --color-text-tertiary: #8C8C8C;
   --color-accent: #1A8917;
   --color-accent-hover: #156D12;
   --color-code-bg: #F4F4F5;
-  --color-selection: rgba(26, 137, 23, 0.15);
+  --color-selection: rgba(26, 137, 23, 0.12);
 }
 
 [data-theme="off-white"] {
   --color-bg: #FBF9F5;
-  --color-bg-surface: #F4F0E8;
-  --color-bg-subtle: #ECE7DC;
-  --color-bg-quote: #F5F1E9;
-  --color-border-soft: #E4DFC;
-  --color-border-hover: #CFC8B7;
+  --color-bg-surface: #F5F1E9;
+  --color-bg-subtle: #ECE7DD;
+  --color-bg-quote: #F4F0E8;
+  --color-border-soft: #E4DFD7;
+  --color-border-hover: #CFC8BC;
   --color-text-primary: #292826;
-  --color-text-secondary: #6E6A63;
-  --color-text-tertiary: #969085;
+  --color-text-secondary: #6B6760;
+  --color-text-tertiary: #918C83;
   --color-accent: #1A8917;
   --color-accent-hover: #156D12;
-  --color-code-bg: #EFE9DC;
+  --color-code-bg: #EFE9DE;
   --color-selection: rgba(160, 140, 110, 0.2);
 }
 
 [data-theme="dark-gray"] {
   --color-bg: #242424;
-  --color-bg-surface: #1B1B1B;
-  --color-bg-subtle: #2D2D2D;
+  --color-bg-surface: #1C1C1C;
+  --color-bg-subtle: #2C2C2C;
   --color-bg-quote: #1E1E1E;
   --color-border-soft: #383838;
   --color-border-hover: #4D4D4D;
   --color-text-primary: #EFEFEF;
-  --color-text-secondary: #A0A0A0;
-  --color-text-tertiary: #6E6E6E;
+  --color-text-secondary: #A6A6A6;
+  --color-text-tertiary: #737373;
   --color-accent: #23A55A;
   --color-accent-hover: #2EC46E;
-  --color-code-bg: #1B1B1B;
-  --color-selection: rgba(35, 165, 90, 0.25);
+  --color-code-bg: #1A1A1A;
+  --color-selection: rgba(35, 165, 90, 0.22);
 }
 
 [data-theme="amoled"] {
   --color-bg: #000000;
-  --color-bg-surface: #0B0B0B;
+  --color-bg-surface: #0A0A0A;
   --color-bg-subtle: #141414;
   --color-bg-quote: #080808;
   --color-border-soft: #202020;
   --color-border-hover: #333333;
-  --color-text-primary: #D8D8D8;
-  --color-text-secondary: #888888;
-  --color-text-tertiary: #555555;
+  --color-text-primary: #DCDCDC;
+  --color-text-secondary: #8E8E8E;
+  --color-text-tertiary: #585858;
   --color-accent: #23A55A;
   --color-accent-hover: #2EC46E;
-  --color-code-bg: #0A0A0A;
+  --color-code-bg: #0C0C0C;
   --color-selection: rgba(255, 255, 255, 0.15);
 }
 
 /* Strict Anti-Shadow & Anti-Gradient rules */
-* {
+*, *::before, *::after {
   box-shadow: none !important;
   text-shadow: none !important;
 }
@@ -79,8 +79,8 @@
 body {
   background-color: var(--color-bg);
   color: var(--color-text-primary);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  line-height: 1.6;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.65;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   margin: 0;
@@ -88,12 +88,55 @@ body {
   transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
-/* Editorial Story Serif Font */
+/* Medium Signature Editorial Typography */
 .font-editorial {
-  font-family: "Charter", "Georgia", "Cambria", "Times New Roman", serif;
+  font-family: "Newsreader", "Charter", "Georgia", "Iowan Old Style", "Cambria", serif;
+  font-size: 1.25rem;
+  line-height: 1.8;
+  letter-spacing: -0.003em;
 }
 
-/* Editorial quote styling with hairline border and subtle background */
+/* Content Editable canvas styling */
+[contenteditable]:empty:before {
+  content: attr(data-placeholder);
+  color: var(--color-text-tertiary);
+  pointer-events: none;
+  display: block;
+}
+
+[contenteditable] {
+  outline: none;
+}
+
+[contenteditable] h1,
+.font-editorial h1 {
+  font-family: "Newsreader", "Charter", "Georgia", serif;
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.25;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+  color: var(--color-text-primary);
+}
+
+[contenteditable] h2,
+.font-editorial h2 {
+  font-family: "Newsreader", "Charter", "Georgia", serif;
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.35;
+  margin-top: 1.75rem;
+  margin-bottom: 0.5rem;
+  color: var(--color-text-primary);
+}
+
+[contenteditable] p,
+.font-editorial p {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+[contenteditable] blockquote,
 .editorial-quote {
   border-left: 3px solid var(--color-text-primary);
   background-color: var(--color-bg-quote);
@@ -101,6 +144,39 @@ body {
   margin: 1.5rem 0;
   font-style: italic;
   color: var(--color-text-primary);
+  border-radius: 0 4px 4px 0;
+}
+
+[contenteditable] pre {
+  background-color: var(--color-code-bg);
+  border: 1px solid var(--color-border-soft);
+  padding: 1rem;
+  border-radius: 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.875rem;
+  overflow-x: auto;
+  margin: 1.5rem 0;
+}
+
+[contenteditable] hr,
+.editorial-divider {
+  border: none;
+  border-top: 1px solid var(--color-border-soft);
+  margin: 2.5rem 0;
+}
+
+[contenteditable] a,
+.font-editorial a {
+  color: var(--color-text-primary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--color-text-tertiary);
+  transition: text-decoration-color 0.15s ease;
+}
+
+[contenteditable] a:hover,
+.font-editorial a:hover {
+  text-decoration-color: var(--color-text-primary);
 }
 
 ::selection {
@@ -117,7 +193,7 @@ body {
 }
 ::-webkit-scrollbar-thumb {
   background: var(--color-border-soft);
-  border-radius: 2px;
+  border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-border-hover);

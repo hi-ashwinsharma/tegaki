@@ -1,8 +1,8 @@
 import React from 'react';
-import { CircularLogoIcon, SquircleHomeIcon, PeacockFeatherIcon } from '../common/Icons';
+import { CircularLogoIcon } from '../common/Icons';
 import { ThemeSelector } from '../common/ThemeSelector';
 import { useAuth } from '../../context/AuthContext';
-import { User as UserIcon } from 'lucide-react';
+import { Home, Feather, User } from 'lucide-react';
 
 interface SidebarProps {
   currentView: 'home' | 'writer' | 'reader' | 'landing';
@@ -33,15 +33,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
           className="p-2 rounded-full transition-transform hover:scale-105 active:scale-95 cursor-pointer"
           style={{ color: 'var(--color-text-primary)' }}
         >
-          <CircularLogoIcon size={34} />
+          <CircularLogoIcon size={30} />
         </button>
 
         {/* Navigation items */}
-        <nav className="flex flex-col items-center gap-5 mt-4">
-          {/* iOS Rounded Squircle Home Icon */}
+        <nav className="flex flex-col items-center gap-4 mt-2">
+          {/* Rounded Home Icon */}
           <button
             onClick={() => onNavigate('home')}
-            title="Home / Publications Feed"
+            title="Stories & Journals"
             className="p-2.5 rounded-xl transition-colors flex items-center justify-center cursor-pointer"
             style={{
               color: currentView === 'home' ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
@@ -49,13 +49,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
               border: currentView === 'home' ? '1px solid var(--color-border-soft)' : '1px solid transparent',
             }}
           >
-            <SquircleHomeIcon size={22} filled={currentView === 'home'} />
+            <Home size={19} strokeWidth={currentView === 'home' ? 2.2 : 1.6} />
           </button>
 
-          {/* Peacock Feather (The Editorial Writer Icon) */}
+          {/* Feather Quill (Writer Icon) */}
           <button
             onClick={() => onNavigate('writer')}
-            title="Write / New Journal (Peacock Feather)"
+            title="Write / New Journal"
             className="p-2.5 rounded-xl transition-colors flex items-center justify-center relative group cursor-pointer"
             style={{
               color: currentView === 'writer' ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
@@ -63,9 +63,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
               border: currentView === 'writer' ? '1px solid var(--color-border-soft)' : '1px solid transparent',
             }}
           >
-            <PeacockFeatherIcon size={24} active={currentView === 'writer'} />
+            <Feather size={19} strokeWidth={currentView === 'writer' ? 2.2 : 1.6} />
             <span
-              className="absolute left-16 px-2 py-1 text-xs rounded opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity whitespace-nowrap z-50"
+              className="absolute left-16 px-2.5 py-1 text-xs rounded opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity whitespace-nowrap z-50 font-sans"
               style={{
                 backgroundColor: 'var(--color-bg-surface)',
                 border: '1px solid var(--color-border-soft)',
@@ -79,15 +79,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* Bottom controls: Theme selector & Profile */}
-      <div className="flex flex-col items-center gap-5">
+      <div className="flex flex-col items-center gap-4">
         <ThemeSelector compact />
 
         {isAuthenticated && user ? (
           <div className="relative group">
             <button
               onClick={() => logout()}
-              title={`${user.name} (${user.authProvider}) — Click to sign out`}
-              className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center transition-opacity hover:opacity-80 cursor-pointer"
+              title={`${user.name} — Click to sign out`}
+              className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center transition-opacity hover:opacity-80 cursor-pointer"
               style={{
                 border: '1px solid var(--color-border-soft)',
                 backgroundColor: 'var(--color-bg-surface)',
@@ -106,14 +106,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <button
             onClick={onOpenAuth}
             title="Sign In"
-            className="p-2 rounded-full hover:opacity-80 transition-colors cursor-pointer"
+            className="w-8 h-8 rounded-full flex items-center justify-center hover:opacity-80 transition-colors cursor-pointer"
             style={{
               color: 'var(--color-text-secondary)',
               border: '1px solid var(--color-border-soft)',
               backgroundColor: 'var(--color-bg-surface)',
             }}
           >
-            <UserIcon size={18} />
+            <User size={15} strokeWidth={1.75} />
           </button>
         )}
       </div>
