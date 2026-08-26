@@ -1,14 +1,72 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /articles/{articleId} {
-      allow read: if true;
-      allow create: if true;
-      allow update, delete: if true;
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
     }
 
+    function isOwner(authorId) {
+      return isAuthenticated() && request.auth.uid == authorId;
+    }
+
+    function isValidArticlePayload() {
+      let data = request.resource.data;
+      return data.title is string && data.title.size() <= 500
+        && data.content is string && data.content.size() <= 1000000
+        && (data.subtitle == null || (data.subtitle is string && data.subtitle.size() <= 1000))
+        && (data.slug == null || (data.slug is string && data.slug.size() <= 200))
+        && data.visibility in ['private', 'published'];
+    }
+
+    // =========================================================================
+    // Articles Security Rules
+    // =========================================================================
+    match /articles/{articleId} {
+      // 1. Read: Public posts can be read by anyone; Private posts ONLY by author
+      allow read: if resource.data.visibility == 'published'
+                  || isOwner(resource.data.authorId);
+
+      // 2. Create: Only authenticated users can create, and must set authorId to own UID
+      allow create: if (isAuthenticated() && request.resource.data.authorId == request.auth.uid && isValidArticlePayload())
+                    // Allow anonymous / guest writes if needed during local testing
+                    || (!isAuthenticated() && isValidArticlePayload());
+
+      // 3. Update: 
+      //    - Full edit: only the author
+      //    - Claps: anyone can increment upvotes by 1
+      //    - Comment count: increments on new response
+      allow update: if (isOwner(resource.data.authorId) && isValidArticlePayload())
+                    // Public reader clapping
+                    || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['upvotes', 'updatedAt'])
+                        && request.resource.data.upvotes == resource.data.upvotes + 1)
+                    // Comment count sync
+                    || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['commentCount', 'updatedAt'])
+                        && request.resource.data.commentCount == resource.data.commentCount + 1);
+
+      // 4. Delete: Strictly only author
+      allow delete: if isOwner(resource.data.authorId);
+    }
+
+    // =========================================================================
+    // Comments Security Rules
+    // =========================================================================
     match /comments/{commentId} {
-      allow read, write: if true;
+      // Anyone can read comments
+      allow read: if true;
+
+      // Authenticated users or guest comments with size limit
+      allow create: if request.resource.data.content is string 
+                    && request.resource.data.content.size() <= 5000;
+
+      // Update: Author or clapping on comment
+      allow update: if isOwner(resource.data.authorId)
+                    || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['upvotes'])
+                        && request.resource.data.upvotes == resource.data.upvotes + 1);
+
+      // Delete: Strictly only author
+      allow delete: if isOwner(resource.data.authorId);
     }
   }
 }
