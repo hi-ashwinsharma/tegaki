@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { CircularLogoIcon } from '../common/Icons';
+import { CircularLogoIcon, ClapIcon } from '../common/Icons';
 import { ThemeSelector } from '../common/ThemeSelector';
 import { PrivacyModal } from './PrivacyModal';
 import { useTheme } from '../../context/ThemeContext';
@@ -16,7 +16,6 @@ import {
   Link2,
   Quote,
   Plus,
-  Flame,
   MessageSquare,
   Share2,
   BellOff,
@@ -722,8 +721,8 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
                     <span>/@your-name/essay-slug</span>
                   </span>
                   <span className="px-3 py-1 rounded-full flex items-center gap-1.5" style={{ backgroundColor: 'var(--color-bg-subtle)', border: '1px solid var(--color-border-soft)' }}>
-                    <Flame size={12} />
-                    <span>Resonated Claps</span>
+                    <ClapIcon size={12} />
+                    <span>Applauds & Claps</span>
                   </span>
                   <span className="px-3 py-1 rounded-full flex items-center gap-1.5" style={{ backgroundColor: 'var(--color-bg-subtle)', border: '1px solid var(--color-border-soft)' }}>
                     <MessageSquare size={12} />
@@ -752,7 +751,7 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
                 <div className="flex items-center justify-between pt-2 text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
                   <div className="flex items-center gap-3">
                     <span className="flex items-center gap-1 font-mono" style={{ color: 'var(--color-text-primary)' }}>
-                      <Flame size={13} /> 148 claps
+                      <ClapIcon size={13} /> 148 claps
                     </span>
                     <span className="flex items-center gap-1">
                       <MessageSquare size={13} /> 12 responses
