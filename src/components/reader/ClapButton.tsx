@@ -32,7 +32,6 @@ export const ClapButton: React.FC<ClapButtonProps> = ({ count, onClap }) => {
       <Sparkles
         size={16}
         strokeWidth={1.8}
-        className={count > 0 ? 'text-amber-500 fill-amber-500' : ''}
       />
       <span className="text-xs font-mono font-medium">{count}</span>
     </button>

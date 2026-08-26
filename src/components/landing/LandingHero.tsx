@@ -19,6 +19,8 @@ import {
   Sparkles,
   MessageSquare,
   Share2,
+  BellOff,
+  Zap,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -96,7 +98,7 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
   const handleInsertInteractiveQuote = () => {
     if (interactiveEditorRef.current) {
       interactiveEditorRef.current.focus();
-      document.execCommand('insertHTML', false, '<blockquote class="editorial-quote">&ldquo;Write your first draft in the dark.&rdquo;</blockquote><p><br></p>');
+      document.execCommand('insertHTML', false, '<blockquote class="editorial-quote">Write your first draft in the dark.</blockquote><p><br></p>');
       setInteractivePlusOpen(false);
       setInteractiveSaved(false);
       setTimeout(() => setInteractiveSaved(true), 600);
@@ -127,7 +129,7 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
         </div>
 
         <div className="flex items-center gap-4">
-          <ThemeSelector compact />
+          <ThemeSelector compact placement="bottom-right" />
 
           {isAuthenticated ? (
             <button
@@ -555,7 +557,7 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
 
                   {interactivePlusOpen && (
                     <div
-                      className="absolute left-8 top-0 flex items-center gap-1.5 p-1 rounded-full animate-fade-in z-20"
+                      className="absolute left-8 top-0 flex items-center gap-2 p-1.5 rounded-full animate-fade-in z-20"
                       style={{
                         backgroundColor: 'var(--color-bg-surface)',
                         border: '1px solid var(--color-border-soft)',
@@ -563,17 +565,18 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
                     >
                       <button
                         onClick={handleInsertInteractiveQuote}
-                        className="px-2 py-0.5 text-[11px] rounded-full hover:opacity-80 cursor-pointer"
+                        className="px-2.5 py-1 text-[11px] rounded-full flex items-center gap-1 hover:opacity-80 cursor-pointer"
                         style={{ color: 'var(--color-text-primary)' }}
                       >
-                        ❝ Quote
+                        <Quote size={11} />
+                        <span>Quote</span>
                       </button>
                       <button
                         onClick={handleInsertInteractiveDivider}
-                        className="px-2 py-0.5 text-[11px] rounded-full hover:opacity-80 cursor-pointer"
+                        className="px-2.5 py-1 text-[11px] rounded-full flex items-center gap-1 hover:opacity-80 cursor-pointer"
                         style={{ color: 'var(--color-text-primary)' }}
                       >
-                        — Divider
+                        <span>— Divider</span>
                       </button>
                     </div>
                   )}
@@ -664,14 +667,17 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
                   A journal where you never have to perform. Encrypted in-memory on your device with AES-256 before saving to Cloud Firestore. Zero metrics. Zero algorithms.
                 </p>
                 <div className="flex flex-wrap gap-2 pt-2 text-xs">
-                  <span className="px-3 py-1 rounded-full" style={{ backgroundColor: 'var(--color-bg-subtle)', border: '1px solid var(--color-border-soft)' }}>
-                    🔒 Zero-Knowledge Storage
+                  <span className="px-3 py-1 rounded-full flex items-center gap-1.5" style={{ backgroundColor: 'var(--color-bg-subtle)', border: '1px solid var(--color-border-soft)' }}>
+                    <Lock size={12} />
+                    <span>Zero-Knowledge Storage</span>
                   </span>
-                  <span className="px-3 py-1 rounded-full" style={{ backgroundColor: 'var(--color-bg-subtle)', border: '1px solid var(--color-border-soft)' }}>
-                    🔕 No Follower Counts
+                  <span className="px-3 py-1 rounded-full flex items-center gap-1.5" style={{ backgroundColor: 'var(--color-bg-subtle)', border: '1px solid var(--color-border-soft)' }}>
+                    <BellOff size={12} />
+                    <span>No Follower Counts</span>
                   </span>
-                  <span className="px-3 py-1 rounded-full" style={{ backgroundColor: 'var(--color-bg-subtle)', border: '1px solid var(--color-border-soft)' }}>
-                    ⚡ Offline Capable
+                  <span className="px-3 py-1 rounded-full flex items-center gap-1.5" style={{ backgroundColor: 'var(--color-bg-subtle)', border: '1px solid var(--color-border-soft)' }}>
+                    <Zap size={12} />
+                    <span>Offline Capable</span>
                   </span>
                 </div>
               </div>
@@ -711,14 +717,17 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
                   When your piece is ready, assign a custom slug and share it with readers. Distraction-free editorial typography, applause claps, and quiet margin responses.
                 </p>
                 <div className="flex flex-wrap gap-2 pt-2 text-xs">
-                  <span className="px-3 py-1 rounded-full font-mono" style={{ backgroundColor: 'var(--color-bg-subtle)', border: '1px solid var(--color-border-soft)' }}>
-                    /@your-name/essay-slug
+                  <span className="px-3 py-1 rounded-full font-mono flex items-center gap-1.5" style={{ backgroundColor: 'var(--color-bg-subtle)', border: '1px solid var(--color-border-soft)' }}>
+                    <Globe size={12} />
+                    <span>/@your-name/essay-slug</span>
                   </span>
-                  <span className="px-3 py-1 rounded-full" style={{ backgroundColor: 'var(--color-bg-subtle)', border: '1px solid var(--color-border-soft)' }}>
-                    ✨ Resonated Claps
+                  <span className="px-3 py-1 rounded-full flex items-center gap-1.5" style={{ backgroundColor: 'var(--color-bg-subtle)', border: '1px solid var(--color-border-soft)' }}>
+                    <Sparkles size={12} />
+                    <span>Resonated Claps</span>
                   </span>
-                  <span className="px-3 py-1 rounded-full" style={{ backgroundColor: 'var(--color-bg-subtle)', border: '1px solid var(--color-border-soft)' }}>
-                    💬 Margin Responses
+                  <span className="px-3 py-1 rounded-full flex items-center gap-1.5" style={{ backgroundColor: 'var(--color-bg-subtle)', border: '1px solid var(--color-border-soft)' }}>
+                    <MessageSquare size={12} />
+                    <span>Margin Responses</span>
                   </span>
                 </div>
               </div>
@@ -742,8 +751,8 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
                 </p>
                 <div className="flex items-center justify-between pt-2 text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
                   <div className="flex items-center gap-3">
-                    <span className="flex items-center gap-1 text-amber-500 font-mono">
-                      <Sparkles size={13} className="fill-amber-500" /> 148 claps
+                    <span className="flex items-center gap-1 font-mono" style={{ color: 'var(--color-text-primary)' }}>
+                      <Sparkles size={13} /> 148 claps
                     </span>
                     <span className="flex items-center gap-1">
                       <MessageSquare size={13} /> 12 responses

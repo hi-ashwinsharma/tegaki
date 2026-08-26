@@ -135,7 +135,7 @@ export const ArticleList: React.FC<ArticleListProps> = ({
         <div className="flex items-center gap-2">
           <span className="text-[11px] opacity-75">Sort:</span>
           <div
-            className="flex items-center p-0.5 rounded-full"
+            className="flex items-center p-1 rounded-full"
             style={{
               backgroundColor: 'var(--color-bg-surface)',
               border: '1px solid var(--color-border-soft)',
@@ -143,27 +143,29 @@ export const ArticleList: React.FC<ArticleListProps> = ({
           >
             <button
               onClick={() => setSortBy('latest')}
-              className="px-2.5 py-0.5 text-[11px] rounded-full transition-colors cursor-pointer flex items-center gap-1"
+              className="px-3.5 py-1.5 text-xs rounded-full transition-all cursor-pointer flex items-center gap-1.5"
               style={{
                 backgroundColor: sortBy === 'latest' ? 'var(--color-bg)' : 'transparent',
+                border: sortBy === 'latest' ? '1px solid var(--color-border-soft)' : '1px solid transparent',
                 color: sortBy === 'latest' ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
                 fontWeight: sortBy === 'latest' ? 600 : 400,
               }}
             >
-              <Clock size={11} />
+              <Clock size={13} strokeWidth={1.75} />
               <span>Latest</span>
             </button>
 
             <button
               onClick={() => setSortBy('upvotes')}
-              className="px-2.5 py-0.5 text-[11px] rounded-full transition-colors cursor-pointer flex items-center gap-1"
+              className="px-3.5 py-1.5 text-xs rounded-full transition-all cursor-pointer flex items-center gap-1.5"
               style={{
                 backgroundColor: sortBy === 'upvotes' ? 'var(--color-bg)' : 'transparent',
+                border: sortBy === 'upvotes' ? '1px solid var(--color-border-soft)' : '1px solid transparent',
                 color: sortBy === 'upvotes' ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
                 fontWeight: sortBy === 'upvotes' ? 600 : 400,
               }}
             >
-              <Sparkles size={11} className={sortBy === 'upvotes' ? 'text-amber-500 fill-amber-500' : ''} />
+              <Sparkles size={13} strokeWidth={1.75} />
               <span>Most Resonated</span>
             </button>
           </div>

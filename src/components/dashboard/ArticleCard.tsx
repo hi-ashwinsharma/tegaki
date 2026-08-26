@@ -165,10 +165,10 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
           <button
             onClick={() => onClap(article.id)}
             className="flex items-center gap-1.5 hover:opacity-80 transition-opacity cursor-pointer"
-            style={{ color: 'var(--color-text-secondary)' }}
+            style={{ color: article.upvotes > 0 ? 'var(--color-text-primary)' : 'var(--color-text-secondary)' }}
             title="Applaud"
           >
-            <Sparkles size={14} strokeWidth={1.8} className={article.upvotes > 0 ? 'text-amber-500 fill-amber-500' : ''} />
+            <Sparkles size={14} strokeWidth={1.8} />
             <span>{article.upvotes}</span>
           </button>
 
