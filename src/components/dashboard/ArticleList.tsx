@@ -96,7 +96,7 @@ export const ArticleList: React.FC<ArticleListProps> = ({
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-8 py-10">
-      {/* Top Search & Action Bar */}
+      {/* Row 1: Search & New Entry */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
         <TopSearchBar
           value={searchQuery}
@@ -118,47 +118,55 @@ export const ArticleList: React.FC<ArticleListProps> = ({
         </button>
       </div>
 
-      {/* Filter Tabs & Rank / Sort Controls */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 pb-1">
+      {/* Row 2: Clean Full-Width Filter Tabs with Baseline Hairline Border */}
+      <div className="mb-3">
         <FilterTabs current={filter} onChange={setFilter} counts={counts} />
+      </div>
 
-        {/* Minimalist Rank Selector */}
-        <div
-          className="flex items-center p-0.5 rounded-full select-none"
-          style={{
-            backgroundColor: 'var(--color-bg-surface)',
-            border: '1px solid var(--color-border-soft)',
-          }}
-        >
-          <button
-            onClick={() => setSortBy('latest')}
-            title="Rank by latest published date"
-            className="flex items-center gap-1.5 px-3 py-1 text-xs rounded-full transition-colors cursor-pointer"
+      {/* Row 3: Quiet Secondary Meta & Sort Bar */}
+      <div
+        className="flex items-center justify-between text-xs py-2 mb-4 select-none"
+        style={{ color: 'var(--color-text-tertiary)' }}
+      >
+        <span className="font-mono text-[11px]">
+          {processedArticles.length} {processedArticles.length === 1 ? 'thought' : 'thoughts'}
+        </span>
+
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] opacity-75">Sort:</span>
+          <div
+            className="flex items-center p-0.5 rounded-full"
             style={{
-              backgroundColor: sortBy === 'latest' ? 'var(--color-bg)' : 'transparent',
-              color: sortBy === 'latest' ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
-              fontWeight: sortBy === 'latest' ? 600 : 400,
-              border: sortBy === 'latest' ? '1px solid var(--color-border-soft)' : '1px solid transparent',
+              backgroundColor: 'var(--color-bg-surface)',
+              border: '1px solid var(--color-border-soft)',
             }}
           >
-            <Clock size={12} strokeWidth={1.8} />
-            <span>Latest</span>
-          </button>
+            <button
+              onClick={() => setSortBy('latest')}
+              className="px-2.5 py-0.5 text-[11px] rounded-full transition-colors cursor-pointer flex items-center gap-1"
+              style={{
+                backgroundColor: sortBy === 'latest' ? 'var(--color-bg)' : 'transparent',
+                color: sortBy === 'latest' ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
+                fontWeight: sortBy === 'latest' ? 600 : 400,
+              }}
+            >
+              <Clock size={11} />
+              <span>Latest</span>
+            </button>
 
-          <button
-            onClick={() => setSortBy('upvotes')}
-            title="Rank by most upvotes and resonance"
-            className="flex items-center gap-1.5 px-3 py-1 text-xs rounded-full transition-colors cursor-pointer"
-            style={{
-              backgroundColor: sortBy === 'upvotes' ? 'var(--color-bg)' : 'transparent',
-              color: sortBy === 'upvotes' ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
-              fontWeight: sortBy === 'upvotes' ? 600 : 400,
-              border: sortBy === 'upvotes' ? '1px solid var(--color-border-soft)' : '1px solid transparent',
-            }}
-          >
-            <Sparkles size={12} strokeWidth={1.8} className={sortBy === 'upvotes' ? 'text-amber-500 fill-amber-500' : ''} />
-            <span>Most Resonated</span>
-          </button>
+            <button
+              onClick={() => setSortBy('upvotes')}
+              className="px-2.5 py-0.5 text-[11px] rounded-full transition-colors cursor-pointer flex items-center gap-1"
+              style={{
+                backgroundColor: sortBy === 'upvotes' ? 'var(--color-bg)' : 'transparent',
+                color: sortBy === 'upvotes' ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
+                fontWeight: sortBy === 'upvotes' ? 600 : 400,
+              }}
+            >
+              <Sparkles size={11} className={sortBy === 'upvotes' ? 'text-amber-500 fill-amber-500' : ''} />
+              <span>Most Resonated</span>
+            </button>
+          </div>
         </div>
       </div>
 
