@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { CircularLogoIcon } from '../common/Icons';
 import { ThemeSelector } from '../common/ThemeSelector';
+import { UserAvatar } from '../common/UserAvatar';
 import { useAuth } from '../../context/AuthContext';
-import { Home, Feather, User } from 'lucide-react';
+import { Home, Feather, User, LogOut } from 'lucide-react';
 
 interface SidebarProps {
   currentView: 'home' | 'writer' | 'reader' | 'landing';
@@ -16,6 +17,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onOpenAuth,
 }) => {
   const { user, isAuthenticated, logout } = useAuth();
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const profileRef = useRef<HTMLDivElement>(null);
+
+  // Close profile menu on outside click
+  useEffect(() => {
+    const handleOutside = (e: MouseEvent) => {
+      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
+        setIsProfileMenuOpen(false);
+      }
+    };
+    if (isProfileMenuOpen) {
+      document.addEventListener('mousedown', handleOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleOutside);
+  }, [isProfileMenuOpen]);
 
   return (
     <aside
@@ -25,7 +41,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         borderRight: '1px solid var(--color-border-soft)',
       }}
     >
-      {/* Top circular minimal vector logo */}
+      {/* Top circular minimal logo */}
       <div className="flex flex-col items-center gap-6">
         <button
           onClick={() => onNavigate('home')}
@@ -83,24 +99,57 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <ThemeSelector compact />
 
         {isAuthenticated && user ? (
-          <div className="relative group">
+          <div className="relative" ref={profileRef}>
             <button
-              onClick={() => logout()}
-              title={`${user.name} — Click to sign out`}
-              className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center transition-opacity hover:opacity-80 cursor-pointer"
-              style={{
-                border: '1px solid var(--color-border-soft)',
-                backgroundColor: 'var(--color-bg-surface)',
-              }}
+              onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+              title={user.name}
+              className="rounded-full transition-opacity hover:opacity-85 cursor-pointer"
             >
-              {user.avatarUrl ? (
-                <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
-              ) : (
-                <span className="text-xs font-semibold" style={{ color: 'var(--color-text-primary)' }}>
-                  {user.name.slice(0, 2).toUpperCase()}
-                </span>
-              )}
+              <UserAvatar src={user.avatarUrl} name={user.name} size="md" />
             </button>
+
+            {/* Profile Dropdown Popover */}
+            {isProfileMenuOpen && (
+              <div
+                className="absolute left-12 bottom-0 z-50 py-3 px-3.5 w-60 rounded-xl select-none animate-fade-in"
+                style={{
+                  backgroundColor: 'var(--color-bg-surface)',
+                  border: '1px solid var(--color-border-soft)',
+                }}
+              >
+                <div className="flex items-center gap-3 pb-3 mb-2" style={{ borderBottom: '1px solid var(--color-border-soft)' }}>
+                  <UserAvatar src={user.avatarUrl} name={user.name} size="md" />
+                  <div className="flex flex-col overflow-hidden">
+                    <span className="text-xs font-semibold truncate" style={{ color: 'var(--color-text-primary)' }}>
+                      {user.name}
+                    </span>
+                    <span className="text-[11px] font-mono truncate" style={{ color: 'var(--color-text-tertiary)' }}>
+                      @{user.username}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="text-[11px] mb-3 truncate px-0.5" style={{ color: 'var(--color-text-secondary)' }}>
+                  {user.email}
+                </div>
+
+                <button
+                  onClick={() => {
+                    setIsProfileMenuOpen(false);
+                    logout();
+                  }}
+                  className="w-full py-1.5 px-2.5 text-xs font-medium rounded-md flex items-center justify-between transition-colors cursor-pointer hover:opacity-80"
+                  style={{
+                    backgroundColor: 'var(--color-bg-subtle)',
+                    color: 'var(--color-text-primary)',
+                    border: '1px solid var(--color-border-soft)',
+                  }}
+                >
+                  <span>Sign out</span>
+                  <LogOut size={13} strokeWidth={1.8} />
+                </button>
+              </div>
+            )}
           </div>
         ) : (
           <button

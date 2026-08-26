@@ -1,5 +1,6 @@
 import React from 'react';
 import type { Article } from '../../types/article';
+import { UserAvatar } from '../common/UserAvatar';
 import { MessageSquare, Edit3, Trash2, Globe, ExternalLink, Lock, Sparkles } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -40,24 +41,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
       {/* Author Bar */}
       <div className="flex items-center justify-between mb-2.5 text-xs">
         <div className="flex items-center gap-2">
-          {article.authorAvatar ? (
-            <img
-              src={article.authorAvatar}
-              alt={article.authorName}
-              className="w-5 h-5 rounded-full object-cover"
-            />
-          ) : (
-            <div
-              className="w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px]"
-              style={{
-                backgroundColor: 'var(--color-bg-subtle)',
-                color: 'var(--color-text-secondary)',
-                border: '1px solid var(--color-border-soft)',
-              }}
-            >
-              {article.authorName.charAt(0).toUpperCase()}
-            </div>
-          )}
+          <UserAvatar src={article.authorAvatar} name={article.authorName} size="xs" />
 
           <span className="font-medium" style={{ color: 'var(--color-text-primary)' }}>
             {article.authorName}
@@ -148,6 +132,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
             <img
               src={article.coverImage}
               alt={article.title}
+              referrerPolicy="no-referrer"
               className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
             />
           </div>

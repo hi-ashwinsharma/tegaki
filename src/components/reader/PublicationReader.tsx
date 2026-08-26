@@ -3,6 +3,7 @@ import type { Article } from '../../types/article';
 import { ClapButton } from './ClapButton';
 import { CommentsDrawer } from './CommentsDrawer';
 import { ShareModal } from './ShareModal';
+import { UserAvatar } from '../common/UserAvatar';
 import { ArrowLeft, MessageSquare, Share2, Edit3, Lock } from 'lucide-react';
 import { ThemeSelector } from '../common/ThemeSelector';
 import { useArticles } from '../../context/ArticlesContext';
@@ -146,24 +147,8 @@ export const PublicationReader: React.FC<PublicationReaderProps> = ({
           }}
         >
           <div className="flex items-center gap-3">
-            {article.authorAvatar ? (
-              <img
-                src={article.authorAvatar}
-                alt={article.authorName}
-                className="w-10 h-10 rounded-full object-cover"
-              />
-            ) : (
-              <div
-                className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm"
-                style={{
-                  backgroundColor: 'var(--color-bg-subtle)',
-                  color: 'var(--color-text-secondary)',
-                  border: '1px solid var(--color-border-soft)',
-                }}
-              >
-                {article.authorName.charAt(0).toUpperCase()}
-              </div>
-            )}
+            <UserAvatar src={article.authorAvatar} name={article.authorName} size="lg" />
+
             <div>
               <div className="text-sm font-semibold flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
                 <span>{article.authorName}</span>
@@ -202,7 +187,7 @@ export const PublicationReader: React.FC<PublicationReaderProps> = ({
         {/* Cover Image if present */}
         {article.coverImage && (
           <div className="my-8 rounded-lg overflow-hidden">
-            <img src={article.coverImage} alt={article.title} className="w-full max-h-[480px] object-cover" />
+            <img src={article.coverImage} alt={article.title} referrerPolicy="no-referrer" className="w-full max-h-[480px] object-cover" />
           </div>
         )}
 

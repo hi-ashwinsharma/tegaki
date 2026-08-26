@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Send, Heart, MessageSquare } from 'lucide-react';
 import type { Comment } from '../../types/article';
+import { UserAvatar } from '../common/UserAvatar';
 import { useAuth } from '../../context/AuthContext';
 
 interface CommentsDrawerProps {
@@ -48,7 +49,7 @@ export const CommentsDrawer: React.FC<CommentsDrawerProps> = ({
         >
           <div className="flex items-center gap-2">
             <MessageSquare size={16} style={{ color: 'var(--color-text-primary)' }} />
-            <h3 className="font-serif font-bold text-lg" style={{ color: 'var(--color-text-primary)' }}>
+            <h3 className="font-serif font-bold text-base" style={{ color: 'var(--color-text-primary)' }}>
               Responses ({comments.length})
             </h3>
           </div>
@@ -65,6 +66,11 @@ export const CommentsDrawer: React.FC<CommentsDrawerProps> = ({
         <div className="p-6" style={{ borderBottom: '1px solid var(--color-border-soft)' }}>
           <form onSubmit={handleSubmit} className="space-y-3">
             <div className="flex items-center gap-2 mb-2 text-xs">
+              <UserAvatar
+                src={isAuthenticated && user ? user.avatarUrl : undefined}
+                name={isAuthenticated && user ? user.name : 'Guest'}
+                size="xs"
+              />
               <span className="font-medium" style={{ color: 'var(--color-text-primary)' }}>
                 {isAuthenticated && user ? user.name : 'Writing as Guest'}
               </span>
@@ -75,7 +81,7 @@ export const CommentsDrawer: React.FC<CommentsDrawerProps> = ({
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder="What are your thoughts?"
-              className="w-full p-3 text-sm rounded-md focus:outline-none resize-none font-sans"
+              className="w-full p-3 text-xs rounded-md focus:outline-none resize-none font-sans"
               style={{
                 backgroundColor: 'var(--color-bg-surface)',
                 border: '1px solid var(--color-border-soft)',
@@ -85,7 +91,7 @@ export const CommentsDrawer: React.FC<CommentsDrawerProps> = ({
 
             <div className="flex items-center justify-between">
               <span className="text-[11px]" style={{ color: 'var(--color-text-tertiary)' }}>
-                Keep responses constructive and thoughtful.
+                Thoughtful and respectful responses.
               </span>
               <button
                 type="submit"
@@ -98,7 +104,7 @@ export const CommentsDrawer: React.FC<CommentsDrawerProps> = ({
                 }}
               >
                 <span>Respond</span>
-                <Send size={12} />
+                <Send size={11} />
               </button>
             </div>
           </form>
@@ -115,16 +121,7 @@ export const CommentsDrawer: React.FC<CommentsDrawerProps> = ({
               >
                 <div className="flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2">
-                    <div
-                      className="w-6 h-6 rounded-full flex items-center justify-center font-bold text-[10px]"
-                      style={{
-                        backgroundColor: 'var(--color-bg-subtle)',
-                        color: 'var(--color-text-secondary)',
-                        border: '1px solid var(--color-border-soft)',
-                      }}
-                    >
-                      {c.authorName.charAt(0).toUpperCase()}
-                    </div>
+                    <UserAvatar src={c.authorAvatar} name={c.authorName} size="xs" />
                     <span className="font-semibold" style={{ color: 'var(--color-text-primary)' }}>
                       {c.authorName}
                     </span>
@@ -134,7 +131,7 @@ export const CommentsDrawer: React.FC<CommentsDrawerProps> = ({
                   </span>
                 </div>
 
-                <p className="text-sm font-sans leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
+                <p className="text-xs font-sans leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
                   {c.content}
                 </p>
 
@@ -152,7 +149,7 @@ export const CommentsDrawer: React.FC<CommentsDrawerProps> = ({
             ))
           ) : (
             <div className="text-center py-12">
-              <p className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>
+              <p className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
                 No responses yet. Be the first to start the conversation.
               </p>
             </div>
