@@ -1,0 +1,124 @@
+@import "tailwindcss";
+
+/* 
+ * TEGAKI STRICT DESIGN SYSTEM
+ * Zero Gradients. Zero Box Shadows. Hairline (1px) borders with theme-adaptive colors.
+ */
+
+:root,
+[data-theme="white"] {
+  --color-bg: #FFFFFF;
+  --color-bg-surface: #F9F9F9;
+  --color-bg-subtle: #F2F2F2;
+  --color-bg-quote: #F7F7F7;
+  --color-border-soft: #E6E6E6;
+  --color-border-hover: #D1D1D1;
+  --color-text-primary: #242424;
+  --color-text-secondary: #6B6B6B;
+  --color-text-tertiary: #9E9E9E;
+  --color-accent: #1A8917;
+  --color-accent-hover: #156D12;
+  --color-code-bg: #F4F4F5;
+  --color-selection: rgba(26, 137, 23, 0.15);
+}
+
+[data-theme="off-white"] {
+  --color-bg: #FBF9F5;
+  --color-bg-surface: #F4F0E8;
+  --color-bg-subtle: #ECE7DC;
+  --color-bg-quote: #F5F1E9;
+  --color-border-soft: #E4DFC;
+  --color-border-hover: #CFC8B7;
+  --color-text-primary: #292826;
+  --color-text-secondary: #6E6A63;
+  --color-text-tertiary: #969085;
+  --color-accent: #1A8917;
+  --color-accent-hover: #156D12;
+  --color-code-bg: #EFE9DC;
+  --color-selection: rgba(160, 140, 110, 0.2);
+}
+
+[data-theme="dark-gray"] {
+  --color-bg: #242424;
+  --color-bg-surface: #1B1B1B;
+  --color-bg-subtle: #2D2D2D;
+  --color-bg-quote: #1E1E1E;
+  --color-border-soft: #383838;
+  --color-border-hover: #4D4D4D;
+  --color-text-primary: #EFEFEF;
+  --color-text-secondary: #A0A0A0;
+  --color-text-tertiary: #6E6E6E;
+  --color-accent: #23A55A;
+  --color-accent-hover: #2EC46E;
+  --color-code-bg: #1B1B1B;
+  --color-selection: rgba(35, 165, 90, 0.25);
+}
+
+[data-theme="amoled"] {
+  --color-bg: #000000;
+  --color-bg-surface: #0B0B0B;
+  --color-bg-subtle: #141414;
+  --color-bg-quote: #080808;
+  --color-border-soft: #202020;
+  --color-border-hover: #333333;
+  --color-text-primary: #D8D8D8;
+  --color-text-secondary: #888888;
+  --color-text-tertiary: #555555;
+  --color-accent: #23A55A;
+  --color-accent-hover: #2EC46E;
+  --color-code-bg: #0A0A0A;
+  --color-selection: rgba(255, 255, 255, 0.15);
+}
+
+/* Strict Anti-Shadow & Anti-Gradient rules */
+* {
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  margin: 0;
+  padding: 0;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+/* Editorial Story Serif Font */
+.font-editorial {
+  font-family: "Charter", "Georgia", "Cambria", "Times New Roman", serif;
+}
+
+/* Editorial quote styling with hairline border and subtle background */
+.editorial-quote {
+  border-left: 3px solid var(--color-text-primary);
+  background-color: var(--color-bg-quote);
+  padding: 1rem 1.25rem;
+  margin: 1.5rem 0;
+  font-style: italic;
+  color: var(--color-text-primary);
+}
+
+::selection {
+  background: var(--color-selection);
+}
+
+/* Custom scrollbar hairline */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-soft);
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-border-hover);
+}
