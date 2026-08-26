@@ -4,10 +4,12 @@ import { ClapButton } from './ClapButton';
 import { CommentsDrawer } from './CommentsDrawer';
 import { ShareModal } from './ShareModal';
 import { UserAvatar } from '../common/UserAvatar';
-import { ArrowLeft, MessageSquare, Share2, Edit3, Lock } from 'lucide-react';
+import { ArrowLeft, MessageSquare, Share2, Edit3, Lock, Trash2, SlidersHorizontal, Globe } from 'lucide-react';
 import { ThemeSelector } from '../common/ThemeSelector';
 import { useArticles } from '../../context/ArticlesContext';
 import { useAuth } from '../../context/AuthContext';
+import { DeleteConfirmModal } from '../common/DeleteConfirmModal';
+import { PublishModal } from '../writer/PublishModal';
 
 interface PublicationReaderProps {
   article: Article;
@@ -27,32 +29,64 @@ export const PublicationReader: React.FC<PublicationReaderProps> = ({
     addCommentToArticle,
     clapComment,
     decryptJournal,
+    updateArticle,
+    deleteArticle,
   } = useArticles();
 
+  const [currentArticle, setCurrentArticle] = useState<Article>(article);
   const [decryptedHtml, setDecryptedHtml] = useState<string>(article.content);
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
 
-  const isOwner = user?.id === article.authorId || user?.username === article.authorUsername;
-  const comments = getCommentsForArticle(article.id);
+  useEffect(() => {
+    setCurrentArticle(article);
+  }, [article]);
+
+  const isOwner = user?.id === currentArticle.authorId || user?.username === currentArticle.authorUsername;
+  const comments = getCommentsForArticle(currentArticle.id);
 
   useEffect(() => {
     async function loadDecrypted() {
-      if (article.isEncrypted) {
-        const decrypted = await decryptJournal(article);
+      if (currentArticle.isEncrypted) {
+        const decrypted = await decryptJournal(currentArticle);
         setDecryptedHtml(decrypted);
       } else {
-        setDecryptedHtml(article.content);
+        setDecryptedHtml(currentArticle.content);
       }
     }
     loadDecrypted();
-  }, [article, decryptJournal]);
+  }, [currentArticle, decryptJournal]);
 
-  const formattedDate = new Date(article.createdAt).toLocaleDateString('en-US', {
+  const formattedDate = new Date(currentArticle.createdAt).toLocaleDateString('en-US', {
     month: 'long',
     day: 'numeric',
     year: 'numeric',
   });
+
+  const handleUpdateSettings = async (params: {
+    slug: string;
+    visibility: 'private' | 'published';
+    tags: string[];
+    subtitle: string;
+  }) => {
+    const updated = await updateArticle(currentArticle.id, {
+      slug: params.slug,
+      visibility: params.visibility,
+      tags: params.tags,
+      subtitle: params.subtitle,
+    });
+    if (updated) {
+      setCurrentArticle(updated);
+    }
+    setIsSettingsModalOpen(false);
+  };
+
+  const handleDeleteConfirm = () => {
+    deleteArticle(currentArticle.id);
+    onBack();
+  };
 
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--color-bg)' }}>
@@ -78,29 +112,59 @@ export const PublicationReader: React.FC<PublicationReaderProps> = ({
             Tegaki
           </span>
 
-          {article.slug && (
+          {currentArticle.slug && (
             <span className="hidden md:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-mono" style={{ backgroundColor: 'var(--color-bg-surface)', border: '1px solid var(--color-border-soft)', color: 'var(--color-text-secondary)' }}>
-              <span>/@{article.authorUsername}/{article.slug}</span>
+              <Globe size={11} />
+              <span>/@{currentArticle.authorUsername}/{currentArticle.slug}</span>
             </span>
           )}
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <ThemeSelector compact />
 
           {isOwner && (
-            <button
-              onClick={() => onEdit(article)}
-              className="px-3.5 py-1.5 text-xs font-medium rounded-full flex items-center gap-1.5 transition-colors cursor-pointer"
-              style={{
-                backgroundColor: 'var(--color-bg-surface)',
-                border: '1px solid var(--color-border-soft)',
-                color: 'var(--color-text-primary)',
-              }}
-            >
-              <Edit3 size={13} />
-              <span>Edit</span>
-            </button>
+            <>
+              <button
+                onClick={() => setIsSettingsModalOpen(true)}
+                className="px-3 py-1.5 text-xs font-medium rounded-full flex items-center gap-1.5 transition-colors cursor-pointer"
+                style={{
+                  backgroundColor: 'var(--color-bg-surface)',
+                  border: '1px solid var(--color-border-soft)',
+                  color: 'var(--color-text-primary)',
+                }}
+                title="Change slug & settings"
+              >
+                <SlidersHorizontal size={13} />
+                <span className="hidden sm:inline">Settings</span>
+              </button>
+
+              <button
+                onClick={() => onEdit(currentArticle)}
+                className="px-3.5 py-1.5 text-xs font-medium rounded-full flex items-center gap-1.5 transition-colors cursor-pointer"
+                style={{
+                  backgroundColor: 'var(--color-bg-surface)',
+                  border: '1px solid var(--color-border-soft)',
+                  color: 'var(--color-text-primary)',
+                }}
+              >
+                <Edit3 size={13} />
+                <span>Edit</span>
+              </button>
+
+              <button
+                onClick={() => setIsDeleteModalOpen(true)}
+                className="p-2 rounded-full hover:text-red-500 hover:opacity-75 transition-colors cursor-pointer"
+                style={{
+                  backgroundColor: 'var(--color-bg-surface)',
+                  border: '1px solid var(--color-border-soft)',
+                  color: 'var(--color-text-tertiary)',
+                }}
+                title="Delete story permanently"
+              >
+                <Trash2 size={14} />
+              </button>
+            </>
           )}
 
           <button
@@ -125,16 +189,16 @@ export const PublicationReader: React.FC<PublicationReaderProps> = ({
           className="text-3xl sm:text-5xl font-serif font-bold tracking-tight mb-4 leading-tight"
           style={{ color: 'var(--color-text-primary)' }}
         >
-          {article.title}
+          {currentArticle.title}
         </h1>
 
         {/* Subtitle */}
-        {article.subtitle && (
+        {currentArticle.subtitle && (
           <p
             className="text-lg sm:text-xl font-serif leading-relaxed mb-6"
             style={{ color: 'var(--color-text-secondary)' }}
           >
-            {article.subtitle}
+            {currentArticle.subtitle}
           </p>
         )}
 
@@ -147,12 +211,12 @@ export const PublicationReader: React.FC<PublicationReaderProps> = ({
           }}
         >
           <div className="flex items-center gap-3">
-            <UserAvatar src={article.authorAvatar} name={article.authorName} size="lg" />
+            <UserAvatar src={currentArticle.authorAvatar} name={currentArticle.authorName} size="lg" />
 
             <div>
               <div className="text-sm font-semibold flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
-                <span>{article.authorName}</span>
-                {article.isEncrypted && (
+                <span>{currentArticle.authorName}</span>
+                {currentArticle.isEncrypted && (
                   <span className="inline-flex items-center gap-1 text-[11px] font-normal" style={{ color: 'var(--color-text-tertiary)' }}>
                     <Lock size={11} />
                     <span>Private</span>
@@ -160,7 +224,7 @@ export const PublicationReader: React.FC<PublicationReaderProps> = ({
                 )}
               </div>
               <div className="text-xs flex items-center gap-2" style={{ color: 'var(--color-text-tertiary)' }}>
-                <span>{article.readingTimeMinutes} min read</span>
+                <span>{currentArticle.readingTimeMinutes} min read</span>
                 <span>•</span>
                 <span>{formattedDate}</span>
               </div>
@@ -168,7 +232,7 @@ export const PublicationReader: React.FC<PublicationReaderProps> = ({
           </div>
 
           <div className="flex items-center gap-3">
-            <ClapButton count={article.upvotes} onClap={() => clapArticle(article.id)} />
+            <ClapButton count={currentArticle.upvotes} onClap={() => clapArticle(currentArticle.id)} />
             <button
               onClick={() => setIsCommentsOpen(true)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs transition-opacity hover:opacity-80 cursor-pointer"
@@ -179,15 +243,15 @@ export const PublicationReader: React.FC<PublicationReaderProps> = ({
               }}
             >
               <MessageSquare size={13} />
-              <span>{article.commentCount}</span>
+              <span>{currentArticle.commentCount}</span>
             </button>
           </div>
         </div>
 
         {/* Cover Image if present */}
-        {article.coverImage && (
+        {currentArticle.coverImage && (
           <div className="my-8 rounded-lg overflow-hidden">
-            <img src={article.coverImage} alt={article.title} referrerPolicy="no-referrer" className="w-full max-h-[480px] object-cover" />
+            <img src={currentArticle.coverImage} alt={currentArticle.title} referrerPolicy="no-referrer" className="w-full max-h-[480px] object-cover" />
           </div>
         )}
 
@@ -199,9 +263,9 @@ export const PublicationReader: React.FC<PublicationReaderProps> = ({
         />
 
         {/* Tags */}
-        {article.tags && article.tags.length > 0 && (
+        {currentArticle.tags && currentArticle.tags.length > 0 && (
           <div className="flex flex-wrap gap-2 pt-12">
-            {article.tags.map((t) => (
+            {currentArticle.tags.map((t) => (
               <span
                 key={t}
                 className="px-3 py-1 rounded-full text-xs"
@@ -223,7 +287,7 @@ export const PublicationReader: React.FC<PublicationReaderProps> = ({
           style={{ borderTop: '1px solid var(--color-border-soft)' }}
         >
           <div className="flex items-center gap-4">
-            <ClapButton count={article.upvotes} onClap={() => clapArticle(article.id)} />
+            <ClapButton count={currentArticle.upvotes} onClap={() => clapArticle(currentArticle.id)} />
             <button
               onClick={() => setIsCommentsOpen(true)}
               className="flex items-center gap-2 px-4 py-2 rounded-full text-xs transition-opacity hover:opacity-80 cursor-pointer"
@@ -234,7 +298,7 @@ export const PublicationReader: React.FC<PublicationReaderProps> = ({
               }}
             >
               <MessageSquare size={15} />
-              <span>Responses ({article.commentCount})</span>
+              <span>Responses ({currentArticle.commentCount})</span>
             </button>
           </div>
 
@@ -258,7 +322,7 @@ export const PublicationReader: React.FC<PublicationReaderProps> = ({
         isOpen={isCommentsOpen}
         onClose={() => setIsCommentsOpen(false)}
         comments={comments}
-        onAddComment={(content) => addCommentToArticle(article.id, content)}
+        onAddComment={(content) => addCommentToArticle(currentArticle.id, content)}
         onClapComment={(cId) => clapComment(cId)}
       />
 
@@ -266,7 +330,27 @@ export const PublicationReader: React.FC<PublicationReaderProps> = ({
       <ShareModal
         isOpen={isShareOpen}
         onClose={() => setIsShareOpen(false)}
-        article={article}
+        article={currentArticle}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleDeleteConfirm}
+        title={currentArticle.title}
+      />
+
+      {/* Slug & Publication Settings Modal */}
+      <PublishModal
+        isOpen={isSettingsModalOpen}
+        onClose={() => setIsSettingsModalOpen(false)}
+        title={currentArticle.title}
+        subtitle={currentArticle.subtitle || ''}
+        initialSlug={currentArticle.slug}
+        initialVisibility={currentArticle.visibility}
+        initialTags={currentArticle.tags}
+        onConfirmPublish={handleUpdateSettings}
       />
     </div>
   );
