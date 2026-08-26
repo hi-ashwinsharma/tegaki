@@ -1,6 +1,6 @@
 <div align="center">
 
-# Tegaki • 手書き
+# Tegaki
 
 ### *First for yourself. Then, for the world.*
 
