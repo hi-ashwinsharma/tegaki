@@ -1,10 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { CircularLogoIcon } from '../common/Icons';
 import { ThemeSelector } from '../common/ThemeSelector';
 import { PrivacyModal } from './PrivacyModal';
 import { useTheme } from '../../context/ThemeContext';
 import type { ThemeMode } from '../../types/theme';
-import { ArrowRight, Lock, Globe, Feather, ArrowUpRight, Check, Bold, Italic, Link2, Quote, Plus } from 'lucide-react';
+import {
+  ArrowRight,
+  Lock,
+  Globe,
+  Feather,
+  ArrowUpRight,
+  Check,
+  Bold,
+  Italic,
+  Link2,
+  Quote,
+  Plus,
+  Sparkles,
+  MessageSquare,
+  Share2,
+} from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 interface LandingHeroProps {
@@ -22,9 +37,75 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
   const { theme, setTheme, themes } = useTheme();
   const [modalState, setModalState] = useState<'privacy' | 'terms' | null>(null);
 
+  // Interactive Live Sheet of Paper State
+  const [interactiveTitle, setInteractiveTitle] = useState('The Solitude of First Thoughts');
+  const [interactiveVisibility, setInteractiveVisibility] = useState<'private' | 'published'>('private');
+  const [interactiveSlug, setInteractiveSlug] = useState('first-thoughts');
+  const [interactiveSaved, setInteractiveSaved] = useState(true);
+  const [interactiveToolbarPos, setInteractiveToolbarPos] = useState<{ top: number; left: number } | null>(null);
+  const [interactivePlusOpen, setInteractivePlusOpen] = useState(false);
+  const [showSlugPreview, setShowSlugPreview] = useState(false);
+  const interactiveEditorRef = useRef<HTMLDivElement>(null);
+
+  // Two Spheres Interactive Lens State
+  const [activeSphere, setActiveSphere] = useState<'private' | 'public'>('private');
+
+  // Track text selection inside interactive paper canvas
+  useEffect(() => {
+    const handleSelection = () => {
+      const sel = window.getSelection();
+      if (!sel || sel.isCollapsed || !interactiveEditorRef.current) {
+        setInteractiveToolbarPos(null);
+        return;
+      }
+      if (!interactiveEditorRef.current.contains(sel.anchorNode)) {
+        setInteractiveToolbarPos(null);
+        return;
+      }
+      const range = sel.getRangeAt(0);
+      const rect = range.getBoundingClientRect();
+      if (rect.width > 0) {
+        setInteractiveToolbarPos({
+          top: rect.top,
+          left: rect.left + rect.width / 2,
+        });
+      } else {
+        setInteractiveToolbarPos(null);
+      }
+    };
+    document.addEventListener('selectionchange', handleSelection);
+    return () => document.removeEventListener('selectionchange', handleSelection);
+  }, []);
+
+  const handleFormatCommand = (command: string, value: string = '') => {
+    document.execCommand(command, false, value);
+    setInteractiveSaved(false);
+    setTimeout(() => setInteractiveSaved(true), 600);
+  };
+
+  const handleInsertInteractiveDivider = () => {
+    if (interactiveEditorRef.current) {
+      interactiveEditorRef.current.focus();
+      document.execCommand('insertHTML', false, '<hr class="editorial-divider my-6" /><p><br></p>');
+      setInteractivePlusOpen(false);
+      setInteractiveSaved(false);
+      setTimeout(() => setInteractiveSaved(true), 600);
+    }
+  };
+
+  const handleInsertInteractiveQuote = () => {
+    if (interactiveEditorRef.current) {
+      interactiveEditorRef.current.focus();
+      document.execCommand('insertHTML', false, '<blockquote class="editorial-quote">&ldquo;Write your first draft in the dark.&rdquo;</blockquote><p><br></p>');
+      setInteractivePlusOpen(false);
+      setInteractiveSaved(false);
+      setTimeout(() => setInteractiveSaved(true), 600);
+    }
+  };
+
   return (
     <div
-      className="min-h-screen flex flex-col justify-between selection:bg-neutral-200 dark:selection:bg-neutral-800"
+      className="min-h-screen selection:bg-neutral-200 dark:selection:bg-neutral-800"
       style={{ backgroundColor: 'var(--color-bg)' }}
     >
       {/* Top Navbar */}
@@ -86,10 +167,11 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
         </div>
       </header>
 
-      {/* Main Content Area with Natural Pacing and Scroll */}
-      <main className="flex-grow">
-        {/* Hero Section: 2-Column Editorial Aesthetic */}
-        <section className="max-w-6xl mx-auto px-6 sm:px-12 md:px-16 pt-16 pb-24 md:pt-24 md:pb-32 grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
+      {/* ========================================================================= */}
+      {/* 1. HERO SECTION (Full Viewport Height) */}
+      {/* ========================================================================= */}
+      <section className="min-h-[calc(100vh-65px)] flex flex-col justify-center max-w-6xl mx-auto px-6 sm:px-12 md:px-16 py-12">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
           {/* Left Column */}
           <div className="lg:col-span-7 space-y-7">
             <div
@@ -108,9 +190,12 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
               className="text-4xl sm:text-6xl md:text-7xl font-serif font-bold tracking-tight leading-[1.08]"
               style={{ color: 'var(--color-text-primary)' }}
             >
-              First for yourself. <br />
+              <span className="inline-block whitespace-nowrap sm:whitespace-normal xl:whitespace-nowrap">
+                First for yourself.
+              </span>
+              <br />
               <span className="italic font-normal opacity-90">
-                Then, if you wish, for the world.
+                Then, for the world.
               </span>
             </h1>
 
@@ -118,7 +203,7 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
               className="text-base sm:text-lg font-serif max-w-xl leading-relaxed"
               style={{ color: 'var(--color-text-secondary)' }}
             >
-              A notebook stripped of noise. Write privately without metrics, feeds, or audience anxiety. When an idea has matured, release it with quiet dignity.
+              Tegaki is a quiet sanctuary for unhurried thought. A notebook without algorithms, metrics, or premature audience anxiety—where ideas mature in private before entering the world.
             </p>
 
             <div className="flex flex-wrap items-center gap-3.5 pt-2">
@@ -222,266 +307,546 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
               </div>
             </div>
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* Section 1: The Tactile Writer Showcase */}
-        <section
-          className="py-24 px-6 sm:px-12"
-          style={{
-            borderTop: '1px solid var(--color-border-soft)',
-            backgroundColor: 'var(--color-bg-subtle)',
-          }}
-        >
-          <div className="max-w-4xl mx-auto space-y-12">
-            <div className="text-center space-y-3 max-w-xl mx-auto">
-              <h2
-                className="text-3xl sm:text-4xl font-serif font-bold tracking-tight"
-                style={{ color: 'var(--color-text-primary)' }}
-              >
-                A clean sheet of paper.
-              </h2>
-              <p className="text-sm font-serif" style={{ color: 'var(--color-text-secondary)' }}>
-                No complex sidebars or distractions. Just words in Newsreader serif typography.
-              </p>
-            </div>
-
-            {/* Writer Canvas Graphic */}
-            <div
-              className="rounded-2xl p-6 sm:p-12 select-none relative"
-              style={{
-                backgroundColor: 'var(--color-bg)',
-                border: '1px solid var(--color-border-soft)',
-              }}
-            >
-              {/* Writer Header Simulation */}
-              <div
-                className="flex items-center justify-between pb-4 mb-8 text-xs"
-                style={{ borderBottom: '1px solid var(--color-border-soft)' }}
-              >
-                <div className="flex items-center gap-2" style={{ color: 'var(--color-text-tertiary)' }}>
-                  <Check size={13} style={{ color: 'var(--color-accent)' }} />
-                  <span>Preserved in silence</span>
-                </div>
-                <div
-                  className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px]"
-                  style={{
-                    backgroundColor: 'var(--color-bg-surface)',
-                    border: '1px solid var(--color-border-soft)',
-                    color: 'var(--color-text-primary)',
-                  }}
-                >
-                  <Lock size={11} strokeWidth={1.8} />
-                  <span>Private Notebook</span>
-                </div>
-              </div>
-
-              {/* Title & Body */}
-              <div className="space-y-6 max-w-2xl mx-auto">
-                <h3
-                  className="text-2xl sm:text-4xl font-serif font-bold tracking-tight"
-                  style={{ color: 'var(--color-text-primary)' }}
-                >
-                  The Solitude of First Thoughts
-                </h3>
-
-                <div className="relative">
-                  {/* Floating Bubble Toolbar Callout */}
-                  <div
-                    className="absolute -top-10 left-12 flex items-center gap-1 px-2 py-1 rounded-lg text-xs"
-                    style={{
-                      backgroundColor: 'var(--color-bg-surface)',
-                      border: '1px solid var(--color-border-soft)',
-                      color: 'var(--color-text-primary)',
-                    }}
-                  >
-                    <button className="p-1 hover:opacity-75"><Bold size={13} /></button>
-                    <button className="p-1 hover:opacity-75"><Italic size={13} /></button>
-                    <button className="p-1 hover:opacity-75"><Link2 size={13} /></button>
-                    <button className="p-1 hover:opacity-75"><Quote size={13} /></button>
-                  </div>
-
-                  <p
-                    className="font-editorial text-base sm:text-lg leading-relaxed"
-                    style={{ color: 'var(--color-text-primary)' }}
-                  >
-                    Writing was meant to be an honest dialogue with oneself. The blank page offers freedom without the pressure of an audience watching your first draft.
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-3 pt-2 text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
-                  <div
-                    className="w-6 h-6 rounded-full flex items-center justify-center"
-                    style={{
-                      border: '1px solid var(--color-border-soft)',
-                      backgroundColor: 'var(--color-bg-surface)',
-                    }}
-                  >
-                    <Plus size={13} />
-                  </div>
-                  <span className="font-editorial italic">Click + to insert images, website cards, or code blocks</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Section 2: Two Spheres (Private vs Public) */}
-        <section className="max-w-5xl mx-auto px-6 sm:px-12 py-24 md:py-32 space-y-12">
-          <div className="text-center space-y-3 max-w-xl mx-auto">
+      {/* ========================================================================= */}
+      {/* 2. IT ALL STARTS WITH A SHEET OF PAPER (Full Viewport Height & Interactive) */}
+      {/* ========================================================================= */}
+      <section
+        className="min-h-screen flex flex-col justify-center px-6 sm:px-12 py-16"
+        style={{
+          borderTop: '1px solid var(--color-border-soft)',
+          backgroundColor: 'var(--color-bg-subtle)',
+        }}
+      >
+        <div className="max-w-4xl mx-auto w-full space-y-8">
+          <div className="text-center space-y-2 max-w-xl mx-auto">
             <h2
               className="text-3xl sm:text-4xl font-serif font-bold tracking-tight"
               style={{ color: 'var(--color-text-primary)' }}
             >
-              Two Spheres of Thought
+              It all starts with a sheet of paper.
             </h2>
-            <p className="text-sm font-serif" style={{ color: 'var(--color-text-secondary)' }}>
-              Complete privacy when developing ideas. Total clarity when publishing.
+            <p className="text-xs sm:text-sm font-serif" style={{ color: 'var(--color-text-secondary)' }}>
+              Try it below: Select text to format, type your thoughts, or click + to add margin notes.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Sphere 1: The Private Notebook */}
-            <div
-              className="p-8 rounded-2xl space-y-5"
-              style={{
-                backgroundColor: 'var(--color-bg-surface)',
-                border: '1px solid var(--color-border-soft)',
-              }}
-            >
+          {/* Interactive Live Mini-Writer Canvas */}
+          <div
+            className="rounded-2xl p-6 sm:p-10 select-none relative transition-all"
+            style={{
+              backgroundColor: 'var(--color-bg)',
+              border: '1px solid var(--color-border-soft)',
+            }}
+          >
+            {/* Floating Selection Toolbar Popup */}
+            {interactiveToolbarPos && (
               <div
-                className="w-10 h-10 rounded-full flex items-center justify-center"
+                className="fixed z-50 transform -translate-x-1/2 -translate-y-full mb-2 flex items-center px-1.5 py-1 rounded-lg select-none animate-fade-in"
                 style={{
-                  backgroundColor: 'var(--color-bg)',
+                  top: interactiveToolbarPos.top - 6,
+                  left: interactiveToolbarPos.left,
+                  backgroundColor: 'var(--color-bg-surface)',
                   border: '1px solid var(--color-border-soft)',
-                  color: 'var(--color-accent)',
+                  color: 'var(--color-text-primary)',
                 }}
               >
-                <Lock size={18} strokeWidth={1.8} />
+                <button
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    handleFormatCommand('bold');
+                  }}
+                  className="p-1.5 rounded hover:opacity-75 cursor-pointer"
+                  title="Bold"
+                >
+                  <Bold size={13} strokeWidth={2} />
+                </button>
+                <button
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    handleFormatCommand('italic');
+                  }}
+                  className="p-1.5 rounded hover:opacity-75 cursor-pointer"
+                  title="Italic"
+                >
+                  <Italic size={13} strokeWidth={2} />
+                </button>
+                <button
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    const url = prompt('Enter link URL:');
+                    if (url) handleFormatCommand('createLink', url);
+                  }}
+                  className="p-1.5 rounded hover:opacity-75 cursor-pointer"
+                  title="Add Link"
+                >
+                  <Link2 size={13} />
+                </button>
+                <button
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    handleFormatCommand('formatBlock', '<blockquote>');
+                  }}
+                  className="p-1.5 rounded hover:opacity-75 cursor-pointer"
+                  title="Quote"
+                >
+                  <Quote size={13} />
+                </button>
+              </div>
+            )}
+
+            {/* Writer Header Simulation */}
+            <div
+              className="flex items-center justify-between pb-4 mb-6 text-xs"
+              style={{ borderBottom: '1px solid var(--color-border-soft)' }}
+            >
+              <div className="flex items-center gap-2" style={{ color: 'var(--color-text-tertiary)' }}>
+                {interactiveSaved ? (
+                  <>
+                    <Check size={13} style={{ color: 'var(--color-accent)' }} />
+                    <span>Preserved in silence</span>
+                  </>
+                ) : (
+                  <span>Inking draft...</span>
+                )}
               </div>
 
-              <h3 className="text-xl font-serif font-bold" style={{ color: 'var(--color-text-primary)' }}>
-                The Solitary Notebook
-              </h3>
+              <div className="flex items-center gap-3">
+                {/* Privacy Pill Switcher */}
+                <div
+                  className="flex items-center p-0.5 rounded-full"
+                  style={{
+                    backgroundColor: 'var(--color-bg-surface)',
+                    border: '1px solid var(--color-border-soft)',
+                  }}
+                >
+                  <button
+                    onClick={() => {
+                      setInteractiveVisibility('private');
+                      setShowSlugPreview(false);
+                    }}
+                    className="flex items-center gap-1 px-2.5 py-0.5 text-[11px] rounded-full transition-colors cursor-pointer"
+                    style={{
+                      backgroundColor: interactiveVisibility === 'private' ? 'var(--color-bg)' : 'transparent',
+                      color: interactiveVisibility === 'private' ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
+                      fontWeight: interactiveVisibility === 'private' ? 600 : 400,
+                    }}
+                  >
+                    <Lock size={11} strokeWidth={1.8} />
+                    <span>Private</span>
+                  </button>
 
-              <p className="text-sm leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
-                Drafts, journals, and reflections stay encrypted on your device. No metrics, no followers, no public judgment.
-              </p>
+                  <button
+                    onClick={() => {
+                      setInteractiveVisibility('published');
+                      setShowSlugPreview(true);
+                    }}
+                    className="flex items-center gap-1 px-2.5 py-0.5 text-[11px] rounded-full transition-colors cursor-pointer"
+                    style={{
+                      backgroundColor: interactiveVisibility === 'published' ? 'var(--color-bg)' : 'transparent',
+                      color: interactiveVisibility === 'published' ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
+                      fontWeight: interactiveVisibility === 'published' ? 600 : 400,
+                    }}
+                  >
+                    <Globe size={11} strokeWidth={1.8} />
+                    <span>Public</span>
+                  </button>
+                </div>
 
-              <ul className="space-y-2 text-xs pt-2" style={{ color: 'var(--color-text-secondary)' }}>
-                <li className="flex items-center gap-2">
-                  <Check size={14} style={{ color: 'var(--color-accent)' }} />
-                  <span>Client-side AES-256 encryption</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check size={14} style={{ color: 'var(--color-accent)' }} />
-                  <span>Zero tracking & zero ads</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check size={14} style={{ color: 'var(--color-accent)' }} />
-                  <span>Always available offline</span>
-                </li>
-              </ul>
+                {interactiveVisibility === 'published' && (
+                  <button
+                    onClick={() => setShowSlugPreview(!showSlugPreview)}
+                    className="px-3 py-1 text-[11px] font-medium rounded-full cursor-pointer transition-opacity hover:opacity-90"
+                    style={{
+                      backgroundColor: 'var(--color-accent)',
+                      color: '#FFFFFF',
+                      border: '1px solid var(--color-accent)',
+                    }}
+                  >
+                    Slug: /@{interactiveSlug}
+                  </button>
+                )}
+              </div>
             </div>
 
-            {/* Sphere 2: The Public Story */}
-            <div
-              className="p-8 rounded-2xl space-y-5"
-              style={{
-                backgroundColor: 'var(--color-bg-surface)',
-                border: '1px solid var(--color-border-soft)',
-              }}
-            >
+            {/* Custom Slug Drawer Simulation */}
+            {showSlugPreview && interactiveVisibility === 'published' && (
               <div
-                className="w-10 h-10 rounded-full flex items-center justify-center"
+                className="mb-6 p-3.5 rounded-xl text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-fade-in"
                 style={{
-                  backgroundColor: 'var(--color-bg)',
+                  backgroundColor: 'var(--color-bg-surface)',
                   border: '1px solid var(--color-border-soft)',
-                  color: 'var(--color-accent)',
                 }}
               >
-                <Globe size={18} strokeWidth={1.8} />
+                <div className="flex items-center gap-2">
+                  <Globe size={14} style={{ color: 'var(--color-accent)' }} />
+                  <span style={{ color: 'var(--color-text-secondary)' }}>Live Publication Route:</span>
+                  <code className="font-mono font-medium" style={{ color: 'var(--color-accent)' }}>
+                    /@you/{interactiveSlug}
+                  </code>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={interactiveSlug}
+                    onChange={(e) => setInteractiveSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                    placeholder="custom-slug"
+                    className="px-2 py-1 text-[11px] font-mono rounded bg-transparent focus:outline-none"
+                    style={{
+                      border: '1px solid var(--color-border-soft)',
+                      color: 'var(--color-text-primary)',
+                    }}
+                  />
+                  <span className="text-[10px]" style={{ color: 'var(--color-text-tertiary)' }}>
+                    (Author Defined)
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Editable Canvas Content */}
+            <div className="space-y-4 max-w-2xl mx-auto">
+              <input
+                type="text"
+                value={interactiveTitle}
+                onChange={(e) => {
+                  setInteractiveTitle(e.target.value);
+                  setInteractiveSaved(false);
+                  setTimeout(() => setInteractiveSaved(true), 600);
+                }}
+                className="w-full bg-transparent font-serif font-bold text-2xl sm:text-4xl tracking-tight focus:outline-none"
+                style={{ color: 'var(--color-text-primary)' }}
+              />
+
+              <div className="w-full h-px" style={{ backgroundColor: 'var(--color-border-soft)' }} />
+
+              <div
+                ref={interactiveEditorRef}
+                contentEditable
+                suppressContentEditableWarning
+                onInput={() => {
+                  setInteractiveSaved(false);
+                  setTimeout(() => setInteractiveSaved(true), 600);
+                }}
+                className="font-editorial text-base sm:text-lg leading-relaxed focus:outline-none min-h-[140px]"
+                style={{ color: 'var(--color-text-primary)' }}
+              >
+                Writing is an honest dialogue with oneself. The blank page offers freedom without the pressure of a crowd watching your first draft. Highlight any sentence to format.
               </div>
 
-              <h3 className="text-xl font-serif font-bold" style={{ color: 'var(--color-text-primary)' }}>
-                The Published Letter
-              </h3>
+              {/* Plus Button Simulation */}
+              <div className="flex items-center gap-3 pt-2 text-xs select-none">
+                <div className="relative">
+                  <button
+                    onClick={() => setInteractivePlusOpen(!interactivePlusOpen)}
+                    className="w-6 h-6 rounded-full flex items-center justify-center transition-transform cursor-pointer"
+                    style={{
+                      border: '1px solid var(--color-border-soft)',
+                      backgroundColor: 'var(--color-bg-surface)',
+                      color: 'var(--color-text-secondary)',
+                      transform: interactivePlusOpen ? 'rotate(45deg)' : 'none',
+                    }}
+                  >
+                    <Plus size={13} strokeWidth={2} />
+                  </button>
 
-              <p className="text-sm leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
-                When an essay has found its shape, publish with your custom slug. Pure Medium-style reading with claps and marginalia.
-              </p>
+                  {interactivePlusOpen && (
+                    <div
+                      className="absolute left-8 top-0 flex items-center gap-1.5 p-1 rounded-full animate-fade-in z-20"
+                      style={{
+                        backgroundColor: 'var(--color-bg-surface)',
+                        border: '1px solid var(--color-border-soft)',
+                      }}
+                    >
+                      <button
+                        onClick={handleInsertInteractiveQuote}
+                        className="px-2 py-0.5 text-[11px] rounded-full hover:opacity-80 cursor-pointer"
+                        style={{ color: 'var(--color-text-primary)' }}
+                      >
+                        ❝ Quote
+                      </button>
+                      <button
+                        onClick={handleInsertInteractiveDivider}
+                        className="px-2 py-0.5 text-[11px] rounded-full hover:opacity-80 cursor-pointer"
+                        style={{ color: 'var(--color-text-primary)' }}
+                      >
+                        — Divider
+                      </button>
+                    </div>
+                  )}
+                </div>
 
-              <ul className="space-y-2 text-xs pt-2" style={{ color: 'var(--color-text-secondary)' }}>
-                <li className="flex items-center gap-2">
-                  <Check size={14} style={{ color: 'var(--color-accent)' }} />
-                  <span>Personal URL: <code className="font-mono text-[11px]">/@you/slug</code></span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check size={14} style={{ color: 'var(--color-accent)' }} />
-                  <span>Distraction-free editorial reader</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check size={14} style={{ color: 'var(--color-accent)' }} />
-                  <span>Thoughtful responses & claps</span>
-                </li>
-              </ul>
+                <span className="font-serif text-xs italic" style={{ color: 'var(--color-text-tertiary)' }}>
+                  Interactive live sheet • Click into the text above to write
+                </span>
+              </div>
             </div>
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* Section 3: Interactive Theme Swatches */}
-        <section
-          className="py-20 px-6 sm:px-12 text-center"
+      {/* ========================================================================= */}
+      {/* 3. TWO SPHERES OF THOUGHT (Full Viewport Height & Creative Interactive Dial) */}
+      {/* ========================================================================= */}
+      <section className="min-h-screen flex flex-col justify-center max-w-5xl mx-auto px-6 sm:px-12 py-16 space-y-10">
+        <div className="text-center space-y-3 max-w-xl mx-auto">
+          <h2
+            className="text-3xl sm:text-4xl font-serif font-bold tracking-tight"
+            style={{ color: 'var(--color-text-primary)' }}
+          >
+            Two Spheres of Thought
+          </h2>
+          <p className="text-xs sm:text-sm font-serif" style={{ color: 'var(--color-text-secondary)' }}>
+            Switch the lens below to explore how a thought evolves from private intimacy to public craft.
+          </p>
+
+          {/* Interactive Lens Switcher */}
+          <div
+            className="inline-flex items-center p-1 rounded-full mt-2"
+            style={{
+              backgroundColor: 'var(--color-bg-surface)',
+              border: '1px solid var(--color-border-soft)',
+            }}
+          >
+            <button
+              onClick={() => setActiveSphere('private')}
+              className="flex items-center gap-2 px-5 py-2 rounded-full text-xs font-medium transition-all cursor-pointer"
+              style={{
+                backgroundColor: activeSphere === 'private' ? 'var(--color-bg)' : 'transparent',
+                color: activeSphere === 'private' ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
+                fontWeight: activeSphere === 'private' ? 600 : 400,
+                border: activeSphere === 'private' ? '1px solid var(--color-border-soft)' : '1px solid transparent',
+              }}
+            >
+              <Lock size={13} strokeWidth={1.8} />
+              <span>The Solitary Notebook</span>
+            </button>
+
+            <button
+              onClick={() => setActiveSphere('public')}
+              className="flex items-center gap-2 px-5 py-2 rounded-full text-xs font-medium transition-all cursor-pointer"
+              style={{
+                backgroundColor: activeSphere === 'public' ? 'var(--color-bg)' : 'transparent',
+                color: activeSphere === 'public' ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
+                fontWeight: activeSphere === 'public' ? 600 : 400,
+                border: activeSphere === 'public' ? '1px solid var(--color-border-soft)' : '1px solid transparent',
+              }}
+            >
+              <Globe size={13} strokeWidth={1.8} />
+              <span>The Published Letter</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Dynamic Sphere Showcase Container */}
+        <div
+          className="rounded-2xl p-8 sm:p-12 transition-all duration-300 relative select-none"
           style={{
-            borderTop: '1px solid var(--color-border-soft)',
-            borderBottom: '1px solid var(--color-border-soft)',
-            backgroundColor: 'var(--color-bg-subtle)',
+            backgroundColor: 'var(--color-bg-surface)',
+            border: '1px solid var(--color-border-soft)',
           }}
         >
-          <div className="max-w-2xl mx-auto space-y-6">
+          {activeSphere === 'private' ? (
+            /* Private Notebook View */
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center animate-fade-in">
+              <div className="md:col-span-6 space-y-4">
+                <div className="flex items-center gap-2 text-xs font-mono" style={{ color: 'var(--color-accent)' }}>
+                  <Lock size={14} />
+                  <span>INTIMATE • ENCRYPTED • SOLITARY</span>
+                </div>
+                <h3 className="text-2xl sm:text-3xl font-serif font-bold" style={{ color: 'var(--color-text-primary)' }}>
+                  Raw thoughts, safe from judgment.
+                </h3>
+                <p className="text-sm leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
+                  A journal where you never have to perform. Encrypted in-memory on your device with AES-256 before saving to Cloud Firestore. Zero metrics. Zero algorithms.
+                </p>
+                <div className="flex flex-wrap gap-2 pt-2 text-xs">
+                  <span className="px-3 py-1 rounded-full" style={{ backgroundColor: 'var(--color-bg-subtle)', border: '1px solid var(--color-border-soft)' }}>
+                    🔒 Zero-Knowledge Storage
+                  </span>
+                  <span className="px-3 py-1 rounded-full" style={{ backgroundColor: 'var(--color-bg-subtle)', border: '1px solid var(--color-border-soft)' }}>
+                    🔕 No Follower Counts
+                  </span>
+                  <span className="px-3 py-1 rounded-full" style={{ backgroundColor: 'var(--color-bg-subtle)', border: '1px solid var(--color-border-soft)' }}>
+                    ⚡ Offline Capable
+                  </span>
+                </div>
+              </div>
+
+              <div
+                className="md:col-span-6 p-6 rounded-xl space-y-3 font-mono text-xs"
+                style={{
+                  backgroundColor: 'var(--color-bg)',
+                  border: '1px solid var(--color-border-soft)',
+                  color: 'var(--color-text-secondary)',
+                }}
+              >
+                <div className="flex items-center justify-between pb-2" style={{ borderBottom: '1px solid var(--color-border-soft)' }}>
+                  <span className="font-bold text-xs" style={{ color: 'var(--color-text-primary)' }}>notebook_entry_042.enc</span>
+                  <span className="text-[11px]" style={{ color: 'var(--color-text-tertiary)' }}>Confidential</span>
+                </div>
+                <p className="font-editorial text-sm italic" style={{ color: 'var(--color-text-primary)' }}>
+                  &ldquo;I woke up with the realization that we measure ourselves against ghosts of other people&apos;s finished work, forgetting how crude their first attempts were...&rdquo;
+                </p>
+                <div className="text-[11px] pt-2" style={{ color: 'var(--color-text-tertiary)' }}>
+                  • Stored securely for your eyes only
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* Published Letter View */
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center animate-fade-in">
+              <div className="md:col-span-6 space-y-4">
+                <div className="flex items-center gap-2 text-xs font-mono" style={{ color: 'var(--color-accent)' }}>
+                  <Globe size={14} />
+                  <span>PUBLIC RELEASE • AUTHOR SLUG</span>
+                </div>
+                <h3 className="text-2xl sm:text-3xl font-serif font-bold" style={{ color: 'var(--color-text-primary)' }}>
+                  Released with craft and dignity.
+                </h3>
+                <p className="text-sm leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
+                  When your piece is ready, assign a custom slug and share it with readers. Distraction-free editorial typography, applause claps, and quiet margin responses.
+                </p>
+                <div className="flex flex-wrap gap-2 pt-2 text-xs">
+                  <span className="px-3 py-1 rounded-full font-mono" style={{ backgroundColor: 'var(--color-bg-subtle)', border: '1px solid var(--color-border-soft)' }}>
+                    /@your-name/essay-slug
+                  </span>
+                  <span className="px-3 py-1 rounded-full" style={{ backgroundColor: 'var(--color-bg-subtle)', border: '1px solid var(--color-border-soft)' }}>
+                    ✨ Resonated Claps
+                  </span>
+                  <span className="px-3 py-1 rounded-full" style={{ backgroundColor: 'var(--color-bg-subtle)', border: '1px solid var(--color-border-soft)' }}>
+                    💬 Margin Responses
+                  </span>
+                </div>
+              </div>
+
+              <div
+                className="md:col-span-6 p-6 rounded-xl space-y-3"
+                style={{
+                  backgroundColor: 'var(--color-bg)',
+                  border: '1px solid var(--color-border-soft)',
+                }}
+              >
+                <div className="flex items-center justify-between text-xs pb-2" style={{ borderBottom: '1px solid var(--color-border-soft)' }}>
+                  <span className="font-mono text-xs" style={{ color: 'var(--color-accent)' }}>/@ashwin/the-art-of-quiet-thought</span>
+                  <span className="text-[11px]" style={{ color: 'var(--color-text-tertiary)' }}>3 min read</span>
+                </div>
+                <h4 className="font-serif font-bold text-lg" style={{ color: 'var(--color-text-primary)' }}>
+                  The Art of Quiet Thought
+                </h4>
+                <p className="font-editorial text-xs line-clamp-2 leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
+                  In an internet built on instant reaction, there is immense power in taking two weeks to think before writing a single word.
+                </p>
+                <div className="flex items-center justify-between pt-2 text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
+                  <div className="flex items-center gap-3">
+                    <span className="flex items-center gap-1 text-amber-500 font-mono">
+                      <Sparkles size={13} className="fill-amber-500" /> 148 claps
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <MessageSquare size={13} /> 12 responses
+                    </span>
+                  </div>
+                  <Share2 size={13} />
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* ========================================================================= */}
+      {/* 4. FOUR CALIBRATED READING THEMES (Full Viewport Height & Circle Reveal) */}
+      {/* ========================================================================= */}
+      <section
+        className="min-h-screen flex flex-col justify-center px-6 sm:px-12 py-16 text-center"
+        style={{
+          borderTop: '1px solid var(--color-border-soft)',
+          borderBottom: '1px solid var(--color-border-soft)',
+          backgroundColor: 'var(--color-bg-subtle)',
+        }}
+      >
+        <div className="max-w-4xl mx-auto w-full space-y-10">
+          <div className="space-y-3 max-w-xl mx-auto">
             <h2
-              className="text-2xl sm:text-3xl font-serif font-bold tracking-tight"
+              className="text-3xl sm:text-4xl font-serif font-bold tracking-tight"
               style={{ color: 'var(--color-text-primary)' }}
             >
               Four Calibrated Reading Themes
             </h2>
             <p className="text-xs sm:text-sm font-serif" style={{ color: 'var(--color-text-secondary)' }}>
-              Zero gradients. Zero shadows. Tuned for eye comfort across day and night.
+              Click any canvas below to experience the smooth circular reveal transition across the entire platform.
             </p>
-
-            <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-              {themes.map((t) => {
-                const active = theme === t.id;
-                return (
-                  <button
-                    key={t.id}
-                    onClick={() => setTheme(t.id as ThemeMode)}
-                    className="px-4 py-2 rounded-full text-xs font-medium flex items-center gap-2.5 transition-all cursor-pointer"
-                    style={{
-                      backgroundColor: active ? 'var(--color-bg)' : 'var(--color-bg-surface)',
-                      border: active ? '1px solid var(--color-text-primary)' : '1px solid var(--color-border-soft)',
-                      color: 'var(--color-text-primary)',
-                    }}
-                  >
-                    <span
-                      className="w-3 h-3 rounded-full inline-block"
-                      style={{
-                        backgroundColor: t.previewBg,
-                        border: `1px solid ${t.previewBorder}`,
-                      }}
-                    />
-                    <span>{t.name}</span>
-                    {active && <Check size={12} style={{ color: 'var(--color-accent)' }} />}
-                  </button>
-                );
-              })}
-            </div>
           </div>
-        </section>
 
-        {/* Section 4: Final Quiet Call to Action */}
-        <section className="py-24 sm:py-32 px-6 text-center space-y-6">
+          {/* 4 Visual Mini-Canvas Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {themes.map((t) => {
+              const active = theme === t.id;
+              const isDarkTheme = t.id === 'dark-gray' || t.id === 'amoled';
+
+              return (
+                <div
+                  key={t.id}
+                  onClick={(e) => setTheme(t.id as ThemeMode, e)}
+                  className="p-5 rounded-2xl text-left cursor-pointer transition-transform hover:scale-[1.03] active:scale-[0.98] select-none flex flex-col justify-between h-56"
+                  style={{
+                    backgroundColor: t.previewBg,
+                    border: active ? '2px solid var(--color-accent)' : `1px solid ${t.previewBorder}`,
+                    color: isDarkTheme ? '#EFEFEF' : '#1F1F1F',
+                  }}
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold font-serif">{t.name}</span>
+                      {active && <Check size={14} style={{ color: 'var(--color-accent)' }} />}
+                    </div>
+
+                    <div
+                      className="p-2.5 rounded-lg text-[11px] font-editorial space-y-1.5"
+                      style={{
+                        backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+                        border: isDarkTheme ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.06)',
+                      }}
+                    >
+                      <div className="font-bold text-xs">A quiet evening...</div>
+                      <div className="opacity-75 text-[10px] line-clamp-2 leading-relaxed">
+                        The ink settles into the grain of the page without noise.
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 text-[10px] opacity-60 font-mono flex items-center justify-between">
+                    <span>{t.desc}</span>
+                    <span className="font-bold">{active ? 'ACTIVE' : 'APPLY'}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ========================================================================= */}
+      {/* 5. FINAL QUIET INVITATION & FOOTER (Full Viewport Height) */}
+      {/* ========================================================================= */}
+      <section className="min-h-screen flex flex-col justify-between px-6 sm:px-12 md:px-20 py-16 text-center">
+        <div className="my-auto space-y-6 max-w-2xl mx-auto">
+          <div
+            className="w-14 h-14 mx-auto rounded-full flex items-center justify-center"
+            style={{
+              backgroundColor: 'var(--color-bg-surface)',
+              border: '1px solid var(--color-border-soft)',
+              color: 'var(--color-text-primary)',
+            }}
+          >
+            <Feather size={22} strokeWidth={1.6} />
+          </div>
+
           <h2
-            className="text-3xl sm:text-5xl font-serif font-bold tracking-tight"
+            className="text-4xl sm:text-6xl font-serif font-bold tracking-tight"
             style={{ color: 'var(--color-text-primary)' }}
           >
             The desk is quiet.
@@ -494,10 +859,10 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
             No feeds. No algorithms. Just you and your thoughts.
           </p>
 
-          <div className="pt-2">
+          <div className="pt-4">
             <button
               onClick={isAuthenticated ? onStartWriting : () => onOpenAuth('signup')}
-              className="px-7 py-3.5 text-sm font-medium rounded-full inline-flex items-center gap-2.5 transition-transform hover:scale-105 active:scale-95 cursor-pointer"
+              className="px-8 py-4 text-sm font-medium rounded-full inline-flex items-center gap-3 transition-transform hover:scale-105 active:scale-95 cursor-pointer"
               style={{
                 backgroundColor: 'var(--color-text-primary)',
                 color: 'var(--color-bg)',
@@ -505,21 +870,19 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
               }}
             >
               <span>Open Your Notebook</span>
-              <ArrowRight size={15} />
+              <ArrowRight size={16} />
             </button>
           </div>
-        </section>
-      </main>
+        </div>
 
-      {/* Minimalist Footer */}
-      <footer
-        className="py-8 px-6 sm:px-12 md:px-20 text-xs select-none"
-        style={{
-          borderTop: '1px solid var(--color-border-soft)',
-          color: 'var(--color-text-tertiary)',
-        }}
-      >
-        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+        {/* Minimalist Footer */}
+        <footer
+          className="pt-10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs select-none"
+          style={{
+            borderTop: '1px solid var(--color-border-soft)',
+            color: 'var(--color-text-tertiary)',
+          }}
+        >
           <div className="flex items-center gap-3">
             <span className="font-serif font-bold" style={{ color: 'var(--color-text-primary)' }}>Tegaki</span>
             <span>•</span>
@@ -556,8 +919,8 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
               </a>
             </div>
           </div>
-        </div>
-      </footer>
+        </footer>
+      </section>
 
       {/* Privacy Policy & Terms Modal */}
       <PrivacyModal
