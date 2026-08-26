@@ -7,7 +7,8 @@ service cloud.firestore {
     }
 
     function isOwner(authorId) {
-      return isAuthenticated() && request.auth.uid == authorId;
+      return (isAuthenticated() && request.auth.uid == authorId)
+             || (!isAuthenticated() && authorId == 'guest-author');
     }
 
     function isValidArticlePayload() {
@@ -28,20 +29,19 @@ service cloud.firestore {
                   || resource.data.visibility == 'published'
                   || isOwner(resource.data.authorId);
 
-      // 2. Create: Authenticated author or valid payload
+      // 2. Create: Valid article payload
       allow create: if isValidArticlePayload();
 
       // 3. Update:
       //    - Author full edit
-      //    - Anyone clapping (+1 upvotes)
-      //    - Anyone adding comment (+1 commentCount)
+      //    - Authenticated user editing guest draft
+      //    - Claps (+1 upvotes)
+      //    - Comments (+1 commentCount)
       allow update: if (isOwner(resource.data.authorId) && isValidArticlePayload())
-                    // Claps update
-                    || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['upvotes', 'updatedAt'])
-                        && request.resource.data.upvotes >= resource.data.upvotes)
-                    // Comments count update
-                    || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['commentCount', 'updatedAt'])
-                        && request.resource.data.commentCount >= resource.data.commentCount);
+                    || (isAuthenticated() && resource.data.authorId == 'guest-author' && isValidArticlePayload())
+                    || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['upvotes'])
+                    || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['upvotes', 'updatedAt'])
+                    || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['commentCount', 'updatedAt']);
 
       // 4. Delete: Strictly owner
       allow delete: if isOwner(resource.data.authorId);
@@ -57,8 +57,8 @@ service cloud.firestore {
                     && request.resource.data.content.size() <= 5000;
 
       allow update: if isOwner(resource.data.authorId)
-                    || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['upvotes'])
-                        && request.resource.data.upvotes >= resource.data.upvotes);
+                    || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['upvotes'])
+                    || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['upvotes', 'updatedAt']);
 
       allow delete: if isOwner(resource.data.authorId);
     }
