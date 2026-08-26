@@ -2,12 +2,15 @@ import {
   collection,
   doc,
   setDoc,
+  getDoc,
   getDocs,
   deleteDoc,
   increment,
   query,
   orderBy,
   where,
+  onSnapshot,
+  type Unsubscribe,
 } from 'firebase/firestore';
 import { db, isFirebaseConfigured } from './firebase';
 import type { Article, Comment } from '../types/article';
@@ -25,6 +28,9 @@ function cleanUndefined<T extends Record<string, any>>(obj: T): Partial<T> {
   return cleaned as Partial<T>;
 }
 
+/**
+ * Sync an article (create or update) to Cloud Firestore
+ */
 export async function syncArticleToFirestore(article: Article): Promise<boolean> {
   if (!isFirebaseConfigured) return false;
   try {
@@ -41,22 +47,122 @@ export async function syncArticleToFirestore(article: Article): Promise<boolean>
   }
 }
 
-export async function fetchArticlesFromFirestore(): Promise<Article[] | null> {
+/**
+ * Real-time subscription to published & shared articles in Cloud Firestore
+ */
+export function subscribeToArticles(callback: (articles: Article[]) => void): Unsubscribe | null {
   if (!isFirebaseConfigured) return null;
   try {
     const q = query(collection(db, ARTICLES_COLLECTION), orderBy('createdAt', 'desc'));
-    const snapshot = await getDocs(q);
-    const articles: Article[] = [];
-    snapshot.forEach((d) => {
-      articles.push(d.data() as Article);
-    });
-    return articles.length ? articles : null;
-  } catch (error) {
-    console.warn('Firestore fetch articles failed:', error);
+    return onSnapshot(
+      q,
+      (snapshot) => {
+        const list: Article[] = [];
+        snapshot.forEach((d) => {
+          list.push(d.data() as Article);
+        });
+        callback(list);
+      },
+      (error) => {
+        console.warn('Firestore articles snapshot listener error:', error);
+      }
+    );
+  } catch (err) {
+    console.warn('Failed to attach articles subscription:', err);
     return null;
   }
 }
 
+/**
+ * Real-time subscription to comments in Cloud Firestore
+ */
+export function subscribeToComments(callback: (comments: Comment[]) => void): Unsubscribe | null {
+  if (!isFirebaseConfigured) return null;
+  try {
+    const q = query(collection(db, COMMENTS_COLLECTION), orderBy('createdAt', 'desc'));
+    return onSnapshot(
+      q,
+      (snapshot) => {
+        const list: Comment[] = [];
+        snapshot.forEach((d) => {
+          list.push(d.data() as Comment);
+        });
+        callback(list);
+      },
+      (error) => {
+        console.warn('Firestore comments snapshot listener error:', error);
+      }
+    );
+  } catch (err) {
+    console.warn('Failed to attach comments subscription:', err);
+    return null;
+  }
+}
+
+/**
+ * Fetch a single article by Author Username and Slug from Cloud Firestore
+ */
+export async function fetchArticleBySlugFromFirestore(
+  username: string,
+  slug: string
+): Promise<Article | null> {
+  if (!isFirebaseConfigured) return null;
+  try {
+    const cleanUser = username.toLowerCase().replace(/^@/, '');
+    const cleanSlug = slug.toLowerCase();
+
+    // Query Firestore matching author and slug
+    const q = query(
+      collection(db, ARTICLES_COLLECTION),
+      where('slug', '==', cleanSlug)
+    );
+    const snapshot = await getDocs(q);
+    let matchedArticle: Article | null = null;
+
+    snapshot.forEach((docSnap) => {
+      const data = docSnap.data() as Article;
+      if (data.authorUsername.toLowerCase() === cleanUser) {
+        matchedArticle = data;
+      }
+    });
+
+    if (matchedArticle) return matchedArticle;
+
+    // Fallback query by document ID
+    const docRef = doc(db, ARTICLES_COLLECTION, slug);
+    const singleDoc = await getDoc(docRef);
+    if (singleDoc.exists()) {
+      return singleDoc.data() as Article;
+    }
+
+    return null;
+  } catch (error) {
+    console.warn('Firestore fetch article by slug failed:', error);
+    return null;
+  }
+}
+
+/**
+ * Fetch a single article by ID from Cloud Firestore
+ */
+export async function fetchArticleByIdFromFirestore(id: string): Promise<Article | null> {
+  if (!isFirebaseConfigured) return null;
+  try {
+    const docRef = doc(db, ARTICLES_COLLECTION, id);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return docSnap.data() as Article;
+    }
+    return null;
+  } catch (error) {
+    console.warn('Firestore fetch article by ID failed:', error);
+    return null;
+  }
+}
+
+/**
+ * Delete an article from Cloud Firestore
+ */
 export async function deleteArticleFromFirestore(id: string): Promise<boolean> {
   if (!isFirebaseConfigured) return false;
   try {
@@ -68,6 +174,9 @@ export async function deleteArticleFromFirestore(id: string): Promise<boolean> {
   }
 }
 
+/**
+ * Atomically clap an article in Cloud Firestore
+ */
 export async function clapArticleInFirestore(id: string): Promise<boolean> {
   if (!isFirebaseConfigured) return false;
   try {
@@ -87,13 +196,16 @@ export async function clapArticleInFirestore(id: string): Promise<boolean> {
   }
 }
 
+/**
+ * Sync a comment to Cloud Firestore and increment article comment count
+ */
 export async function syncCommentToFirestore(comment: Comment): Promise<boolean> {
   if (!isFirebaseConfigured) return false;
   try {
     const commentRef = doc(db, COMMENTS_COLLECTION, comment.id);
     const cleaned = cleanUndefined(comment);
     await setDoc(commentRef, cleaned, { merge: true });
-    
+
     // Increment comment count on article
     const articleRef = doc(db, ARTICLES_COLLECTION, comment.articleId);
     await setDoc(
@@ -108,28 +220,5 @@ export async function syncCommentToFirestore(comment: Comment): Promise<boolean>
   } catch (error) {
     console.warn('Firestore sync comment failed:', error);
     return false;
-  }
-}
-
-export async function fetchCommentsFromFirestore(articleId?: string): Promise<Comment[] | null> {
-  if (!isFirebaseConfigured) return null;
-  try {
-    let q = query(collection(db, COMMENTS_COLLECTION), orderBy('createdAt', 'desc'));
-    if (articleId) {
-      q = query(
-        collection(db, COMMENTS_COLLECTION),
-        where('articleId', '==', articleId),
-        orderBy('createdAt', 'desc')
-      );
-    }
-    const snapshot = await getDocs(q);
-    const comments: Comment[] = [];
-    snapshot.forEach((d) => {
-      comments.push(d.data() as Comment);
-    });
-    return comments.length ? comments : null;
-  } catch (error) {
-    console.warn('Firestore fetch comments failed:', error);
-    return null;
   }
 }

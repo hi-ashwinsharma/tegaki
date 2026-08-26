@@ -12,6 +12,7 @@ import { useArticles } from './context/ArticlesContext';
 import { useAuth } from './context/AuthContext';
 import type { Article } from './types/article';
 import { buildArticlePath } from './services/slugService';
+import { Feather, ArrowLeft } from 'lucide-react';
 
 type ViewMode = 'landing' | 'home' | 'writer' | 'reader';
 
@@ -19,13 +20,13 @@ export const App: React.FC = () => {
   const { isAuthenticated } = useAuth();
   const {
     articles,
-    getArticleById,
-    getArticleBySlug,
+    findArticleBySlugOrFetch,
+    findArticleByIdOrFetch,
     deleteArticle,
     clapArticle,
   } = useArticles();
 
-  // Initial view is 'landing' if not authenticated, otherwise 'home'
+  // Initial view is 'landing' if not authenticated and at root, otherwise 'home' or 'reader'
   const [currentView, setCurrentView] = useState<ViewMode>(() => {
     const path = window.location.pathname;
     if (path.startsWith('/@') || path.startsWith('/story/')) {
@@ -35,6 +36,9 @@ export const App: React.FC = () => {
   });
 
   const [activeArticle, setActiveArticle] = useState<Article | null>(null);
+  const [isLoadingArticle, setIsLoadingArticle] = useState(false);
+  const [articleNotFound, setArticleNotFound] = useState(false);
+
   const [editingArticle, setEditingArticle] = useState<Article | null>(null);
   const [sharingArticle, setSharingArticle] = useState<Article | null>(null);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
@@ -52,25 +56,46 @@ export const App: React.FC = () => {
 
   // URL Hash & Path router
   useEffect(() => {
-    const handleHashOrPath = () => {
+    let isMounted = true;
+
+    const handleHashOrPath = async () => {
       const hash = window.location.hash.replace(/^#/, '');
       const path = window.location.pathname;
 
       if (path.startsWith('/@') || path.startsWith('/story/')) {
         const parts = path.split('/').filter(Boolean);
+        setIsLoadingArticle(true);
+        setArticleNotFound(false);
+
         if (parts.length === 2 && parts[0].startsWith('@')) {
           const username = parts[0].replace('@', '');
           const slug = parts[1];
-          const found = getArticleBySlug(username, slug);
+          const found = await findArticleBySlugOrFetch(username, slug);
+          if (!isMounted) return;
+
           if (found) {
             setActiveArticle(found);
+            setCurrentView('reader');
+            setIsLoadingArticle(false);
+            return;
+          } else {
+            setArticleNotFound(true);
+            setIsLoadingArticle(false);
             setCurrentView('reader');
             return;
           }
         } else if (parts.length === 2 && parts[0] === 'story') {
-          const found = getArticleById(parts[1]);
+          const found = await findArticleByIdOrFetch(parts[1]);
+          if (!isMounted) return;
+
           if (found) {
             setActiveArticle(found);
+            setCurrentView('reader');
+            setIsLoadingArticle(false);
+            return;
+          } else {
+            setArticleNotFound(true);
+            setIsLoadingArticle(false);
             setCurrentView('reader');
             return;
           }
@@ -86,13 +111,18 @@ export const App: React.FC = () => {
         setCurrentView('home');
       } else if (path === '/' && !isAuthenticated) {
         setCurrentView('landing');
+      } else if (path === '/' && isAuthenticated) {
+        setCurrentView('home');
       }
     };
 
     handleHashOrPath();
     window.addEventListener('popstate', handleHashOrPath);
-    return () => window.removeEventListener('popstate', handleHashOrPath);
-  }, [getArticleBySlug, getArticleById, isAuthenticated]);
+    return () => {
+      isMounted = false;
+      window.removeEventListener('popstate', handleHashOrPath);
+    };
+  }, [findArticleBySlugOrFetch, findArticleByIdOrFetch, isAuthenticated, articles]);
 
   const showToast = (text: string, type: 'success' | 'info' | 'error' = 'success') => {
     setToast({ id: Date.now().toString(), text, type });
@@ -100,6 +130,8 @@ export const App: React.FC = () => {
 
   const navigateTo = (view: ViewMode) => {
     setCurrentView(view);
+    setArticleNotFound(false);
+    setIsLoadingArticle(false);
     if (view === 'home') {
       window.history.pushState(null, '', '/');
     } else if (view === 'writer') {
@@ -111,6 +143,8 @@ export const App: React.FC = () => {
 
   const handleReadArticle = (article: Article) => {
     setActiveArticle(article);
+    setArticleNotFound(false);
+    setIsLoadingArticle(false);
     setCurrentView('reader');
     const path = buildArticlePath(article.authorUsername, article.slug, article.id);
     window.history.pushState(null, '', path);
@@ -204,12 +238,65 @@ export const App: React.FC = () => {
           />
         )}
 
-        {currentView === 'reader' && activeArticle && (
-          <PublicationReader
-            article={activeArticle}
-            onBack={() => navigateTo(isAuthenticated ? 'home' : 'landing')}
-            onEdit={handleEditArticle}
-          />
+        {currentView === 'reader' && (
+          isLoadingArticle ? (
+            /* Literary Loading Skeleton */
+            <div className="max-w-2xl mx-auto px-6 py-24 text-center select-none space-y-4">
+              <div
+                className="w-10 h-10 mx-auto rounded-full flex items-center justify-center animate-pulse"
+                style={{
+                  backgroundColor: 'var(--color-bg-subtle)',
+                  border: '1px solid var(--color-border-soft)',
+                  color: 'var(--color-text-tertiary)',
+                }}
+              >
+                <Feather size={18} />
+              </div>
+              <p className="font-serif text-sm italic" style={{ color: 'var(--color-text-secondary)' }}>
+                The page is unfolding...
+              </p>
+            </div>
+          ) : articleNotFound ? (
+            /* Story Not Found Screen */
+            <div className="max-w-2xl mx-auto px-6 py-24 text-center select-none space-y-4">
+              <div
+                className="w-12 h-12 mx-auto rounded-full flex items-center justify-center"
+                style={{
+                  backgroundColor: 'var(--color-bg-subtle)',
+                  border: '1px solid var(--color-border-soft)',
+                  color: 'var(--color-text-tertiary)',
+                }}
+              >
+                <Feather size={20} />
+              </div>
+              <h2 className="text-2xl font-serif font-bold" style={{ color: 'var(--color-text-primary)' }}>
+                Essay Not Found
+              </h2>
+              <p className="text-xs font-serif max-w-sm mx-auto leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
+                This piece may have been returned to a private notebook or moved to a new title.
+              </p>
+              <div className="pt-2">
+                <button
+                  onClick={() => navigateTo(isAuthenticated ? 'home' : 'landing')}
+                  className="px-5 py-2 text-xs font-medium rounded-full inline-flex items-center gap-2 transition-transform hover:scale-105 active:scale-95 cursor-pointer"
+                  style={{
+                    backgroundColor: 'var(--color-text-primary)',
+                    color: 'var(--color-bg)',
+                    border: '1px solid var(--color-text-primary)',
+                  }}
+                >
+                  <ArrowLeft size={13} />
+                  <span>Return to {isAuthenticated ? 'The Desk' : 'Home'}</span>
+                </button>
+              </div>
+            </div>
+          ) : activeArticle ? (
+            <PublicationReader
+              article={activeArticle}
+              onBack={() => navigateTo(isAuthenticated ? 'home' : 'landing')}
+              onEdit={handleEditArticle}
+            />
+          ) : null
         )}
       </div>
 

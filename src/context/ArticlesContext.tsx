@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { Article, Comment } from '../types/article';
 import {
   getStoredArticles,
@@ -8,11 +8,13 @@ import {
 } from '../services/storageService';
 import {
   syncArticleToFirestore,
-  fetchArticlesFromFirestore,
   deleteArticleFromFirestore,
   clapArticleInFirestore,
   syncCommentToFirestore,
-  fetchCommentsFromFirestore,
+  subscribeToArticles,
+  subscribeToComments,
+  fetchArticleBySlugFromFirestore,
+  fetchArticleByIdFromFirestore,
 } from '../services/firestoreService';
 import { encryptContent, decryptContent } from '../services/cryptoService';
 import { generateSlug, sanitizeSlug } from '../services/slugService';
@@ -22,6 +24,8 @@ interface ArticlesContextType {
   articles: Article[];
   getArticleById: (id: string) => Article | undefined;
   getArticleBySlug: (username: string, slug: string) => Article | undefined;
+  findArticleBySlugOrFetch: (username: string, slug: string) => Promise<Article | null>;
+  findArticleByIdOrFetch: (id: string) => Promise<Article | null>;
   createArticle: (params: {
     title: string;
     subtitle?: string;
@@ -51,27 +55,33 @@ export const ArticlesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [articles, setArticles] = useState<Article[]>(() => getStoredArticles());
   const [comments, setComments] = useState<Comment[]>(() => getStoredComments());
 
-  // Attempt initial sync from Cloud Firestore if online & configured
+  // Real-time Cloud Firestore synchronization
   useEffect(() => {
-    async function loadCloudData() {
-      const cloudArticles = await fetchArticlesFromFirestore();
-      if (cloudArticles && cloudArticles.length) {
+    const unsubArticles = subscribeToArticles((cloudArticles) => {
+      if (cloudArticles && cloudArticles.length > 0) {
         setArticles((prev) => {
           const cloudIds = new Set(cloudArticles.map((a) => a.id));
+          // Preserve any local-only private entries that haven't synced
           const localOnly = prev.filter((a) => !cloudIds.has(a.id));
           return [...cloudArticles, ...localOnly];
         });
       }
-      const cloudComments = await fetchCommentsFromFirestore();
-      if (cloudComments && cloudComments.length) {
+    });
+
+    const unsubComments = subscribeToComments((cloudComments) => {
+      if (cloudComments && cloudComments.length > 0) {
         setComments((prev) => {
           const cloudIds = new Set(cloudComments.map((c) => c.id));
           const localOnly = prev.filter((c) => !cloudIds.has(c.id));
           return [...cloudComments, ...localOnly];
         });
       }
-    }
-    loadCloudData();
+    });
+
+    return () => {
+      if (unsubArticles) unsubArticles();
+      if (unsubComments) unsubComments();
+    };
   }, []);
 
   // Save to persistent storage cache
@@ -79,11 +89,11 @@ export const ArticlesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     saveStoredArticles(articles);
   }, [articles]);
 
-  const getArticleById = (id: string) => {
+  const getArticleById = useCallback((id: string) => {
     return articles.find((a) => a.id === id);
-  };
+  }, [articles]);
 
-  const getArticleBySlug = (username: string, slug: string) => {
+  const getArticleBySlug = useCallback((username: string, slug: string) => {
     const cleanUser = username.toLowerCase().replace(/^@/, '');
     const cleanSlug = slug.toLowerCase();
     return articles.find(
@@ -91,7 +101,39 @@ export const ArticlesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         a.authorUsername.toLowerCase() === cleanUser &&
         (a.slug?.toLowerCase() === cleanSlug || a.id === cleanSlug)
     );
-  };
+  }, [articles]);
+
+  const findArticleBySlugOrFetch = useCallback(async (username: string, slug: string): Promise<Article | null> => {
+    const local = getArticleBySlug(username, slug);
+    if (local) return local;
+
+    // Fetch directly from Cloud Firestore
+    const cloud = await fetchArticleBySlugFromFirestore(username, slug);
+    if (cloud) {
+      setArticles((prev) => {
+        if (prev.some((a) => a.id === cloud.id)) return prev;
+        return [cloud, ...prev];
+      });
+      return cloud;
+    }
+    return null;
+  }, [getArticleBySlug]);
+
+  const findArticleByIdOrFetch = useCallback(async (id: string): Promise<Article | null> => {
+    const local = getArticleById(id);
+    if (local) return local;
+
+    // Fetch directly from Cloud Firestore
+    const cloud = await fetchArticleByIdFromFirestore(id);
+    if (cloud) {
+      setArticles((prev) => {
+        if (prev.some((a) => a.id === cloud.id)) return prev;
+        return [cloud, ...prev];
+      });
+      return cloud;
+    }
+    return null;
+  }, [getArticleById]);
 
   const calculateReadingTime = (text: string) => {
     const words = text.replace(/<[^>]*>/g, '').trim().split(/\s+/).length;
@@ -148,7 +190,7 @@ export const ArticlesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setArticles((prev) => [newArticle, ...prev]);
 
     // Async sync to Cloud Firestore
-    syncArticleToFirestore(newArticle);
+    await syncArticleToFirestore(newArticle);
 
     return newArticle;
   };
@@ -193,7 +235,7 @@ export const ArticlesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setArticles(newArticles);
 
     if (updatedTarget) {
-      syncArticleToFirestore(updatedTarget);
+      await syncArticleToFirestore(updatedTarget);
     }
 
     return updatedTarget;
@@ -276,6 +318,8 @@ export const ArticlesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         articles,
         getArticleById,
         getArticleBySlug,
+        findArticleBySlugOrFetch,
+        findArticleByIdOrFetch,
         createArticle,
         updateArticle,
         deleteArticle,
