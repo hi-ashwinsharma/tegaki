@@ -9,12 +9,14 @@ import { ShareModal } from './components/reader/ShareModal';
 import { Toast } from './components/common/Toast';
 import type { ToastMessage } from './components/common/Toast';
 import { useArticles } from './context/ArticlesContext';
+import { useAuth } from './context/AuthContext';
 import type { Article } from './types/article';
 import { buildArticlePath } from './services/slugService';
 
 type ViewMode = 'landing' | 'home' | 'writer' | 'reader';
 
 export const App: React.FC = () => {
+  const { isAuthenticated } = useAuth();
   const {
     articles,
     getArticleById,
@@ -23,7 +25,15 @@ export const App: React.FC = () => {
     clapArticle,
   } = useArticles();
 
-  const [currentView, setCurrentView] = useState<ViewMode>('home');
+  // Initial view is 'landing' if not authenticated, otherwise 'home'
+  const [currentView, setCurrentView] = useState<ViewMode>(() => {
+    const path = window.location.pathname;
+    if (path.startsWith('/@') || path.startsWith('/story/')) {
+      return 'reader';
+    }
+    return isAuthenticated ? 'home' : 'landing';
+  });
+
   const [activeArticle, setActiveArticle] = useState<Article | null>(null);
   const [editingArticle, setEditingArticle] = useState<Article | null>(null);
   const [sharingArticle, setSharingArticle] = useState<Article | null>(null);
@@ -31,6 +41,16 @@ export const App: React.FC = () => {
   const [authInitialMode, setAuthInitialMode] = useState<'signin' | 'signup'>('signin');
   const [toast, setToast] = useState<ToastMessage | null>(null);
 
+  // Sync when authentication status changes
+  useEffect(() => {
+    if (!isAuthenticated && currentView === 'writer') {
+      setCurrentView('landing');
+    } else if (isAuthenticated && currentView === 'landing') {
+      setCurrentView('home');
+    }
+  }, [isAuthenticated, currentView]);
+
+  // URL Hash & Path router
   useEffect(() => {
     const handleHashOrPath = () => {
       const hash = window.location.hash.replace(/^#/, '');
@@ -62,15 +82,17 @@ export const App: React.FC = () => {
       } else if (hash === 'writer') {
         setEditingArticle(null);
         setCurrentView('writer');
-      } else if (hash === 'home') {
+      } else if (hash === 'home' || hash === 'feed') {
         setCurrentView('home');
+      } else if (path === '/' && !isAuthenticated) {
+        setCurrentView('landing');
       }
     };
 
     handleHashOrPath();
     window.addEventListener('popstate', handleHashOrPath);
     return () => window.removeEventListener('popstate', handleHashOrPath);
-  }, [getArticleBySlug, getArticleById]);
+  }, [getArticleBySlug, getArticleById, isAuthenticated]);
 
   const showToast = (text: string, type: 'success' | 'info' | 'error' = 'success') => {
     setToast({ id: Date.now().toString(), text, type });
@@ -83,7 +105,7 @@ export const App: React.FC = () => {
     } else if (view === 'writer') {
       window.history.pushState(null, '', '#writer');
     } else if (view === 'landing') {
-      window.history.pushState(null, '', '#landing');
+      window.history.pushState(null, '', '/');
     }
   };
 
@@ -143,8 +165,12 @@ export const App: React.FC = () => {
         {currentView === 'landing' && (
           <LandingHero
             onStartWriting={() => {
-              setEditingArticle(null);
-              navigateTo('writer');
+              if (isAuthenticated) {
+                setEditingArticle(null);
+                navigateTo('writer');
+              } else {
+                handleOpenAuth('signup');
+              }
             }}
             onExplorePublic={() => navigateTo('home')}
             onOpenAuth={handleOpenAuth}
@@ -160,8 +186,12 @@ export const App: React.FC = () => {
             onClap={(id) => clapArticle(id)}
             onShare={(art) => setSharingArticle(art)}
             onNewStory={() => {
-              setEditingArticle(null);
-              navigateTo('writer');
+              if (isAuthenticated) {
+                setEditingArticle(null);
+                navigateTo('writer');
+              } else {
+                handleOpenAuth('signin');
+              }
             }}
           />
         )}
@@ -169,7 +199,7 @@ export const App: React.FC = () => {
         {currentView === 'writer' && (
           <WriterEditor
             initialArticle={editingArticle}
-            onBack={() => navigateTo('home')}
+            onBack={() => navigateTo(isAuthenticated ? 'home' : 'landing')}
             onSaved={handleSavedStory}
           />
         )}
@@ -177,7 +207,7 @@ export const App: React.FC = () => {
         {currentView === 'reader' && activeArticle && (
           <PublicationReader
             article={activeArticle}
-            onBack={() => navigateTo('home')}
+            onBack={() => navigateTo(isAuthenticated ? 'home' : 'landing')}
             onEdit={handleEditArticle}
           />
         )}
