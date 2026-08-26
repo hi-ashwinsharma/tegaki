@@ -58,23 +58,32 @@ export const ArticlesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   // Real-time Cloud Firestore synchronization
   useEffect(() => {
     const unsubArticles = subscribeToArticles((cloudArticles) => {
-      if (cloudArticles && cloudArticles.length > 0) {
+      if (cloudArticles) {
         setArticles((prev) => {
           const cloudIds = new Set(cloudArticles.map((a) => a.id));
           // Preserve any local-only private entries that haven't synced
-          const localOnly = prev.filter((a) => !cloudIds.has(a.id));
-          return [...cloudArticles, ...localOnly];
+          const localPrivate = prev.filter(
+            (a) => !cloudIds.has(a.id) && a.visibility === 'private'
+          );
+          return [...cloudArticles, ...localPrivate];
         });
       }
     });
 
     const unsubComments = subscribeToComments((cloudComments) => {
-      if (cloudComments && cloudComments.length > 0) {
+      if (cloudComments) {
         setComments((prev) => {
           const cloudIds = new Set(cloudComments.map((c) => c.id));
           const localOnly = prev.filter((c) => !cloudIds.has(c.id));
           return [...cloudComments, ...localOnly];
         });
+      }
+    });
+
+    // Auto-sync any previously stored local published stories to Firestore
+    articles.forEach((art) => {
+      if (art.visibility === 'published') {
+        syncArticleToFirestore(art);
       }
     });
 

@@ -37,21 +37,23 @@ export const ArticleList: React.FC<ArticleListProps> = ({
   const processedArticles = useMemo(() => {
     // 1. Filter
     const filtered = articles.filter((art) => {
-      // In private tab: only show user's private journals
+      // In private tab: strictly show logged-in user's private journals only
       if (filter === 'private') {
         if (art.visibility !== 'private') return false;
-        if (user && art.authorId !== user.id && art.authorUsername !== user.username) return false;
+        if (!user || (art.authorId !== user.id && art.authorUsername !== user.username)) return false;
       }
 
       // In published tab: show all published stories from any author
-      if (filter === 'published' && art.visibility !== 'published') {
-        return false;
+      if (filter === 'published') {
+        if (art.visibility !== 'published') return false;
       }
 
-      // In 'all' tab: show all published stories + user's own private notes
+      // In 'all' tab: show all published stories from any author + user's own private notes
       if (filter === 'all') {
-        if (art.visibility === 'private' && user && art.authorId !== user.id && art.authorUsername !== user.username) {
-          return false;
+        if (art.visibility === 'private') {
+          if (!user || (art.authorId !== user.id && art.authorUsername !== user.username)) {
+            return false;
+          }
         }
       }
 
@@ -82,7 +84,8 @@ export const ArticleList: React.FC<ArticleListProps> = ({
     const userPrivateCount = articles.filter(
       (a) =>
         a.visibility === 'private' &&
-        (!user || a.authorId === user.id || a.authorUsername === user.username)
+        user &&
+        (a.authorId === user.id || a.authorUsername === user.username)
     ).length;
 
     const publishedCount = articles.filter((a) => a.visibility === 'published').length;
