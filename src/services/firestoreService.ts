@@ -8,7 +8,6 @@ import {
   updateDoc,
   increment,
   query,
-  orderBy,
   where,
   onSnapshot,
   type Unsubscribe,
@@ -56,8 +55,7 @@ export function subscribeToArticles(callback: (articles: Article[]) => void): Un
   try {
     const q = query(
       collection(db, ARTICLES_COLLECTION),
-      where('visibility', '==', 'published'),
-      orderBy('createdAt', 'desc')
+      where('visibility', '==', 'published')
     );
     return onSnapshot(
       q,
@@ -66,6 +64,7 @@ export function subscribeToArticles(callback: (articles: Article[]) => void): Un
         snapshot.forEach((d) => {
           list.push(d.data() as Article);
         });
+        list.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
         callback(list);
       },
       (error) => {
@@ -84,7 +83,7 @@ export function subscribeToArticles(callback: (articles: Article[]) => void): Un
 export function subscribeToComments(callback: (comments: Comment[]) => void): Unsubscribe | null {
   if (!isFirebaseConfigured) return null;
   try {
-    const q = query(collection(db, COMMENTS_COLLECTION), orderBy('createdAt', 'desc'));
+    const q = query(collection(db, COMMENTS_COLLECTION));
     return onSnapshot(
       q,
       (snapshot) => {
@@ -92,6 +91,7 @@ export function subscribeToComments(callback: (comments: Comment[]) => void): Un
         snapshot.forEach((d) => {
           list.push(d.data() as Comment);
         });
+        list.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
         callback(list);
       },
       (error) => {
