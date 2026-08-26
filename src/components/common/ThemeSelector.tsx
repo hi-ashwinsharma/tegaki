@@ -3,7 +3,15 @@ import { useTheme } from '../../context/ThemeContext';
 import type { ThemeMode } from '../../types/theme';
 import { Check, SunMedium, Moon } from 'lucide-react';
 
-export const ThemeSelector: React.FC<{ compact?: boolean }> = ({ compact = false }) => {
+interface ThemeSelectorProps {
+  compact?: boolean;
+  placement?: 'bottom-right' | 'sidebar';
+}
+
+export const ThemeSelector: React.FC<ThemeSelectorProps> = ({
+  compact = false,
+  placement = 'bottom-right',
+}) => {
   const { theme, setTheme, themes } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -23,6 +31,11 @@ export const ThemeSelector: React.FC<{ compact?: boolean }> = ({ compact = false
   const isDark = theme === 'dark-gray' || theme === 'amoled';
 
   if (compact) {
+    const dropdownPositionClasses =
+      placement === 'sidebar'
+        ? 'left-12 bottom-0'
+        : 'right-0 top-full mt-2';
+
     return (
       <div className="relative" ref={containerRef}>
         <button
@@ -40,7 +53,7 @@ export const ThemeSelector: React.FC<{ compact?: boolean }> = ({ compact = false
 
         {isOpen && (
           <div
-            className="absolute left-10 bottom-0 z-50 py-2 w-52 rounded-lg select-none animate-fade-in"
+            className={`absolute z-50 py-2 w-52 rounded-xl select-none animate-fade-in ${dropdownPositionClasses}`}
             style={{
               backgroundColor: 'var(--color-bg-surface)',
               border: '1px solid var(--color-border-soft)',
@@ -54,8 +67,8 @@ export const ThemeSelector: React.FC<{ compact?: boolean }> = ({ compact = false
               return (
                 <button
                   key={t.id}
-                  onClick={() => {
-                    setTheme(t.id as ThemeMode);
+                  onClick={(e) => {
+                    setTheme(t.id as ThemeMode, e);
                     setIsOpen(false);
                   }}
                   className="w-full px-3 py-2 text-left text-xs flex items-center justify-between transition-colors cursor-pointer"
@@ -102,7 +115,7 @@ export const ThemeSelector: React.FC<{ compact?: boolean }> = ({ compact = false
         return (
           <button
             key={t.id}
-            onClick={() => setTheme(t.id as ThemeMode)}
+            onClick={(e) => setTheme(t.id as ThemeMode, e)}
             title={`${t.name} — ${t.desc}`}
             className="px-3 py-1 text-xs rounded-full flex items-center gap-1.5 transition-all cursor-pointer"
             style={{

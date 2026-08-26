@@ -96,7 +96,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Bottom controls: Theme selector & Profile */}
       <div className="flex flex-col items-center gap-4">
-        <ThemeSelector compact />
+        <ThemeSelector compact placement="sidebar" />
 
         {isAuthenticated && user ? (
           <div className="relative" ref={profileRef}>
