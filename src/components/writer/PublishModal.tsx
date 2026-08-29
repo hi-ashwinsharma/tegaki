@@ -8,7 +8,7 @@ interface PublishModalProps {
   isOpen: boolean;
   onClose: () => void;
   title: string;
-  subtitle: string;
+  subtitle?: string;
   initialSlug?: string;
   initialVisibility?: 'private' | 'published';
   initialTags?: string[];
@@ -24,7 +24,7 @@ export const PublishModal: React.FC<PublishModalProps> = ({
   isOpen,
   onClose,
   title,
-  subtitle,
+  subtitle = '',
   initialSlug = '',
   initialVisibility = 'published',
   initialTags = [],

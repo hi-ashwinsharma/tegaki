@@ -210,6 +210,31 @@ body {
   margin: 1.5rem 0;
 }
 
+/* Editorial Writer Title Input */
+.writer-title-input {
+  width: 100%;
+  background-color: transparent !important;
+  border: none !important;
+  outline: none !important;
+  resize: none !important;
+  overflow: hidden;
+  font-family: Newsreader, "Playfair Display", Georgia, serif !important;
+  font-weight: 700 !important;
+  line-height: 1.2 !important;
+  letter-spacing: -0.025em !important;
+  color: var(--color-text-primary) !important;
+  display: block !important;
+  padding: 0 !important;
+  margin: 0 0 1rem 0 !important;
+}
+
+.writer-title-input::placeholder,
+.writer-title-input::-webkit-input-placeholder,
+.writer-title-input::-moz-placeholder {
+  color: var(--color-text-tertiary) !important;
+  opacity: 0.8 !important;
+}
+
 /* Prominent Visible Placeholders for Title & Subtitle */
 .placeholder-visible::placeholder,
 .placeholder-visible::-webkit-input-placeholder,
