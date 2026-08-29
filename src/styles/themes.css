@@ -210,6 +210,14 @@ body {
   margin: 1.5rem 0;
 }
 
+/* Prominent Visible Placeholders for Title & Subtitle */
+.placeholder-visible::placeholder,
+.placeholder-visible::-webkit-input-placeholder,
+.placeholder-visible::-moz-placeholder {
+  color: var(--color-text-tertiary) !important;
+  opacity: 0.75 !important;
+}
+
 /* Styled Code Block Component - Pure Theme Adaptation */
 .code-block-wrapper {
   background-color: var(--color-code-bg);
@@ -221,20 +229,25 @@ body {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
-.code-block-wrapper pre {
+.code-block-wrapper pre,
+.code-block-pre {
   background-color: transparent !important;
   border: none !important;
   padding: 0.875rem 1rem !important;
   margin: 0 !important;
   border-radius: 0 !important;
+  overflow-x: auto;
 }
 
-.code-block-wrapper code {
+.code-block-wrapper code,
+.code-content {
   background-color: transparent !important;
-  color: var(--color-text-primary) !important;
+  color: var(--color-text-primary);
   padding: 0 !important;
   font-size: 0.8125rem !important;
   line-height: 1.65 !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  tab-size: 2;
 }
 
 .code-block-header {
@@ -248,12 +261,26 @@ body {
   -webkit-user-select: none;
 }
 
+.code-block-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.code-lang-dot {
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 9999px;
+  background-color: var(--color-border-hover);
+  display: inline-block;
+}
+
 .code-lang-select {
   background-color: var(--color-bg-subtle);
   color: var(--color-text-secondary);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 0.75rem;
-  padding: 0.15rem 0.45rem;
+  padding: 0.15rem 0.5rem;
   border-radius: 4px;
   border: 1px solid var(--color-border-soft);
   outline: none;
@@ -271,13 +298,20 @@ body {
 }
 
 .code-copy-btn {
+  font-size: 0.6875rem;
   color: var(--color-text-tertiary);
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  background-color: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
   transition: color 0.15s ease, background-color 0.15s ease;
 }
 
 .code-copy-btn:hover {
   color: var(--color-text-primary);
   background-color: var(--color-bg-subtle);
+  border-color: var(--color-border-soft);
 }
 
 .code-content {
@@ -300,18 +334,29 @@ code[data-placeholder]:has(> br:only-child)::before {
 }
 
 /* Theme-Adaptive Prism Syntax Highlighting Tokens */
+.code-block-wrapper .token.comment,
+.code-block-wrapper .token.prolog,
+.code-block-wrapper .token.doctype,
+.code-block-wrapper .token.cdata,
 .token.comment,
 .token.prolog,
 .token.doctype,
 .token.cdata {
   color: var(--syntax-comment) !important;
-  font-style: italic;
+  font-style: italic !important;
 }
 
+.code-block-wrapper .token.punctuation,
 .token.punctuation {
   color: var(--syntax-punctuation) !important;
 }
 
+.code-block-wrapper .token.property,
+.code-block-wrapper .token.tag,
+.code-block-wrapper .token.boolean,
+.code-block-wrapper .token.number,
+.code-block-wrapper .token.constant,
+.code-block-wrapper .token.symbol,
 .token.property,
 .token.tag,
 .token.boolean,
@@ -321,6 +366,11 @@ code[data-placeholder]:has(> br:only-child)::before {
   color: var(--syntax-number) !important;
 }
 
+.code-block-wrapper .token.selector,
+.code-block-wrapper .token.attr-name,
+.code-block-wrapper .token.string,
+.code-block-wrapper .token.char,
+.code-block-wrapper .token.builtin,
 .token.selector,
 .token.attr-name,
 .token.string,
@@ -329,24 +379,35 @@ code[data-placeholder]:has(> br:only-child)::before {
   color: var(--syntax-string) !important;
 }
 
+.code-block-wrapper .token.operator,
+.code-block-wrapper .token.entity,
+.code-block-wrapper .token.url,
 .token.operator,
 .token.entity,
 .token.url {
   color: var(--syntax-operator) !important;
 }
 
+.code-block-wrapper .token.atrule,
+.code-block-wrapper .token.attr-value,
+.code-block-wrapper .token.keyword,
 .token.atrule,
 .token.attr-value,
 .token.keyword {
   color: var(--syntax-keyword) !important;
-  font-weight: 500;
+  font-weight: 600 !important;
 }
 
+.code-block-wrapper .token.function,
+.code-block-wrapper .token.class-name,
 .token.function,
 .token.class-name {
   color: var(--syntax-function) !important;
 }
 
+.code-block-wrapper .token.regex,
+.code-block-wrapper .token.important,
+.code-block-wrapper .token.variable,
 .token.regex,
 .token.important,
 .token.variable {

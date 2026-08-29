@@ -16,21 +16,21 @@ const generateCodeBlockHtml = (language = 'javascript') => {
   const placeholder = getCodePlaceholder(language);
   const optionsHtml = CODE_LANGUAGES.map(
     (lang) =>
-      `<option value="${lang.value}" ${lang.value === language ? 'selected="selected"' : ''} class="bg-stone-900 text-stone-100">${lang.label}</option>`
+      `<option value="${lang.value}" ${lang.value === language ? 'selected="selected"' : ''}>${lang.label}</option>`
   ).join('');
 
   return `
-    <div class="code-block-wrapper my-6 rounded-lg overflow-hidden border border-stone-800 bg-[#18181b] text-stone-100 font-mono text-xs" data-language="${language}">
-      <div class="code-block-header flex items-center justify-between px-3 py-1.5 bg-[#121214] border-b border-stone-800 text-[11px] text-stone-400 select-none" contenteditable="false">
-        <div class="flex items-center gap-2">
-          <span class="w-2.5 h-2.5 rounded-full bg-stone-700 inline-block"></span>
-          <select class="code-lang-select bg-stone-900/80 text-stone-300 text-xs font-mono rounded px-1.5 py-0.5 border border-stone-700/60 focus:outline-none focus:border-stone-500 cursor-pointer" aria-label="Select code language" contenteditable="false">
+    <div class="code-block-wrapper" data-language="${language}">
+      <div class="code-block-header" contenteditable="false">
+        <div class="code-block-header-left">
+          <span class="code-lang-dot"></span>
+          <select class="code-lang-select" aria-label="Select code language" contenteditable="false">
             ${optionsHtml}
           </select>
         </div>
-        <button type="button" class="code-copy-btn px-2 py-0.5 text-[10px] text-stone-400 hover:text-stone-200 transition-colors rounded hover:bg-stone-800 cursor-pointer" onclick="navigator.clipboard.writeText(this.closest('.code-block-wrapper').querySelector('code').innerText).then(()=>{this.innerText='Copied!';setTimeout(()=>{this.innerText='Copy'},2000)})">Copy</button>
+        <button type="button" class="code-copy-btn" contenteditable="false" onclick="navigator.clipboard.writeText(this.closest('.code-block-wrapper').querySelector('code').innerText).then(()=>{this.innerText='Copied!';setTimeout(()=>{this.innerText='Copy'},2000)})">Copy</button>
       </div>
-      <pre class="p-3.5 m-0 bg-transparent overflow-x-auto text-stone-100 font-mono text-xs leading-relaxed focus:outline-none"><code class="language-${language} code-content block focus:outline-none min-h-[1.5rem]" contenteditable="true" spellcheck="false" data-placeholder="${placeholder}"></code></pre>
+      <pre class="code-block-pre"><code class="language-${language} code-content" contenteditable="true" spellcheck="false" data-placeholder="${placeholder}"></code></pre>
     </div>
     <p><br></p>
   `;
@@ -142,7 +142,7 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
           wrapper.setAttribute('data-language', newLang);
           const codeEl = wrapper.querySelector<HTMLElement>('code');
           if (codeEl) {
-            codeEl.className = `language-${newLang} code-content block focus:outline-none min-h-[1.5rem]`;
+            codeEl.className = `language-${newLang} code-content`;
             codeEl.setAttribute('data-placeholder', getCodePlaceholder(newLang));
             highlightCodeElementInPlace(codeEl);
           }
@@ -227,14 +227,14 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
   const handleEditorInput = () => {
     if (!editorRef.current) return;
 
-    // Detect if the user is typing inside a code block and highlight live
+    // Live syntax highlighting inside active code block
     const selection = window.getSelection();
     let node: Node | null = selection?.anchorNode || null;
     if (node?.nodeType === Node.TEXT_NODE) {
       node = node.parentElement;
     }
 
-    const codeEl = node && (node.nodeName === 'CODE' ? node as HTMLElement : (node as HTMLElement).closest?.('code'));
+    const codeEl = node && (node.nodeName === 'CODE' ? (node as HTMLElement) : (node as HTMLElement).closest?.('code'));
     if (codeEl && codeEl.classList.contains('code-content')) {
       highlightCodeElementInPlace(codeEl);
     }
@@ -274,7 +274,6 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
   const calculateWords = () => {
     return calculateWordCount(title + ' ' + subtitle + ' ' + content);
   };
-
 
   // Formatting actions
   const handleFormat = (command: string, value: string = '') => {
@@ -352,16 +351,24 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
       if (e.key === 'Tab') {
         e.preventDefault();
         document.execCommand('insertText', false, '  ');
-        setContent(editorRef.current.innerHTML);
-        setHasUnsavedChanges(true);
+        if (editorRef.current) {
+          const codeEl = (node as HTMLElement).closest?.('code');
+          if (codeEl) highlightCodeElementInPlace(codeEl);
+          setContent(editorRef.current.innerHTML);
+          setHasUnsavedChanges(true);
+        }
         return;
       }
 
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         document.execCommand('insertText', false, '\n');
-        setContent(editorRef.current.innerHTML);
-        setHasUnsavedChanges(true);
+        if (editorRef.current) {
+          const codeEl = (node as HTMLElement).closest?.('code');
+          if (codeEl) highlightCodeElementInPlace(codeEl);
+          setContent(editorRef.current.innerHTML);
+          setHasUnsavedChanges(true);
+        }
         return;
       }
     }
@@ -416,7 +423,6 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
         const readingTime = calculateReadingTime(content);
 
         const uploadedUrl = await generateAndUploadOgImage(
-
           {
             title: finalTitle,
             subtitle: finalSubtitle,
@@ -462,7 +468,6 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
     }
   };
 
-
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--color-bg)' }}>
       {/* Top Header */}
@@ -494,8 +499,11 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
           onChange={handleTitleChange}
           onKeyDown={handleTitleKeyDown}
           placeholder="Title"
-          className="w-full bg-transparent resize-none overflow-hidden text-2xl sm:text-4xl md:text-5xl font-serif font-bold tracking-tight mb-2 sm:mb-3 focus:outline-none placeholder:text-[var(--color-text-tertiary)] placeholder:opacity-60 leading-tight min-h-[3rem] sm:min-h-[3.75rem]"
-          style={{ color: 'var(--color-text-primary)' }}
+          className="placeholder-visible w-full bg-transparent resize-none overflow-hidden text-3xl sm:text-5xl font-serif font-bold tracking-tight mb-3 focus:outline-none leading-tight block"
+          style={{
+            color: 'var(--color-text-primary)',
+            minHeight: '52px',
+          }}
         />
 
         {/* Optional Subtitle */}
@@ -506,12 +514,15 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
           onChange={handleSubtitleChange}
           onKeyDown={handleSubtitleKeyDown}
           placeholder="Subtitle (optional)"
-          className="w-full bg-transparent resize-none overflow-hidden text-base sm:text-xl font-serif mb-4 sm:mb-6 focus:outline-none placeholder:text-[var(--color-text-tertiary)] placeholder:opacity-60 leading-relaxed min-h-[2rem] sm:min-h-[2.5rem]"
-          style={{ color: 'var(--color-text-secondary)' }}
+          className="placeholder-visible w-full bg-transparent resize-none overflow-hidden text-lg sm:text-xl font-serif mb-6 focus:outline-none leading-relaxed block"
+          style={{
+            color: 'var(--color-text-secondary)',
+            minHeight: '36px',
+          }}
         />
 
-        {/* Medium-style Divider */}
-        <div className="w-full h-px my-3 sm:my-4 mb-6 sm:mb-8" style={{ backgroundColor: 'var(--color-border-soft)' }} />
+        {/* Editorial Divider */}
+        <div className="w-full h-px my-4 mb-8" style={{ backgroundColor: 'var(--color-border-soft)' }} />
 
         {/* Body Canvas in Newsreader Editorial Typography with Plus Menu */}
         <div className="relative">

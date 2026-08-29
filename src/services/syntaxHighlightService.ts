@@ -10,6 +10,7 @@ import 'prismjs/components/prism-c';
 import 'prismjs/components/prism-cpp';
 import 'prismjs/components/prism-csharp';
 import 'prismjs/components/prism-java';
+import 'prismjs/components/prism-markup-templating';
 import 'prismjs/components/prism-php';
 import 'prismjs/components/prism-markdown';
 
@@ -22,7 +23,15 @@ export const highlightCode = (code: string, language: string): string => {
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;');
   }
-  return Prism.highlight(code, grammar, normalizedLang);
+  try {
+    return Prism.highlight(code, grammar, normalizedLang);
+  } catch (err) {
+    console.warn('Prism highlighting fallback:', err);
+    return code
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
 };
 
 export const getCaretCharacterOffsetWithin = (element: Node): number => {
@@ -83,6 +92,7 @@ export const highlightCodeElementInPlace = (codeEl: HTMLElement) => {
   const rawText = codeEl.innerText || codeEl.textContent || '';
 
   if (!rawText.trim()) {
+    codeEl.innerHTML = '';
     return;
   }
 
@@ -92,7 +102,7 @@ export const highlightCodeElementInPlace = (codeEl: HTMLElement) => {
   try {
     setCaretCharacterOffsetWithin(codeEl, caretOffset);
   } catch {
-    // Caret restore catch
+    // Caret catch
   }
 };
 
