@@ -10,6 +10,7 @@ import { useSelectionToolbar } from '../../hooks/useSelectionToolbar';
 import { calculateWordCount, calculateReadingTime } from '../../utils/textMetrics';
 import { generateAndUploadOgImage } from '../../services/ogCanvasService';
 import { CODE_LANGUAGES, getCodePlaceholder } from '../../utils/codeLanguages';
+import { highlightAllCodeBlocks } from '../../services/syntaxHighlightService';
 
 const generateCodeBlockHtml = (language = 'javascript') => {
   const placeholder = getCodePlaceholder(language);
@@ -71,6 +72,13 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
   // Floating toolbar state powered by custom hook
   const { toolbarPosition } = useSelectionToolbar(editorRef);
 
+  const adjustTextareaHeight = (el: HTMLTextAreaElement | null) => {
+    if (el) {
+      el.style.height = 'auto';
+      el.style.height = `${el.scrollHeight}px`;
+    }
+  };
+
   const syncCodeSelectValues = () => {
     if (editorRef.current) {
       editorRef.current.querySelectorAll<HTMLSelectElement>('.code-lang-select').forEach((select) => {
@@ -80,6 +88,7 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
           select.value = lang;
         }
       });
+      highlightAllCodeBlocks(editorRef.current);
     }
   };
 
@@ -110,6 +119,12 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
     loadContent();
   }, [initialArticle, decryptJournal]);
 
+  // Adjust title and subtitle heights on mount / text change
+  useEffect(() => {
+    adjustTextareaHeight(titleRef.current);
+    adjustTextareaHeight(subtitleRef.current);
+  }, [title, subtitle]);
+
   // Handle dynamic language dropdown changes inside code blocks
   useEffect(() => {
     const editor = editorRef.current;
@@ -135,6 +150,7 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
               opt.removeAttribute('selected');
             }
           });
+          highlightAllCodeBlocks(editor);
           setContent(editor.innerHTML);
           setHasUnsavedChanges(true);
         }
@@ -194,22 +210,16 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
     return () => document.removeEventListener('selectionchange', handleSelectionChange);
   }, [updatePlusMenuPosition]);
 
-  const adjustTitleHeight = () => {
-    if (titleRef.current) {
-      titleRef.current.style.height = 'auto';
-      titleRef.current.style.height = `${titleRef.current.scrollHeight}px`;
-    }
-  };
-
   const handleTitleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setTitle(e.target.value);
     setHasUnsavedChanges(true);
-    adjustTitleHeight();
+    adjustTextareaHeight(e.target);
   };
 
   const handleSubtitleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setSubtitle(e.target.value);
     setHasUnsavedChanges(true);
+    adjustTextareaHeight(e.target);
   };
 
   const handleEditorInput = () => {
@@ -220,12 +230,28 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
     }
   };
 
+  const handleEditorBlur = () => {
+    if (editorRef.current) {
+      highlightAllCodeBlocks(editorRef.current);
+      setContent(editorRef.current.innerHTML);
+    }
+  };
+
   const handleTitleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
       if (subtitleRef.current) {
         subtitleRef.current.focus();
       } else if (editorRef.current) {
+        editorRef.current.focus();
+      }
+    }
+  };
+
+  const handleSubtitleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (editorRef.current) {
         editorRef.current.focus();
       }
     }
@@ -453,8 +479,8 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
           value={title}
           onChange={handleTitleChange}
           onKeyDown={handleTitleKeyDown}
-          placeholder="Title of this reflection..."
-          className="w-full bg-transparent resize-none overflow-hidden text-2xl sm:text-4xl md:text-5xl font-serif font-bold tracking-tight mb-2 sm:mb-3 focus:outline-none placeholder:opacity-30 leading-tight"
+          placeholder="Title"
+          className="w-full bg-transparent resize-none overflow-hidden text-2xl sm:text-4xl md:text-5xl font-serif font-bold tracking-tight mb-2 sm:mb-3 focus:outline-none placeholder:opacity-25 leading-tight"
           style={{ color: 'var(--color-text-primary)' }}
         />
 
@@ -464,8 +490,9 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
           rows={1}
           value={subtitle}
           onChange={handleSubtitleChange}
-          placeholder="An opening line or subtitle (optional)..."
-          className="w-full bg-transparent resize-none overflow-hidden text-base sm:text-xl font-serif mb-4 sm:mb-6 focus:outline-none placeholder:opacity-30 leading-relaxed"
+          onKeyDown={handleSubtitleKeyDown}
+          placeholder="Subtitle (optional)"
+          className="w-full bg-transparent resize-none overflow-hidden text-base sm:text-xl font-serif mb-4 sm:mb-6 focus:outline-none placeholder:opacity-25 leading-relaxed"
           style={{ color: 'var(--color-text-secondary)' }}
         />
 
@@ -491,6 +518,7 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
             suppressContentEditableWarning
             onInput={handleEditorInput}
             onKeyDown={handleEditorKeyDown}
+            onBlur={handleEditorBlur}
             onClick={updatePlusMenuPosition}
             onKeyUp={updatePlusMenuPosition}
             onFocus={updatePlusMenuPosition}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import type { Article } from '../../types/article';
 import { ClapButton } from './ClapButton';
 import { CommentsDrawer } from './CommentsDrawer';
@@ -12,6 +12,7 @@ import { useDocumentMeta } from '../../hooks/useDocumentMeta';
 import { DeleteConfirmModal } from '../common/DeleteConfirmModal';
 import { PublishModal } from '../writer/PublishModal';
 import { buildArticlePath } from '../../services/slugService';
+import { highlightAllCodeBlocks } from '../../services/syntaxHighlightService';
 
 interface PublicationReaderProps {
   article: Article;
@@ -42,6 +43,8 @@ export const PublicationReader: React.FC<PublicationReaderProps> = ({
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
 
+  const articleBodyRef = useRef<HTMLDivElement>(null);
+
   // Sync dynamic document title
   useDocumentMeta(currentArticle.title);
 
@@ -63,6 +66,13 @@ export const PublicationReader: React.FC<PublicationReaderProps> = ({
     }
     loadDecrypted();
   }, [currentArticle, decryptJournal]);
+
+  // Apply Prism syntax highlighting to all code blocks in the reader
+  useEffect(() => {
+    if (articleBodyRef.current) {
+      highlightAllCodeBlocks(articleBodyRef.current);
+    }
+  }, [decryptedHtml]);
 
   useEffect(() => {
     const handleCopyClick = (e: MouseEvent) => {
@@ -285,6 +295,7 @@ export const PublicationReader: React.FC<PublicationReaderProps> = ({
 
         {/* Story Body in Medium Editorial Typography */}
         <div
+          ref={articleBodyRef}
           className="font-editorial text-base sm:text-xl leading-relaxed space-y-5 sm:space-y-6 pt-2"
           style={{ color: 'var(--color-text-primary)' }}
           dangerouslySetInnerHTML={{ __html: decryptedHtml }}
