@@ -13,9 +13,12 @@ import { CODE_LANGUAGES, getCodePlaceholder } from '../../utils/codeLanguages';
 import {
   highlightAllCodeBlocks,
   highlightCodeElementInPlace,
+  highlightInlineCodeElement,
+  highlightCode,
   handleCodeBlockEnter,
   handleCodeBlockTab,
   handleCodeBlockBackspace,
+  handleInlineCodeKeyDown,
 } from '../../services/syntaxHighlightService';
 
 const generateCodeBlockHtml = (language = 'javascript', title = '') => {
@@ -271,16 +274,22 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
   const handleEditorInput = () => {
     if (!editorRef.current) return;
 
-    // Live syntax highlighting inside active code block
     const selection = window.getSelection();
     let node: Node | null = selection?.anchorNode || null;
     if (node?.nodeType === Node.TEXT_NODE) {
       node = node.parentElement;
     }
 
+    // Live syntax highlighting inside active fenced code block
     const codeEl = node && (node.nodeName === 'CODE' ? (node as HTMLElement) : (node as HTMLElement).closest?.('code'));
     if (codeEl && codeEl.classList.contains('code-content')) {
       highlightCodeElementInPlace(codeEl);
+    }
+
+    // Live syntax highlighting inside active inline code
+    const inlineCodeEl = node instanceof HTMLElement ? (node.closest('code:not(.code-content)') as HTMLElement | null) : null;
+    if (inlineCodeEl) {
+      highlightInlineCodeElement(inlineCodeEl);
     }
 
     setContent(editorRef.current.innerHTML);
@@ -322,6 +331,52 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
   // Formatting actions
   const handleFormat = (command: string, value: string = '') => {
     document.execCommand(command, false, value);
+    if (editorRef.current) {
+      setContent(editorRef.current.innerHTML);
+      setHasUnsavedChanges(true);
+    }
+  };
+
+  const handleToggleInlineCode = () => {
+    const selection = window.getSelection();
+    if (!selection || !editorRef.current || selection.rangeCount === 0) return;
+
+    const range = selection.getRangeAt(0);
+    let node: Node | null = selection.anchorNode;
+    if (node?.nodeType === Node.TEXT_NODE) {
+      node = node.parentElement;
+    }
+
+    const inlineCodeEl = node instanceof HTMLElement ? (node.closest('code:not(.code-content)') as HTMLElement | null) : null;
+
+    if (inlineCodeEl) {
+      // Toggle off: unwrap inline code to plain text
+      const textNode = document.createTextNode(inlineCodeEl.textContent || '');
+      inlineCodeEl.parentNode?.replaceChild(textNode, inlineCodeEl);
+      const newRange = document.createRange();
+      newRange.selectNodeContents(textNode);
+      selection.removeAllRanges();
+      selection.addRange(newRange);
+    } else if (!selection.isCollapsed) {
+      // Wrap selected text in inline code with live syntax highlighting
+      const selectedText = range.toString();
+      const code = document.createElement('code');
+      code.className = 'inline-code';
+      code.innerHTML = highlightCode(selectedText, 'javascript');
+
+      range.deleteContents();
+      range.insertNode(code);
+
+      const space = document.createTextNode('\u00A0');
+      code.after(space);
+
+      const newRange = document.createRange();
+      newRange.setStartAfter(code);
+      newRange.collapse(true);
+      selection.removeAllRanges();
+      selection.addRange(newRange);
+    }
+
     if (editorRef.current) {
       setContent(editorRef.current.innerHTML);
       setHasUnsavedChanges(true);
@@ -435,6 +490,19 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
           setHasUnsavedChanges(true);
           return;
         }
+      }
+    }
+
+    // Handle inline code navigation and exiting
+    const inlineCodeEl = node instanceof HTMLElement ? (node.closest('code:not(.code-content)') as HTMLElement | null) : null;
+    if (inlineCodeEl && editorRef.current.contains(inlineCodeEl)) {
+      const handled = handleInlineCodeKeyDown(inlineCodeEl, e, selection);
+      if (handled) {
+        if (editorRef.current) {
+          setContent(editorRef.current.innerHTML);
+          setHasUnsavedChanges(true);
+        }
+        return;
       }
     }
 
@@ -661,6 +729,7 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
         position={toolbarPosition}
         onFormat={handleFormat}
         onToggleQuote={handleToggleQuote}
+        onToggleInlineCode={handleToggleInlineCode}
       />
 
       {/* Main Distraction-Free Canvas */}

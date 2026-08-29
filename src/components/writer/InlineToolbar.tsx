@@ -5,12 +5,14 @@ interface InlineToolbarProps {
   position: { top: number; left: number } | null;
   onFormat: (command: string, value?: string) => void;
   onToggleQuote: () => void;
+  onToggleInlineCode: () => void;
 }
 
 export const InlineToolbar: React.FC<InlineToolbarProps> = ({
   position,
   onFormat,
   onToggleQuote,
+  onToggleInlineCode,
 }) => {
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
@@ -139,9 +141,9 @@ export const InlineToolbar: React.FC<InlineToolbarProps> = ({
           <button
             onMouseDown={(e) => {
               e.preventDefault();
-              onFormat('formatBlock', '<pre>');
+              onToggleInlineCode();
             }}
-            title="Code Block"
+            title="Inline Code"
             className="p-1.5 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
           >
             <Code size={15} strokeWidth={1.8} />

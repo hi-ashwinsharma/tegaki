@@ -245,6 +245,25 @@ body {
   opacity: 0.75 !important;
 }
 
+/* Styled Inline Code Element with Theme & Token Highlighting */
+.editorial-canvas code:not(.code-content),
+[contenteditable] code:not(.code-content),
+.inline-code,
+.prose code:not(.code-content) {
+  background-color: var(--color-bg-surface) !important;
+  color: var(--color-text-primary) !important;
+  border: 1px solid var(--color-border-soft) !important;
+  border-radius: 4px !important;
+  padding: 0.15rem 0.4rem !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  font-size: 0.85em !important;
+  line-height: 1.4 !important;
+  display: inline !important;
+  vertical-align: baseline;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
 /* Styled Code Block Component - Pure Theme Adaptation */
 .code-block-wrapper {
   background-color: var(--color-code-bg);

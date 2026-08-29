@@ -106,8 +106,23 @@ export const highlightCodeElementInPlace = (codeEl: HTMLElement) => {
   }
 };
 
+export const highlightInlineCodeElement = (codeEl: HTMLElement) => {
+  const rawText = codeEl.innerText || codeEl.textContent || '';
+  if (!rawText.trim()) return;
+
+  const caretOffset = getCaretCharacterOffsetWithin(codeEl);
+  const highlighted = highlightCode(rawText, 'javascript');
+  codeEl.innerHTML = highlighted;
+  try {
+    setCaretCharacterOffsetWithin(codeEl, caretOffset);
+  } catch {
+    // Caret catch
+  }
+};
+
 export const highlightAllCodeBlocks = (container: HTMLElement | null) => {
   if (!container) return;
+  // Highlight fenced code blocks
   const codeElements = container.querySelectorAll<HTMLElement>('.code-block-wrapper code');
   codeElements.forEach((codeEl) => {
     const wrapper = codeEl.closest('.code-block-wrapper');
@@ -115,6 +130,15 @@ export const highlightAllCodeBlocks = (container: HTMLElement | null) => {
     const rawText = codeEl.innerText || codeEl.textContent || '';
     if (rawText.trim()) {
       codeEl.innerHTML = highlightCode(rawText, lang);
+    }
+  });
+
+  // Highlight inline code elements
+  const inlineCodeElements = container.querySelectorAll<HTMLElement>('code:not(.code-content), .inline-code');
+  inlineCodeElements.forEach((codeEl) => {
+    const rawText = codeEl.innerText || codeEl.textContent || '';
+    if (rawText.trim() && !codeEl.querySelector('.token')) {
+      codeEl.innerHTML = highlightCode(rawText, 'javascript');
     }
   });
 };
@@ -225,5 +249,100 @@ export const handleCodeBlockBackspace = (codeEl: HTMLElement): boolean => {
     setCaretCharacterOffsetWithin(codeEl, offset - 2);
     return true;
   }
+  return false;
+};
+
+export const handleInlineCodeKeyDown = (
+  inlineCodeEl: HTMLElement,
+  e: React.KeyboardEvent<HTMLDivElement>,
+  selection: Selection
+): boolean => {
+  const codeText = inlineCodeEl.innerText || inlineCodeEl.textContent || '';
+  const offset = getCaretCharacterOffsetWithin(inlineCodeEl);
+
+  // 1. Backspace on empty inline code -> Delete element
+  if (e.key === 'Backspace' && codeText.trim() === '') {
+    e.preventDefault();
+    const parent = inlineCodeEl.parentNode;
+    const textNode = document.createTextNode('');
+    parent?.replaceChild(textNode, inlineCodeEl);
+    const range = document.createRange();
+    range.setStart(textNode, 0);
+    range.collapse(true);
+    selection.removeAllRanges();
+    selection.addRange(range);
+    return true;
+  }
+
+  // 2. ArrowRight at the end of inline code -> Exit inline code!
+  if (e.key === 'ArrowRight' && selection.isCollapsed && offset >= codeText.length) {
+    e.preventDefault();
+    let nextNode = inlineCodeEl.nextSibling;
+    if (!nextNode || nextNode.nodeType !== Node.TEXT_NODE) {
+      const space = document.createTextNode('\u00A0');
+      inlineCodeEl.after(space);
+      nextNode = space;
+    }
+    const range = document.createRange();
+    range.setStart(nextNode, 0);
+    range.collapse(true);
+    selection.removeAllRanges();
+    selection.addRange(range);
+    return true;
+  }
+
+  // 3. ArrowLeft at the start of inline code -> Exit inline code!
+  if (e.key === 'ArrowLeft' && selection.isCollapsed && offset === 0) {
+    e.preventDefault();
+    let prevNode = inlineCodeEl.previousSibling;
+    if (!prevNode || prevNode.nodeType !== Node.TEXT_NODE) {
+      const space = document.createTextNode('\u00A0');
+      inlineCodeEl.before(space);
+      prevNode = space;
+    }
+    const range = document.createRange();
+    range.setStart(prevNode, prevNode.textContent?.length || 0);
+    range.collapse(true);
+    selection.removeAllRanges();
+    selection.addRange(range);
+    return true;
+  }
+
+  // 4. Escape at any point in inline code -> Exit inline code!
+  if (e.key === 'Escape') {
+    e.preventDefault();
+    let nextNode = inlineCodeEl.nextSibling;
+    if (!nextNode || nextNode.nodeType !== Node.TEXT_NODE) {
+      const space = document.createTextNode('\u00A0');
+      inlineCodeEl.after(space);
+      nextNode = space;
+    }
+    const range = document.createRange();
+    range.setStart(nextNode, 0);
+    range.collapse(true);
+    selection.removeAllRanges();
+    selection.addRange(range);
+    return true;
+  }
+
+  // 5. Enter in inline code -> Break out into a new paragraph below
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    const parentBlock = inlineCodeEl.closest('p, div, h1, h2, h3, blockquote') || inlineCodeEl.parentElement;
+    const newP = document.createElement('p');
+    newP.innerHTML = '<br>';
+    if (parentBlock?.nextSibling) {
+      parentBlock.parentNode?.insertBefore(newP, parentBlock.nextSibling);
+    } else if (parentBlock?.parentNode) {
+      parentBlock.parentNode.appendChild(newP);
+    }
+    const range = document.createRange();
+    range.setStart(newP, 0);
+    range.collapse(true);
+    selection.removeAllRanges();
+    selection.addRange(range);
+    return true;
+  }
+
   return false;
 };
