@@ -82,6 +82,7 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
   const subtitleRef = useRef<HTMLTextAreaElement>(null);
   const editorRef = useRef<HTMLDivElement>(null);
   const savedRangeRef = useRef<Range | null>(null);
+  const savedTargetElementRef = useRef<HTMLElement | null>(null);
 
   // Floating toolbar state powered by custom hook
   const { toolbarPosition } = useSelectionToolbar(editorRef);
@@ -221,6 +222,15 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
 
     const range = selection.getRangeAt(0);
     savedRangeRef.current = range.cloneRange();
+
+    let anchorNode: Node | null = selection.anchorNode;
+    if (anchorNode?.nodeType === Node.TEXT_NODE) {
+      anchorNode = anchorNode.parentElement;
+    }
+    if (anchorNode instanceof HTMLElement && editorRef.current.contains(anchorNode)) {
+      savedTargetElementRef.current = anchorNode.closest('p, div, blockquote, h1, h2, h3, figure') as HTMLElement | null;
+    }
+
     const editorRect = editorRef.current.getBoundingClientRect();
     let rect = range.getBoundingClientRect();
 
@@ -418,70 +428,129 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
   // Plus menu insertions
   const insertHtmlAtCursor = (html: string) => {
     if (!editorRef.current) return;
-    editorRef.current.focus();
+    const editor = editorRef.current;
+    editor.focus();
 
     const selection = window.getSelection();
-    if (!selection) return;
 
-    // Restore the exact saved range if available
-    if (savedRangeRef.current && editorRef.current.contains(savedRangeRef.current.commonAncestorContainer)) {
-      selection.removeAllRanges();
-      selection.addRange(savedRangeRef.current);
+    // 1. Determine target block element using multiple robust fallback strategies:
+    let targetBlock: HTMLElement | null = null;
+
+    // Strategy A: Direct saved target element from cursor/plus tracking
+    if (savedTargetElementRef.current && editor.contains(savedTargetElementRef.current)) {
+      targetBlock = savedTargetElementRef.current;
     }
 
-    if (selection.rangeCount === 0) {
-      editorRef.current.insertAdjacentHTML('beforeend', html);
-      setContent(editorRef.current.innerHTML);
-      setHasUnsavedChanges(true);
-      return;
-    }
-
-    const range = selection.getRangeAt(0);
-    let node: Node | null = range.startContainer;
-    if (node?.nodeType === Node.TEXT_NODE) {
-      node = node.parentElement;
-    }
-
-    const targetBlock =
-      node instanceof HTMLElement && node !== editorRef.current && editorRef.current.contains(node)
-        ? (node.closest('p, div, blockquote, h1, h2, h3, figure') as HTMLElement | null)
-        : null;
-
-    const isCurrentBlockEmpty =
-      targetBlock &&
-      targetBlock !== editorRef.current &&
-      (!targetBlock.textContent || targetBlock.textContent.trim() === '');
-
-    if (isCurrentBlockEmpty && targetBlock && targetBlock.parentNode) {
-      const temp = document.createElement('div');
-      temp.innerHTML = html;
-
-      const parent = targetBlock.parentNode;
-      let lastInserted: Node | null = null;
-
-      while (temp.firstChild) {
-        lastInserted = temp.firstChild;
-        parent.insertBefore(temp.firstChild, targetBlock);
+    // Strategy B: From active Selection Range
+    if (!targetBlock && selection && selection.rangeCount > 0) {
+      const activeNode = selection.anchorNode;
+      if (activeNode && editor.contains(activeNode)) {
+        const el = activeNode.nodeType === Node.TEXT_NODE ? activeNode.parentElement : (activeNode as HTMLElement);
+        if (el && el !== editor) {
+          targetBlock = el.closest('p, div, blockquote, h1, h2, h3, figure') as HTMLElement | null;
+        }
       }
-      targetBlock.remove();
+    }
 
-      if (lastInserted && lastInserted instanceof HTMLElement) {
-        const trailingP = lastInserted.nodeName === 'P' ? lastInserted : lastInserted.querySelector('p');
-        if (trailingP) {
-          const newRange = document.createRange();
-          newRange.setStart(trailingP, 0);
-          newRange.collapse(true);
-          selection.removeAllRanges();
-          selection.addRange(newRange);
+    // Strategy C: Saved Range
+    if (!targetBlock && savedRangeRef.current && editor.contains(savedRangeRef.current.commonAncestorContainer)) {
+      const ancestor = savedRangeRef.current.commonAncestorContainer;
+      const el = ancestor.nodeType === Node.TEXT_NODE ? ancestor.parentElement : (ancestor as HTMLElement);
+      if (el && el !== editor) {
+        targetBlock = el.closest('p, div, blockquote, h1, h2, h3, figure') as HTMLElement | null;
+      }
+    }
+
+    // Strategy D: Find block by plusMenuTop position
+    if (!targetBlock) {
+      const children = Array.from(editor.children) as HTMLElement[];
+      if (children.length > 0) {
+        const editorRect = editor.getBoundingClientRect();
+        let closestChild: HTMLElement | null = null;
+        let minDiff = Infinity;
+        for (const child of children) {
+          const childRect = child.getBoundingClientRect();
+          const childTop = childRect.top - editorRect.top;
+          const diff = Math.abs(childTop - plusMenuTop);
+          if (diff < minDiff) {
+            minDiff = diff;
+            closestChild = child;
+          }
+        }
+        targetBlock = closestChild;
+      }
+    }
+
+    // 2. Parse the HTML fragment to insert
+    const temp = document.createElement('div');
+    temp.innerHTML = html.trim();
+
+    // Ensure there is always a trailing paragraph for typing
+    if (!temp.querySelector('p:last-child')) {
+      const trailingP = document.createElement('p');
+      trailingP.innerHTML = '<br>';
+      temp.appendChild(trailingP);
+    }
+
+    let trailingParagraph: HTMLElement | null = null;
+
+    if (targetBlock && targetBlock !== editor && targetBlock.parentNode === editor) {
+      const isEmpty = !targetBlock.textContent || targetBlock.textContent.trim() === '';
+
+      if (isEmpty) {
+        // Replace empty line directly
+        let lastInserted: Node | null = null;
+        while (temp.firstChild) {
+          lastInserted = temp.firstChild;
+          editor.insertBefore(temp.firstChild, targetBlock);
+        }
+        targetBlock.remove();
+
+        if (lastInserted && lastInserted instanceof HTMLElement) {
+          trailingParagraph = lastInserted.nodeName === 'P' ? lastInserted : lastInserted.querySelector('p');
+        }
+      } else {
+        // Insert right after the non-empty block
+        const insertRef: Node | null = targetBlock.nextSibling;
+        let lastInserted: Node | null = null;
+        while (temp.firstChild) {
+          lastInserted = temp.firstChild;
+          if (insertRef) {
+            editor.insertBefore(temp.firstChild, insertRef);
+          } else {
+            editor.appendChild(temp.firstChild);
+          }
+        }
+        if (lastInserted && lastInserted instanceof HTMLElement) {
+          trailingParagraph = lastInserted.nodeName === 'P' ? lastInserted : lastInserted.querySelector('p');
         }
       }
     } else {
-      document.execCommand('insertHTML', false, html);
+      // Fallback: append to end of editor
+      let lastInserted: Node | null = null;
+      while (temp.firstChild) {
+        lastInserted = temp.firstChild;
+        editor.appendChild(temp.firstChild);
+      }
+      if (lastInserted && lastInserted instanceof HTMLElement) {
+        trailingParagraph = lastInserted.nodeName === 'P' ? lastInserted : lastInserted.querySelector('p');
+      }
+    }
+
+    // 3. Focus cursor into the trailing paragraph
+    if (trailingParagraph && selection) {
+      const newRange = document.createRange();
+      newRange.setStart(trailingParagraph, 0);
+      newRange.collapse(true);
+      selection.removeAllRanges();
+      selection.addRange(newRange);
     }
 
     savedRangeRef.current = null;
-    setContent(editorRef.current.innerHTML);
+    savedTargetElementRef.current = null;
+    setContent(editor.innerHTML);
     setHasUnsavedChanges(true);
+    updatePlusMenuPosition();
   };
 
   const handleInsertImage = (url: string, caption?: string) => {
