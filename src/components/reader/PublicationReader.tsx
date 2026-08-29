@@ -101,6 +101,7 @@ export const PublicationReader: React.FC<PublicationReaderProps> = ({
   });
 
   const handleUpdateSettings = async (params: {
+    title: string;
     slug: string;
     visibility: 'private' | 'published';
     tags: string[];
@@ -108,6 +109,7 @@ export const PublicationReader: React.FC<PublicationReaderProps> = ({
     coverImage?: string;
   }) => {
     const updated = await updateArticle(currentArticle.id, {
+      title: params.title || currentArticle.title,
       slug: params.slug,
       visibility: params.visibility,
       tags: params.tags,

@@ -928,6 +928,7 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
   }, [initialArticle, title, subtitle, content, updateArticle, createArticle, onSaved]);
 
   const handlePublishConfirm = async (params: {
+    title: string;
     slug: string;
     visibility: 'private' | 'published';
     tags: string[];
@@ -936,7 +937,10 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
   }) => {
     setIsSaving(true);
     try {
-      const finalTitle = title.trim() || 'Untitled Thought';
+      const finalTitle = params.title || title.trim() || 'Untitled Thought';
+      if (params.title && params.title !== title) {
+        setTitle(params.title);
+      }
       const finalSubtitle = params.subtitle || subtitle.trim();
       const targetId = initialArticle?.id || 'art-' + Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
 
