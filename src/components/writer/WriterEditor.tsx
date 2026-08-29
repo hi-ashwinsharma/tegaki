@@ -20,6 +20,7 @@ import {
   handleCodeBlockBackspace,
   handleInlineCodeKeyDown,
 } from '../../services/syntaxHighlightService';
+import { generateEmbedHtml, fetchUrlPreview, type UrlPreviewMetadata } from '../../services/embedService';
 
 const generateCodeBlockHtml = (language = 'javascript', title = '') => {
   const placeholder = getCodePlaceholder(language);
@@ -564,15 +565,20 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
     insertHtmlAtCursor(imageHtml);
   };
 
-  const handleInsertEmbed = (url: string, embedTitle?: string) => {
-    const domain = url.replace(/^(?:https?:\/\/)?(?:www\.)?/i, '').split('/')[0];
-    const embedHtml = `
-      <div class="my-6 p-4 rounded-xl border border-stone-200 dark:border-stone-800 bg-stone-50 dark:bg-stone-900/50 flex flex-col gap-1 select-none">
-        <a href="${url}" target="_blank" rel="noopener noreferrer" class="font-serif font-bold text-base hover:underline">${embedTitle || url}</a>
-        <span class="text-xs text-stone-400 font-mono">${domain}</span>
-      </div>
-      <p><br></p>
-    `;
+  const handleInsertEmbed = async (
+    url: string,
+    embedTitle?: string,
+    meta?: UrlPreviewMetadata,
+    isVideoPlayer: boolean = true
+  ) => {
+    let resolvedMeta = meta;
+    if (!resolvedMeta) {
+      resolvedMeta = await fetchUrlPreview(url);
+    }
+    if (embedTitle && embedTitle !== resolvedMeta.title) {
+      resolvedMeta = { ...resolvedMeta, title: embedTitle };
+    }
+    const embedHtml = generateEmbedHtml(resolvedMeta, isVideoPlayer);
     insertHtmlAtCursor(embedHtml);
   };
 

@@ -264,6 +264,65 @@ body {
   white-space: pre-wrap;
 }
 
+/* Rich Web Embed Preview Card Styles */
+.embed-card-wrapper {
+  margin: 1.75rem 0;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.embed-card {
+  background-color: var(--color-bg-surface);
+  border: 1px solid var(--color-border-soft);
+  color: var(--color-text-primary);
+  text-decoration: none !important;
+  transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.embed-card:hover {
+  border-color: var(--color-border-hover);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.embed-card-domain {
+  color: var(--color-text-tertiary);
+}
+
+.embed-card-title {
+  color: var(--color-text-primary);
+  line-height: 1.35;
+  margin: 0;
+}
+
+.embed-card-desc {
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+  margin: 0.25rem 0 0 0;
+}
+
+.embed-video-wrapper {
+  position: relative;
+  width: 100%;
+  padding-bottom: 56.25%;
+  margin: 1.75rem 0;
+  border-radius: 12px;
+  overflow: hidden;
+  background-color: #000;
+  border: 1px solid var(--color-border-soft);
+}
+
+.embed-video-wrapper iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
 /* Styled Code Block Component - Pure Theme Adaptation */
 .code-block-wrapper {
   background-color: var(--color-code-bg);
