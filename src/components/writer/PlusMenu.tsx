@@ -8,7 +8,7 @@ interface PlusMenuProps {
   onToggle: () => void;
   onInsertImage: (url: string, caption?: string) => void;
   onInsertEmbed: (url: string, title?: string) => void;
-  onInsertCode: (language?: string) => void;
+  onInsertCode: (language?: string, title?: string) => void;
   onInsertDivider: () => void;
 }
 
@@ -24,6 +24,7 @@ export const PlusMenu: React.FC<PlusMenuProps> = ({
   const [modalType, setModalType] = useState<'image' | 'embed' | 'code' | null>(null);
   const [inputUrl, setInputUrl] = useState('');
   const [inputCaption, setInputCaption] = useState('');
+  const [inputCodeTitle, setInputCodeTitle] = useState('');
   const [selectedLanguage, setSelectedLanguage] = useState('javascript');
 
   const handleImageSubmit = (e: React.FormEvent) => {
@@ -50,7 +51,9 @@ export const PlusMenu: React.FC<PlusMenuProps> = ({
 
   const handleCodeSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onInsertCode(selectedLanguage);
+    onInsertCode(selectedLanguage, inputCodeTitle.trim());
+    setSelectedLanguage('javascript');
+    setInputCodeTitle('');
     setModalType(null);
     onToggle();
   };
@@ -255,8 +258,26 @@ export const PlusMenu: React.FC<PlusMenuProps> = ({
                   </select>
                 </div>
 
+                <div>
+                  <label className="block text-[11px] uppercase tracking-wider mb-1 font-medium" style={{ color: 'var(--color-text-tertiary)' }}>
+                    Filename / Title (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={inputCodeTitle}
+                    onChange={(e) => setInputCodeTitle(e.target.value)}
+                    placeholder="e.g. index.ts, main.py, styles.css"
+                    className="w-full px-3 py-2 text-xs rounded-md focus:outline-none font-mono"
+                    style={{
+                      backgroundColor: 'var(--color-bg-surface)',
+                      border: '1px solid var(--color-border-soft)',
+                      color: 'var(--color-text-primary)',
+                    }}
+                  />
+                </div>
+
                 <p className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
-                  You can change the language anytime directly in the code block header.
+                  You can change the title and language anytime directly in the code block header.
                 </p>
 
                 <div className="flex items-center justify-end gap-2 pt-2">

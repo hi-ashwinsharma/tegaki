@@ -322,6 +322,49 @@ body {
   border-color: var(--color-border-hover);
 }
 
+.code-title-separator {
+  color: var(--color-border-hover);
+  font-size: 0.75rem;
+  user-select: none;
+  opacity: 0.8;
+}
+
+.code-title-input {
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  color: var(--color-text-secondary) !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  font-size: 0.75rem !important;
+  padding: 0.15rem 0.35rem !important;
+  border-radius: 4px !important;
+  min-width: 80px;
+  max-width: 220px;
+  flex: 1;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.code-title-input::placeholder {
+  color: var(--color-text-tertiary) !important;
+  opacity: 0.65 !important;
+}
+
+.code-title-input:hover {
+  background-color: var(--color-bg-subtle) !important;
+  color: var(--color-text-primary) !important;
+}
+
+.code-title-input:focus {
+  background-color: var(--color-bg-subtle) !important;
+  color: var(--color-text-primary) !important;
+}
+
+.code-title-label {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+}
+
 .code-copy-btn {
   font-size: 0.6875rem;
   color: var(--color-text-tertiary);

@@ -18,21 +18,25 @@ import {
   handleCodeBlockBackspace,
 } from '../../services/syntaxHighlightService';
 
-const generateCodeBlockHtml = (language = 'javascript') => {
+const generateCodeBlockHtml = (language = 'javascript', title = '') => {
   const placeholder = getCodePlaceholder(language);
   const optionsHtml = CODE_LANGUAGES.map(
     (lang) =>
       `<option value="${lang.value}" ${lang.value === language ? 'selected="selected"' : ''}>${lang.label}</option>`
   ).join('');
 
+  const safeTitle = title.replace(/"/g, '&quot;');
+
   return `
-    <div class="code-block-wrapper" data-language="${language}">
+    <div class="code-block-wrapper" data-language="${language}" data-title="${safeTitle}">
       <div class="code-block-header" contenteditable="false">
         <div class="code-block-header-left">
           <span class="code-lang-dot"></span>
           <select class="code-lang-select" aria-label="Select code language" contenteditable="false">
             ${optionsHtml}
           </select>
+          <span class="code-title-separator">•</span>
+          <input type="text" class="code-title-input" placeholder="Filename (optional)" value="${safeTitle}" aria-label="Code title" contenteditable="false" />
         </div>
         <button type="button" class="code-copy-btn" contenteditable="false" onclick="navigator.clipboard.writeText(this.closest('.code-block-wrapper').querySelector('code').innerText).then(()=>{this.innerText='Copied!';setTimeout(()=>{this.innerText='Copy'},2000)})">Copy</button>
       </div>
@@ -94,6 +98,13 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
           select.value = lang;
         }
       });
+      editorRef.current.querySelectorAll<HTMLInputElement>('.code-title-input').forEach((input) => {
+        const wrapper = input.closest('.code-block-wrapper');
+        const titleVal = wrapper?.getAttribute('data-title');
+        if (titleVal !== null && titleVal !== undefined) {
+          input.value = titleVal;
+        }
+      });
       highlightAllCodeBlocks(editorRef.current);
     }
   };
@@ -130,7 +141,7 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
     adjustTitleHeight();
   }, [title]);
 
-  // Handle dynamic language dropdown changes inside code blocks
+  // Handle dynamic language dropdown and title input changes inside code blocks
   useEffect(() => {
     const editor = editorRef.current;
     if (!editor) return;
@@ -162,8 +173,26 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
       }
     };
 
+    const handleTitleInputChange = (e: Event) => {
+      const target = e.target as HTMLElement;
+      if (target && target.classList.contains('code-title-input')) {
+        const input = target as HTMLInputElement;
+        input.setAttribute('value', input.value);
+        const wrapper = input.closest('.code-block-wrapper');
+        if (wrapper) {
+          wrapper.setAttribute('data-title', input.value);
+        }
+        setContent(editor.innerHTML);
+        setHasUnsavedChanges(true);
+      }
+    };
+
     editor.addEventListener('change', handleSelectChange);
-    return () => editor.removeEventListener('change', handleSelectChange);
+    editor.addEventListener('input', handleTitleInputChange);
+    return () => {
+      editor.removeEventListener('change', handleSelectChange);
+      editor.removeEventListener('input', handleTitleInputChange);
+    };
   }, []);
 
   // Track cursor position for plus menu
@@ -313,8 +342,8 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
     insertHtmlAtCursor(embedHtml);
   };
 
-  const handleInsertCode = (language: string = 'javascript') => {
-    insertHtmlAtCursor(generateCodeBlockHtml(language));
+  const handleInsertCode = (language: string = 'javascript', title: string = '') => {
+    insertHtmlAtCursor(generateCodeBlockHtml(language, title));
   };
 
   const handleEditorKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
