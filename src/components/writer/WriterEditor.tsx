@@ -61,6 +61,7 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
   const { createArticle, updateArticle, decryptJournal } = useArticles();
 
   const [title, setTitle] = useState(initialArticle?.title || '');
+  const [subtitle, setSubtitle] = useState(initialArticle?.subtitle || '');
   const [content, setContent] = useState('');
   const [visibility, setVisibility] = useState<'private' | 'published'>(
     initialArticle?.visibility || 'private'
@@ -75,6 +76,7 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
   const [isPlusMenuOpen, setIsPlusMenuOpen] = useState(false);
 
   const titleRef = useRef<HTMLTextAreaElement>(null);
+  const subtitleRef = useRef<HTMLTextAreaElement>(null);
   const editorRef = useRef<HTMLDivElement>(null);
 
   // Floating toolbar state powered by custom hook
@@ -85,6 +87,15 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
       titleRef.current.style.height = 'auto';
       if (titleRef.current.scrollHeight > 0) {
         titleRef.current.style.height = `${titleRef.current.scrollHeight}px`;
+      }
+    }
+  };
+
+  const adjustSubtitleHeight = () => {
+    if (subtitleRef.current) {
+      subtitleRef.current.style.height = 'auto';
+      if (subtitleRef.current.scrollHeight > 0) {
+        subtitleRef.current.style.height = `${subtitleRef.current.scrollHeight}px`;
       }
     }
   };
@@ -136,10 +147,11 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
     loadContent();
   }, [initialArticle, decryptJournal]);
 
-  // Adjust title height on mount / text change
+  // Adjust title and subtitle heights on mount / text change
   useEffect(() => {
     adjustTitleHeight();
-  }, [title]);
+    adjustSubtitleHeight();
+  }, [title, subtitle]);
 
   // Handle dynamic language dropdown and title input changes inside code blocks
   useEffect(() => {
@@ -250,6 +262,12 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
     adjustTitleHeight();
   };
 
+  const handleSubtitleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setSubtitle(e.target.value);
+    setHasUnsavedChanges(true);
+    adjustSubtitleHeight();
+  };
+
   const handleEditorInput = () => {
     if (!editorRef.current) return;
 
@@ -280,6 +298,17 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
   const handleTitleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
+      if (subtitleRef.current) {
+        subtitleRef.current.focus();
+      } else if (editorRef.current) {
+        editorRef.current.focus();
+      }
+    }
+  };
+
+  const handleSubtitleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
       if (editorRef.current) {
         editorRef.current.focus();
       }
@@ -287,7 +316,7 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
   };
 
   const calculateWords = () => {
-    return calculateWordCount(title + ' ' + content);
+    return calculateWordCount(title + ' ' + subtitle + ' ' + content);
   };
 
   // Formatting actions
@@ -400,6 +429,7 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
       if (initialArticle) {
         const updated = await updateArticle(initialArticle.id, {
           title: title.trim() || 'Untitled Thought',
+          subtitle: subtitle.trim(),
           content: content,
           visibility: 'private',
         });
@@ -407,6 +437,7 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
       } else {
         const created = await createArticle({
           title: title.trim() || 'Untitled Thought',
+          subtitle: subtitle.trim(),
           content: content,
           visibility: 'private',
         });
@@ -416,7 +447,7 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
     } finally {
       setIsSaving(false);
     }
-  }, [initialArticle, title, content, updateArticle, createArticle, onSaved]);
+  }, [initialArticle, title, subtitle, content, updateArticle, createArticle, onSaved]);
 
   const handlePublishConfirm = async (params: {
     slug: string;
@@ -427,6 +458,7 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
     setIsSaving(true);
     try {
       const finalTitle = title.trim() || 'Untitled Thought';
+      const finalSubtitle = params.subtitle || subtitle.trim();
       const targetId = initialArticle?.id || 'art-' + Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
 
       let coverImageUrl = initialArticle?.coverImage;
@@ -438,7 +470,7 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
         const uploadedUrl = await generateAndUploadOgImage(
           {
             title: finalTitle,
-            subtitle: params.subtitle || '',
+            subtitle: finalSubtitle,
             authorName: user?.name || initialArticle?.authorName || 'Anonymous Writer',
             authorUsername: user?.username || initialArticle?.authorUsername || 'writer',
             readingTimeMinutes: readingTime,
@@ -455,7 +487,7 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
       if (initialArticle) {
         const updated = await updateArticle(initialArticle.id, {
           title: finalTitle,
-          subtitle: params.subtitle || initialArticle.subtitle || '',
+          subtitle: finalSubtitle,
           content: content,
           visibility: params.visibility,
           slug: params.slug,
@@ -466,7 +498,7 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
       } else {
         const created = await createArticle({
           title: finalTitle,
-          subtitle: params.subtitle || '',
+          subtitle: finalSubtitle,
           content: content,
           visibility: params.visibility,
           slug: params.slug,
@@ -516,8 +548,23 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
           style={{ minHeight: '52px' }}
         />
 
+        {/* Subtitle */}
+        <textarea
+          ref={subtitleRef}
+          rows={1}
+          value={subtitle}
+          onChange={handleSubtitleChange}
+          onKeyDown={handleSubtitleKeyDown}
+          placeholder="Subtitle (optional)"
+          className="placeholder-visible w-full bg-transparent resize-none overflow-hidden text-lg sm:text-xl font-serif mb-4 focus:outline-none leading-relaxed block"
+          style={{
+            color: 'var(--color-text-secondary)',
+            minHeight: '34px',
+          }}
+        />
+
         {/* Editorial Divider */}
-        <div className="w-full h-px mb-8" style={{ backgroundColor: 'var(--color-border-soft)' }} />
+        <div className="w-full h-px my-3 mb-8" style={{ backgroundColor: 'var(--color-border-soft)' }} />
 
         {/* Body Canvas in Newsreader Editorial Typography with Plus Menu */}
         <div className="relative">
@@ -554,7 +601,7 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
         isOpen={isPublishModalOpen}
         onClose={() => setIsPublishModalOpen(false)}
         title={title}
-        subtitle={initialArticle?.subtitle}
+        subtitle={subtitle}
         initialSlug={initialArticle?.slug}
         initialVisibility={visibility}
         initialTags={initialArticle?.tags}
