@@ -64,7 +64,25 @@ export const PublicationReader: React.FC<PublicationReaderProps> = ({
     loadDecrypted();
   }, [currentArticle, decryptJournal]);
 
-
+  useEffect(() => {
+    const handleCopyClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target && target.classList.contains('code-copy-btn')) {
+        const wrapper = target.closest('.code-block-wrapper');
+        const code = wrapper?.querySelector('code');
+        if (code) {
+          navigator.clipboard.writeText(code.innerText).then(() => {
+            target.innerText = 'Copied!';
+            setTimeout(() => {
+              target.innerText = 'Copy';
+            }, 2000);
+          });
+        }
+      }
+    };
+    document.addEventListener('click', handleCopyClick);
+    return () => document.removeEventListener('click', handleCopyClick);
+  }, []);
 
   const formattedDate = new Date(currentArticle.createdAt).toLocaleDateString('en-US', {
     month: 'long',

@@ -158,6 +158,85 @@ body {
   margin: 1.5rem 0;
 }
 
+/* Styled Code Block Component */
+.code-block-wrapper {
+  background-color: #18181b;
+  border: 1px solid #27272a;
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 1.75rem 0;
+  color: #f4f4f5;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.code-block-wrapper pre {
+  background-color: transparent !important;
+  border: none !important;
+  padding: 0.875rem 1rem !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+}
+
+.code-block-wrapper code {
+  background-color: transparent !important;
+  color: #f4f4f5 !important;
+  padding: 0 !important;
+  font-size: 0.8125rem !important;
+  line-height: 1.65 !important;
+}
+
+.code-block-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.375rem 0.75rem;
+  background-color: #121214;
+  border-bottom: 1px solid #27272a;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.code-lang-select {
+  background-color: rgba(39, 39, 42, 0.6);
+  color: #d4d4d8;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.75rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  border: 1px solid #3f3f46;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.code-lang-select:hover {
+  border-color: #52525b;
+  background-color: rgba(63, 63, 70, 0.6);
+}
+
+.code-lang-select:focus {
+  border-color: #71717a;
+}
+
+.code-content {
+  display: block;
+  min-height: 1.5rem;
+  outline: none;
+  white-space: pre;
+}
+
+/* Code block placeholder that disappears automatically when user types */
+.code-content:empty::before,
+.code-content:has(> br:only-child)::before,
+code[data-placeholder]:empty::before,
+code[data-placeholder]:has(> br:only-child)::before {
+  content: attr(data-placeholder);
+  color: #71717a;
+  opacity: 0.7;
+  pointer-events: none;
+  display: inline-block;
+}
+
 [contenteditable] hr,
 .editorial-divider {
   border: none;

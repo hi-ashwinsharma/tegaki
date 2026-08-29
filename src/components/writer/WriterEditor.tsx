@@ -9,6 +9,31 @@ import { useAuth } from '../../hooks/useAuth';
 import { useSelectionToolbar } from '../../hooks/useSelectionToolbar';
 import { calculateWordCount, calculateReadingTime } from '../../utils/textMetrics';
 import { generateAndUploadOgImage } from '../../services/ogCanvasService';
+import { CODE_LANGUAGES, getCodePlaceholder } from '../../utils/codeLanguages';
+
+const generateCodeBlockHtml = (language = 'javascript') => {
+  const placeholder = getCodePlaceholder(language);
+  const optionsHtml = CODE_LANGUAGES.map(
+    (lang) =>
+      `<option value="${lang.value}" ${lang.value === language ? 'selected="selected"' : ''} class="bg-stone-900 text-stone-100">${lang.label}</option>`
+  ).join('');
+
+  return `
+    <div class="code-block-wrapper my-6 rounded-lg overflow-hidden border border-stone-800 bg-[#18181b] text-stone-100 font-mono text-xs" data-language="${language}">
+      <div class="code-block-header flex items-center justify-between px-3 py-1.5 bg-[#121214] border-b border-stone-800 text-[11px] text-stone-400 select-none" contenteditable="false">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-stone-700 inline-block"></span>
+          <select class="code-lang-select bg-stone-900/80 text-stone-300 text-xs font-mono rounded px-1.5 py-0.5 border border-stone-700/60 focus:outline-none focus:border-stone-500 cursor-pointer" aria-label="Select code language" contenteditable="false">
+            ${optionsHtml}
+          </select>
+        </div>
+        <button type="button" class="code-copy-btn px-2 py-0.5 text-[10px] text-stone-400 hover:text-stone-200 transition-colors rounded hover:bg-stone-800 cursor-pointer" onclick="navigator.clipboard.writeText(this.closest('.code-block-wrapper').querySelector('code').innerText).then(()=>{this.innerText='Copied!';setTimeout(()=>{this.innerText='Copy'},2000)})">Copy</button>
+      </div>
+      <pre class="p-3.5 m-0 bg-transparent overflow-x-auto text-stone-100 font-mono text-xs leading-relaxed focus:outline-none"><code class="language-${language} code-content block focus:outline-none min-h-[1.5rem]" contenteditable="true" spellcheck="false" data-placeholder="${placeholder}"></code></pre>
+    </div>
+    <p><br></p>
+  `;
+};
 
 interface WriterEditorProps {
   initialArticle?: Article | null;
@@ -46,6 +71,18 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
   // Floating toolbar state powered by custom hook
   const { toolbarPosition } = useSelectionToolbar(editorRef);
 
+  const syncCodeSelectValues = () => {
+    if (editorRef.current) {
+      editorRef.current.querySelectorAll<HTMLSelectElement>('.code-lang-select').forEach((select) => {
+        const wrapper = select.closest('.code-block-wrapper');
+        const lang = wrapper?.getAttribute('data-language');
+        if (lang) {
+          select.value = lang;
+        }
+      });
+    }
+  };
+
   // Initial decrypted content loading
   useEffect(() => {
     async function loadContent() {
@@ -55,11 +92,13 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
           setContent(dec);
           if (editorRef.current) {
             editorRef.current.innerHTML = dec;
+            syncCodeSelectValues();
           }
         } else {
           setContent(initialArticle.content);
           if (editorRef.current) {
             editorRef.current.innerHTML = initialArticle.content;
+            syncCodeSelectValues();
           }
         }
       } else {
@@ -70,6 +109,41 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
     }
     loadContent();
   }, [initialArticle, decryptJournal]);
+
+  // Handle dynamic language dropdown changes inside code blocks
+  useEffect(() => {
+    const editor = editorRef.current;
+    if (!editor) return;
+
+    const handleSelectChange = (e: Event) => {
+      const target = e.target as HTMLElement;
+      if (target && target.classList.contains('code-lang-select')) {
+        const select = target as HTMLSelectElement;
+        const newLang = select.value;
+        const wrapper = select.closest('.code-block-wrapper');
+        if (wrapper) {
+          wrapper.setAttribute('data-language', newLang);
+          const codeEl = wrapper.querySelector('code');
+          if (codeEl) {
+            codeEl.className = `language-${newLang} code-content block focus:outline-none min-h-[1.5rem]`;
+            codeEl.setAttribute('data-placeholder', getCodePlaceholder(newLang));
+          }
+          Array.from(select.options).forEach((opt) => {
+            if (opt.value === newLang) {
+              opt.setAttribute('selected', 'selected');
+            } else {
+              opt.removeAttribute('selected');
+            }
+          });
+          setContent(editor.innerHTML);
+          setHasUnsavedChanges(true);
+        }
+      }
+    };
+
+    editor.addEventListener('change', handleSelectChange);
+    return () => editor.removeEventListener('change', handleSelectChange);
+  }, []);
 
   // Track cursor position for plus menu
   const updatePlusMenuPosition = useCallback(() => {
@@ -214,8 +288,43 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
     insertHtmlAtCursor(embedHtml);
   };
 
-  const handleInsertCode = () => {
-    insertHtmlAtCursor('<pre class="p-4 rounded-lg bg-stone-900 text-stone-100 font-mono text-xs my-4 overflow-x-auto"><code>// Add code here...</code></pre><p><br></p>');
+  const handleInsertCode = (language: string = 'javascript') => {
+    insertHtmlAtCursor(generateCodeBlockHtml(language));
+  };
+
+  const handleEditorKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    const selection = window.getSelection();
+    if (!selection || !editorRef.current) return;
+
+    let node: Node | null = selection.anchorNode;
+    if (node?.nodeType === Node.TEXT_NODE) {
+      node = node.parentElement;
+    }
+
+    const isInsideCode = Boolean(
+      node &&
+        (node.nodeName === 'CODE' ||
+          (node instanceof HTMLElement &&
+            (node.classList.contains('code-content') || Boolean(node.closest('.code-block-wrapper')))))
+    );
+
+    if (isInsideCode) {
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        document.execCommand('insertText', false, '  ');
+        setContent(editorRef.current.innerHTML);
+        setHasUnsavedChanges(true);
+        return;
+      }
+
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        document.execCommand('insertText', false, '\n');
+        setContent(editorRef.current.innerHTML);
+        setHasUnsavedChanges(true);
+        return;
+      }
+    }
   };
 
   const handleInsertDivider = () => {
@@ -381,6 +490,7 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
             contentEditable
             suppressContentEditableWarning
             onInput={handleEditorInput}
+            onKeyDown={handleEditorKeyDown}
             onClick={updatePlusMenuPosition}
             onKeyUp={updatePlusMenuPosition}
             onFocus={updatePlusMenuPosition}
