@@ -15,7 +15,7 @@ import 'prismjs/components/prism-markdown';
 
 export const highlightCode = (code: string, language: string): string => {
   const normalizedLang = (language || 'plaintext').toLowerCase();
-  const grammar = Prism.languages[normalizedLang] || Prism.languages.plaintext;
+  const grammar = Prism.languages[normalizedLang] || Prism.languages.javascript || Prism.languages.plaintext;
   if (!grammar) {
     return code
       .replace(/&/g, '&amp;')
@@ -23,6 +23,77 @@ export const highlightCode = (code: string, language: string): string => {
       .replace(/>/g, '&gt;');
   }
   return Prism.highlight(code, grammar, normalizedLang);
+};
+
+export const getCaretCharacterOffsetWithin = (element: Node): number => {
+  let caretOffset = 0;
+  const selection = window.getSelection();
+  if (selection && selection.rangeCount > 0) {
+    try {
+      const range = selection.getRangeAt(0);
+      const preCaretRange = range.cloneRange();
+      preCaretRange.selectNodeContents(element);
+      preCaretRange.setEnd(range.endContainer, range.endOffset);
+      caretOffset = preCaretRange.toString().length;
+    } catch {
+      caretOffset = 0;
+    }
+  }
+  return caretOffset;
+};
+
+export const setCaretCharacterOffsetWithin = (element: Node, offset: number) => {
+  const selection = window.getSelection();
+  if (!selection) return;
+  const range = document.createRange();
+  let currentOffset = 0;
+  let found = false;
+
+  function traverse(node: Node) {
+    if (found) return;
+    if (node.nodeType === Node.TEXT_NODE) {
+      const textLength = node.textContent?.length || 0;
+      if (currentOffset + textLength >= offset) {
+        range.setStart(node, Math.min(offset - currentOffset, textLength));
+        range.collapse(true);
+        found = true;
+        return;
+      }
+      currentOffset += textLength;
+    } else {
+      for (let i = 0; i < node.childNodes.length; i++) {
+        traverse(node.childNodes[i]);
+        if (found) break;
+      }
+    }
+  }
+
+  traverse(element);
+  if (!found) {
+    range.selectNodeContents(element);
+    range.collapse(false);
+  }
+  selection.removeAllRanges();
+  selection.addRange(range);
+};
+
+export const highlightCodeElementInPlace = (codeEl: HTMLElement) => {
+  const wrapper = codeEl.closest('.code-block-wrapper');
+  const lang = wrapper?.getAttribute('data-language') || 'javascript';
+  const rawText = codeEl.innerText || codeEl.textContent || '';
+
+  if (!rawText.trim()) {
+    return;
+  }
+
+  const caretOffset = getCaretCharacterOffsetWithin(codeEl);
+  const highlighted = highlightCode(rawText, lang);
+  codeEl.innerHTML = highlighted;
+  try {
+    setCaretCharacterOffsetWithin(codeEl, caretOffset);
+  } catch {
+    // Caret restore catch
+  }
 };
 
 export const highlightAllCodeBlocks = (container: HTMLElement | null) => {

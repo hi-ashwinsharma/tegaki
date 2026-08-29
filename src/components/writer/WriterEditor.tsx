@@ -10,7 +10,7 @@ import { useSelectionToolbar } from '../../hooks/useSelectionToolbar';
 import { calculateWordCount, calculateReadingTime } from '../../utils/textMetrics';
 import { generateAndUploadOgImage } from '../../services/ogCanvasService';
 import { CODE_LANGUAGES, getCodePlaceholder } from '../../utils/codeLanguages';
-import { highlightAllCodeBlocks } from '../../services/syntaxHighlightService';
+import { highlightAllCodeBlocks, highlightCodeElementInPlace } from '../../services/syntaxHighlightService';
 
 const generateCodeBlockHtml = (language = 'javascript') => {
   const placeholder = getCodePlaceholder(language);
@@ -75,7 +75,9 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
   const adjustTextareaHeight = (el: HTMLTextAreaElement | null) => {
     if (el) {
       el.style.height = 'auto';
-      el.style.height = `${el.scrollHeight}px`;
+      if (el.scrollHeight > 0) {
+        el.style.height = `${el.scrollHeight}px`;
+      }
     }
   };
 
@@ -138,10 +140,11 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
         const wrapper = select.closest('.code-block-wrapper');
         if (wrapper) {
           wrapper.setAttribute('data-language', newLang);
-          const codeEl = wrapper.querySelector('code');
+          const codeEl = wrapper.querySelector<HTMLElement>('code');
           if (codeEl) {
             codeEl.className = `language-${newLang} code-content block focus:outline-none min-h-[1.5rem]`;
             codeEl.setAttribute('data-placeholder', getCodePlaceholder(newLang));
+            highlightCodeElementInPlace(codeEl);
           }
           Array.from(select.options).forEach((opt) => {
             if (opt.value === newLang) {
@@ -150,7 +153,6 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
               opt.removeAttribute('selected');
             }
           });
-          highlightAllCodeBlocks(editor);
           setContent(editor.innerHTML);
           setHasUnsavedChanges(true);
         }
@@ -223,11 +225,23 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
   };
 
   const handleEditorInput = () => {
-    if (editorRef.current) {
-      setContent(editorRef.current.innerHTML);
-      setHasUnsavedChanges(true);
-      updatePlusMenuPosition();
+    if (!editorRef.current) return;
+
+    // Detect if the user is typing inside a code block and highlight live
+    const selection = window.getSelection();
+    let node: Node | null = selection?.anchorNode || null;
+    if (node?.nodeType === Node.TEXT_NODE) {
+      node = node.parentElement;
     }
+
+    const codeEl = node && (node.nodeName === 'CODE' ? node as HTMLElement : (node as HTMLElement).closest?.('code'));
+    if (codeEl && codeEl.classList.contains('code-content')) {
+      highlightCodeElementInPlace(codeEl);
+    }
+
+    setContent(editorRef.current.innerHTML);
+    setHasUnsavedChanges(true);
+    updatePlusMenuPosition();
   };
 
   const handleEditorBlur = () => {
@@ -480,7 +494,7 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
           onChange={handleTitleChange}
           onKeyDown={handleTitleKeyDown}
           placeholder="Title"
-          className="w-full bg-transparent resize-none overflow-hidden text-2xl sm:text-4xl md:text-5xl font-serif font-bold tracking-tight mb-2 sm:mb-3 focus:outline-none placeholder:opacity-25 leading-tight"
+          className="w-full bg-transparent resize-none overflow-hidden text-2xl sm:text-4xl md:text-5xl font-serif font-bold tracking-tight mb-2 sm:mb-3 focus:outline-none placeholder:text-[var(--color-text-tertiary)] placeholder:opacity-60 leading-tight min-h-[3rem] sm:min-h-[3.75rem]"
           style={{ color: 'var(--color-text-primary)' }}
         />
 
@@ -492,7 +506,7 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
           onChange={handleSubtitleChange}
           onKeyDown={handleSubtitleKeyDown}
           placeholder="Subtitle (optional)"
-          className="w-full bg-transparent resize-none overflow-hidden text-base sm:text-xl font-serif mb-4 sm:mb-6 focus:outline-none placeholder:opacity-25 leading-relaxed"
+          className="w-full bg-transparent resize-none overflow-hidden text-base sm:text-xl font-serif mb-4 sm:mb-6 focus:outline-none placeholder:text-[var(--color-text-tertiary)] placeholder:opacity-60 leading-relaxed min-h-[2rem] sm:min-h-[2.5rem]"
           style={{ color: 'var(--color-text-secondary)' }}
         />
 
