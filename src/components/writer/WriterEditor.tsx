@@ -932,6 +932,7 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
     visibility: 'private' | 'published';
     tags: string[];
     subtitle?: string;
+    coverImage?: string;
   }) => {
     setIsSaving(true);
     try {
@@ -939,10 +940,10 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
       const finalSubtitle = params.subtitle || subtitle.trim();
       const targetId = initialArticle?.id || 'art-' + Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
 
-      let coverImageUrl = initialArticle?.coverImage;
+      let coverImageUrl = params.coverImage || initialArticle?.coverImage;
 
-      // Automatically generate & upload OpenGraph preview card if published
-      if (params.visibility === 'published') {
+      // If user did not supply a custom cover image and visibility is published, auto-generate OpenGraph card
+      if (!coverImageUrl && params.visibility === 'published') {
         const readingTime = calculateReadingTime(content);
 
         const uploadedUrl = await generateAndUploadOgImage(
@@ -1081,9 +1082,11 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
         onClose={() => setIsPublishModalOpen(false)}
         title={title}
         subtitle={subtitle}
+        content={content}
         initialSlug={initialArticle?.slug}
         initialVisibility={visibility}
         initialTags={initialArticle?.tags}
+        initialCoverImage={initialArticle?.coverImage}
         onConfirmPublish={handlePublishConfirm}
       />
     </div>

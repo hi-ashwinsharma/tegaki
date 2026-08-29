@@ -105,12 +105,14 @@ export const PublicationReader: React.FC<PublicationReaderProps> = ({
     visibility: 'private' | 'published';
     tags: string[];
     subtitle: string;
+    coverImage?: string;
   }) => {
     const updated = await updateArticle(currentArticle.id, {
       slug: params.slug,
       visibility: params.visibility,
       tags: params.tags,
       subtitle: params.subtitle,
+      coverImage: params.coverImage,
     });
     if (updated) {
       setCurrentArticle(updated);
@@ -386,9 +388,11 @@ export const PublicationReader: React.FC<PublicationReaderProps> = ({
         onClose={() => setIsSettingsModalOpen(false)}
         title={currentArticle.title}
         subtitle={currentArticle.subtitle || ''}
+        content={decryptedHtml}
         initialSlug={currentArticle.slug}
         initialVisibility={currentArticle.visibility}
         initialTags={currentArticle.tags}
+        initialCoverImage={currentArticle.coverImage}
         onConfirmPublish={handleUpdateSettings}
       />
     </div>
