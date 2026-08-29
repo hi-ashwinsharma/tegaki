@@ -118,3 +118,112 @@ export const highlightAllCodeBlocks = (container: HTMLElement | null) => {
     }
   });
 };
+
+export const handleCodeBlockEnter = (codeEl: HTMLElement) => {
+  const codeText = codeEl.innerText || codeEl.textContent || '';
+  const offset = getCaretCharacterOffsetWithin(codeEl);
+
+  const textBefore = codeText.slice(0, offset);
+  const textAfter = codeText.slice(offset);
+
+  const linesBefore = textBefore.split('\n');
+  const currentLine = linesBefore[linesBefore.length - 1] || '';
+
+  // Calculate indentation of current line
+  const indentMatch = currentLine.match(/^[ \t]*/);
+  const currentIndent = indentMatch ? indentMatch[0] : '';
+
+  const trimmedLine = currentLine.trimEnd();
+  const isBlockOpener =
+    trimmedLine.endsWith('{') ||
+    trimmedLine.endsWith(':') ||
+    trimmedLine.endsWith('(') ||
+    trimmedLine.endsWith('[');
+
+  const isBetweenBrackets =
+    (trimmedLine.endsWith('{') && textAfter.trimStart().startsWith('}')) ||
+    (trimmedLine.endsWith('(') && textAfter.trimStart().startsWith(')')) ||
+    (trimmedLine.endsWith('[') && textAfter.trimStart().startsWith(']'));
+
+  let insertionText = '\n' + currentIndent;
+  let newCursorOffset = offset + 1 + currentIndent.length;
+
+  if (isBetweenBrackets) {
+    const extraIndent = currentIndent + '  ';
+    insertionText = '\n' + extraIndent + '\n' + currentIndent;
+    newCursorOffset = offset + 1 + extraIndent.length;
+  } else if (isBlockOpener) {
+    const extraIndent = currentIndent + '  ';
+    insertionText = '\n' + extraIndent;
+    newCursorOffset = offset + 1 + extraIndent.length;
+  }
+
+  const newCodeText = textBefore + insertionText + textAfter;
+  const lang = codeEl.closest('.code-block-wrapper')?.getAttribute('data-language') || 'javascript';
+
+  codeEl.innerHTML = highlightCode(newCodeText, lang);
+  setCaretCharacterOffsetWithin(codeEl, newCursorOffset);
+};
+
+export const handleCodeBlockTab = (codeEl: HTMLElement, isShift: boolean) => {
+  const codeText = codeEl.innerText || codeEl.textContent || '';
+  const offset = getCaretCharacterOffsetWithin(codeEl);
+
+  if (isShift) {
+    const textBefore = codeText.slice(0, offset);
+    const textAfter = codeText.slice(offset);
+    const linesBefore = textBefore.split('\n');
+    const currentLineIndex = linesBefore.length - 1;
+    let currentLine = linesBefore[currentLineIndex];
+
+    let removedSpaces = 0;
+    if (currentLine.startsWith('  ')) {
+      currentLine = currentLine.slice(2);
+      removedSpaces = 2;
+    } else if (currentLine.startsWith(' ')) {
+      currentLine = currentLine.slice(1);
+      removedSpaces = 1;
+    }
+
+    if (removedSpaces > 0) {
+      linesBefore[currentLineIndex] = currentLine;
+      const newTextBefore = linesBefore.join('\n');
+      const newCodeText = newTextBefore + textAfter;
+      const lang = codeEl.closest('.code-block-wrapper')?.getAttribute('data-language') || 'javascript';
+      codeEl.innerHTML = highlightCode(newCodeText, lang);
+      setCaretCharacterOffsetWithin(codeEl, Math.max(0, offset - removedSpaces));
+    }
+    return;
+  }
+
+  const textBefore = codeText.slice(0, offset);
+  const textAfter = codeText.slice(offset);
+  const newCodeText = textBefore + '  ' + textAfter;
+  const lang = codeEl.closest('.code-block-wrapper')?.getAttribute('data-language') || 'javascript';
+  codeEl.innerHTML = highlightCode(newCodeText, lang);
+  setCaretCharacterOffsetWithin(codeEl, offset + 2);
+};
+
+export const handleCodeBlockBackspace = (codeEl: HTMLElement): boolean => {
+  const selection = window.getSelection();
+  if (!selection || selection.rangeCount === 0 || !selection.isCollapsed) return false;
+
+  const codeText = codeEl.innerText || codeEl.textContent || '';
+  const offset = getCaretCharacterOffsetWithin(codeEl);
+
+  const textBefore = codeText.slice(0, offset);
+  const linesBefore = textBefore.split('\n');
+  const currentLine = linesBefore[linesBefore.length - 1];
+
+  // If cursor is on leading spaces and ends with at least 2 spaces
+  if (currentLine.length >= 2 && /^[ ]+$/.test(currentLine) && currentLine.endsWith('  ')) {
+    const newTextBefore = codeText.slice(0, offset - 2);
+    const textAfter = codeText.slice(offset);
+    const newCodeText = newTextBefore + textAfter;
+    const lang = codeEl.closest('.code-block-wrapper')?.getAttribute('data-language') || 'javascript';
+    codeEl.innerHTML = highlightCode(newCodeText, lang);
+    setCaretCharacterOffsetWithin(codeEl, offset - 2);
+    return true;
+  }
+  return false;
+};

@@ -10,7 +10,13 @@ import { useSelectionToolbar } from '../../hooks/useSelectionToolbar';
 import { calculateWordCount, calculateReadingTime } from '../../utils/textMetrics';
 import { generateAndUploadOgImage } from '../../services/ogCanvasService';
 import { CODE_LANGUAGES, getCodePlaceholder } from '../../utils/codeLanguages';
-import { highlightAllCodeBlocks, highlightCodeElementInPlace } from '../../services/syntaxHighlightService';
+import {
+  highlightAllCodeBlocks,
+  highlightCodeElementInPlace,
+  handleCodeBlockEnter,
+  handleCodeBlockTab,
+  handleCodeBlockBackspace,
+} from '../../services/syntaxHighlightService';
 
 const generateCodeBlockHtml = (language = 'javascript') => {
   const placeholder = getCodePlaceholder(language);
@@ -340,20 +346,14 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
       node = node.parentElement;
     }
 
-    const isInsideCode = Boolean(
-      node &&
-        (node.nodeName === 'CODE' ||
-          (node instanceof HTMLElement &&
-            (node.classList.contains('code-content') || Boolean(node.closest('.code-block-wrapper')))))
-    );
+    const codeEl = node && (node.nodeName === 'CODE' ? (node as HTMLElement) : (node as HTMLElement).closest?.('code'));
+    const isInsideCode = Boolean(codeEl && codeEl.classList.contains('code-content'));
 
-    if (isInsideCode) {
+    if (isInsideCode && codeEl) {
       if (e.key === 'Tab') {
         e.preventDefault();
-        document.execCommand('insertText', false, '  ');
+        handleCodeBlockTab(codeEl, e.shiftKey);
         if (editorRef.current) {
-          const codeEl = (node as HTMLElement).closest?.('code');
-          if (codeEl) highlightCodeElementInPlace(codeEl);
           setContent(editorRef.current.innerHTML);
           setHasUnsavedChanges(true);
         }
@@ -362,14 +362,21 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
 
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
-        document.execCommand('insertText', false, '\n');
+        handleCodeBlockEnter(codeEl);
         if (editorRef.current) {
-          const codeEl = (node as HTMLElement).closest?.('code');
-          if (codeEl) highlightCodeElementInPlace(codeEl);
           setContent(editorRef.current.innerHTML);
           setHasUnsavedChanges(true);
         }
         return;
+      }
+
+      if (e.key === 'Backspace') {
+        const handled = handleCodeBlockBackspace(codeEl);
+        if (handled && editorRef.current) {
+          setContent(editorRef.current.innerHTML);
+          setHasUnsavedChanges(true);
+          return;
+        }
       }
     }
   };
