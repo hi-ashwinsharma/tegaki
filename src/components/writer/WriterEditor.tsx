@@ -22,6 +22,15 @@ import {
 } from '../../services/syntaxHighlightService';
 import { generateEmbedHtml, fetchUrlPreview, type UrlPreviewMetadata } from '../../services/embedService';
 
+const isCustomBlockElement = (el: HTMLElement | null): boolean => {
+  if (!el) return false;
+  return Boolean(
+    el.matches?.(
+      '.embed-card-wrapper, .embed-video-wrapper, .code-block-wrapper, figure, hr, .editorial-divider, [contenteditable="false"]'
+    )
+  );
+};
+
 const generateCodeBlockHtml = (language = 'javascript', title = '') => {
   const placeholder = getCodePlaceholder(language);
   const optionsHtml = CODE_LANGUAGES.map(
@@ -159,60 +168,6 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
     adjustSubtitleHeight();
   }, [title, subtitle]);
 
-  // Handle dynamic language dropdown and title input changes inside code blocks
-  useEffect(() => {
-    const editor = editorRef.current;
-    if (!editor) return;
-
-    const handleSelectChange = (e: Event) => {
-      const target = e.target as HTMLElement;
-      if (target && target.classList.contains('code-lang-select')) {
-        const select = target as HTMLSelectElement;
-        const newLang = select.value;
-        const wrapper = select.closest('.code-block-wrapper');
-        if (wrapper) {
-          wrapper.setAttribute('data-language', newLang);
-          const codeEl = wrapper.querySelector<HTMLElement>('code');
-          if (codeEl) {
-            codeEl.className = `language-${newLang} code-content`;
-            codeEl.setAttribute('data-placeholder', getCodePlaceholder(newLang));
-            highlightCodeElementInPlace(codeEl);
-          }
-          Array.from(select.options).forEach((opt) => {
-            if (opt.value === newLang) {
-              opt.setAttribute('selected', 'selected');
-            } else {
-              opt.removeAttribute('selected');
-            }
-          });
-          setContent(editor.innerHTML);
-          setHasUnsavedChanges(true);
-        }
-      }
-    };
-
-    const handleTitleInputChange = (e: Event) => {
-      const target = e.target as HTMLElement;
-      if (target && target.classList.contains('code-title-input')) {
-        const input = target as HTMLInputElement;
-        input.setAttribute('value', input.value);
-        const wrapper = input.closest('.code-block-wrapper');
-        if (wrapper) {
-          wrapper.setAttribute('data-title', input.value);
-        }
-        setContent(editor.innerHTML);
-        setHasUnsavedChanges(true);
-      }
-    };
-
-    editor.addEventListener('change', handleSelectChange);
-    editor.addEventListener('input', handleTitleInputChange);
-    return () => {
-      editor.removeEventListener('change', handleSelectChange);
-      editor.removeEventListener('input', handleTitleInputChange);
-    };
-  }, []);
-
   // Track cursor position for plus menu
   const updatePlusMenuPosition = useCallback(() => {
     const selection = window.getSelection();
@@ -259,6 +214,82 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
       setPlusMenuTop(4);
     }
   }, []);
+
+  // Handle dynamic language dropdown and title input changes inside code blocks
+  useEffect(() => {
+    const editor = editorRef.current;
+    if (!editor) return;
+
+    const handleSelectChange = (e: Event) => {
+      const target = e.target as HTMLElement;
+      if (target && target.classList.contains('code-lang-select')) {
+        const select = target as HTMLSelectElement;
+        const newLang = select.value;
+        const wrapper = select.closest('.code-block-wrapper');
+        if (wrapper) {
+          wrapper.setAttribute('data-language', newLang);
+          const codeEl = wrapper.querySelector<HTMLElement>('code');
+          if (codeEl) {
+            codeEl.className = `language-${newLang} code-content`;
+            codeEl.setAttribute('data-placeholder', getCodePlaceholder(newLang));
+            highlightCodeElementInPlace(codeEl);
+          }
+          Array.from(select.options).forEach((opt) => {
+            if (opt.value === newLang) {
+              opt.setAttribute('selected', 'selected');
+            } else {
+              opt.removeAttribute('selected');
+            }
+          });
+          setContent(editor.innerHTML);
+          setHasUnsavedChanges(true);
+        }
+      }
+    };
+
+    const handleTitleInputChange = (e: Event) => {
+      const target = e.target as HTMLElement;
+      if (target && target.classList.contains('code-title-input')) {
+        const input = target as HTMLInputElement;
+        input.setAttribute('value', input.value);
+        const wrapper = input.closest('.code-block-wrapper');
+        if (wrapper) {
+          wrapper.setAttribute('data-title', input.value);
+        }
+        setContent(editor.innerHTML);
+        setHasUnsavedChanges(true);
+      }
+    };
+
+    const handleBlockClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+
+      const removeBtn = target.closest('.block-remove-btn');
+      if (removeBtn && editor.contains(removeBtn)) {
+        e.preventDefault();
+        e.stopPropagation();
+        const wrapper = removeBtn.closest(
+          '.embed-card-wrapper, .embed-video-wrapper, .code-block-wrapper, figure, hr, .editorial-divider'
+        );
+        if (wrapper && editor.contains(wrapper)) {
+          wrapper.remove();
+          setContent(editor.innerHTML);
+          setHasUnsavedChanges(true);
+          updatePlusMenuPosition();
+        }
+      }
+    };
+
+    editor.addEventListener('change', handleSelectChange);
+    editor.addEventListener('input', handleTitleInputChange);
+    editor.addEventListener('click', handleBlockClick);
+    return () => {
+      editor.removeEventListener('change', handleSelectChange);
+      editor.removeEventListener('input', handleTitleInputChange);
+      editor.removeEventListener('click', handleBlockClick);
+    };
+  }, [updatePlusMenuPosition]);
 
   // Listen to document selection change to reposition plus menu dynamically
   useEffect(() => {
@@ -747,6 +778,120 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
           } catch {
             // Range fallback
           }
+        }
+      }
+    }
+
+    // Safeguard 1: Non-collapsed selection deletion crossing into custom blocks (e.g. Shift + ArrowRight + Backspace on empty line)
+    if ((e.key === 'Backspace' || e.key === 'Delete') && !selection.isCollapsed && selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0);
+      const startContainer = range.startContainer;
+      const startEl = startContainer.nodeType === Node.TEXT_NODE ? startContainer.parentElement : (startContainer as HTMLElement);
+      const startBlock = startEl?.closest('p, div:not(.code-block-wrapper):not(.embed-card-wrapper):not(.embed-video-wrapper)');
+      if (startBlock && editorRef.current.contains(startBlock) && (!startBlock.textContent || startBlock.textContent.trim() === '')) {
+        const next = startBlock.nextElementSibling as HTMLElement | null;
+        if (isCustomBlockElement(next) && (range.toString().length === 0 || range.toString().trim() === '')) {
+          e.preventDefault();
+          startBlock.remove();
+          setContent(editorRef.current.innerHTML);
+          setHasUnsavedChanges(true);
+          updatePlusMenuPosition();
+          return;
+        }
+      }
+    }
+
+    // Safeguard 2: Backspace / Delete on empty paragraphs between/adjacent to custom blocks
+    if ((e.key === 'Backspace' || e.key === 'Delete') && selection.isCollapsed) {
+      let anchorNode: Node | null = selection.anchorNode;
+      if (anchorNode?.nodeType === Node.TEXT_NODE) {
+        anchorNode = anchorNode.parentElement;
+      }
+
+      const currentBlock =
+        anchorNode instanceof HTMLElement &&
+        editorRef.current.contains(anchorNode) &&
+        anchorNode !== editorRef.current
+          ? (anchorNode.closest(
+              'p, div:not(.code-block-wrapper):not(.embed-card-wrapper):not(.embed-video-wrapper), h1, h2, h3, blockquote'
+            ) as HTMLElement | null)
+          : null;
+
+      const isCurrentLineEmpty =
+        currentBlock &&
+        (!currentBlock.textContent || currentBlock.textContent.trim() === '') &&
+        !currentBlock.querySelector('img, iframe, input, select, svg');
+
+      if (isCurrentLineEmpty && currentBlock && currentBlock.parentNode === editorRef.current) {
+        const prev = currentBlock.previousElementSibling as HTMLElement | null;
+        const next = currentBlock.nextElementSibling as HTMLElement | null;
+
+        // If adjacent to custom blocks or another block
+        if (isCustomBlockElement(prev) || isCustomBlockElement(next) || prev || next) {
+          e.preventDefault();
+          currentBlock.remove();
+
+          // Focus next editable if available
+          if (next && !isCustomBlockElement(next)) {
+            const range = document.createRange();
+            range.setStart(next, 0);
+            range.collapse(true);
+            selection.removeAllRanges();
+            selection.addRange(range);
+          } else if (prev && !isCustomBlockElement(prev)) {
+            const range = document.createRange();
+            range.selectNodeContents(prev);
+            range.collapse(false);
+            selection.removeAllRanges();
+            selection.addRange(range);
+          } else if (next && isCustomBlockElement(next)) {
+            let nextEditable = next.nextElementSibling as HTMLElement | null;
+            while (nextEditable && isCustomBlockElement(nextEditable)) {
+              nextEditable = nextEditable.nextElementSibling as HTMLElement | null;
+            }
+            if (nextEditable) {
+              const range = document.createRange();
+              range.setStart(nextEditable, 0);
+              range.collapse(true);
+              selection.removeAllRanges();
+              selection.addRange(range);
+            } else {
+              const trailing = document.createElement('p');
+              trailing.innerHTML = '<br>';
+              next.after(trailing);
+              const range = document.createRange();
+              range.setStart(trailing, 0);
+              range.collapse(true);
+              selection.removeAllRanges();
+              selection.addRange(range);
+            }
+          } else if (prev && isCustomBlockElement(prev)) {
+            let prevEditable = prev.previousElementSibling as HTMLElement | null;
+            while (prevEditable && isCustomBlockElement(prevEditable)) {
+              prevEditable = prevEditable.previousElementSibling as HTMLElement | null;
+            }
+            if (prevEditable) {
+              const range = document.createRange();
+              range.selectNodeContents(prevEditable);
+              range.collapse(false);
+              selection.removeAllRanges();
+              selection.addRange(range);
+            } else {
+              const trailing = document.createElement('p');
+              trailing.innerHTML = '<br>';
+              prev.after(trailing);
+              const range = document.createRange();
+              range.setStart(trailing, 0);
+              range.collapse(true);
+              selection.removeAllRanges();
+              selection.addRange(range);
+            }
+          }
+
+          setContent(editorRef.current.innerHTML);
+          setHasUnsavedChanges(true);
+          updatePlusMenuPosition();
+          return;
         }
       }
     }

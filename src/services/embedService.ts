@@ -115,7 +115,8 @@ export const generateEmbedHtml = (
   if (asInteractivePlayer && meta.isVideo && meta.videoId) {
     if (meta.videoType === 'youtube') {
       return `
-        <div class="embed-video-wrapper my-6 rounded-xl overflow-hidden border border-stone-200 dark:border-stone-800 bg-black relative select-none" contenteditable="false">
+        <div class="embed-video-wrapper my-6 rounded-xl overflow-hidden border border-stone-200 dark:border-stone-800 bg-black relative select-none group/embed" contenteditable="false">
+          <button type="button" class="block-remove-btn" title="Remove video" contenteditable="false">✕</button>
           <iframe src="https://www.youtube-nocookie.com/embed/${meta.videoId}" title="${safeTitle}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen class="w-full h-full absolute inset-0"></iframe>
         </div>
         <p><br></p>
@@ -123,7 +124,8 @@ export const generateEmbedHtml = (
     }
     if (meta.videoType === 'vimeo') {
       return `
-        <div class="embed-video-wrapper my-6 rounded-xl overflow-hidden border border-stone-200 dark:border-stone-800 bg-black relative select-none" contenteditable="false">
+        <div class="embed-video-wrapper my-6 rounded-xl overflow-hidden border border-stone-200 dark:border-stone-800 bg-black relative select-none group/embed" contenteditable="false">
+          <button type="button" class="block-remove-btn" title="Remove video" contenteditable="false">✕</button>
           <iframe src="https://player.vimeo.com/video/${meta.videoId}" title="${safeTitle}" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen class="w-full h-full absolute inset-0"></iframe>
         </div>
         <p><br></p>
@@ -133,7 +135,8 @@ export const generateEmbedHtml = (
 
   // 2. Rich OpenGraph Visual Bookmark Card
   return `
-    <div class="embed-card-wrapper my-6 select-none" contenteditable="false">
+    <div class="embed-card-wrapper my-6 select-none relative group/embed" contenteditable="false">
+      <button type="button" class="block-remove-btn" title="Remove embed" contenteditable="false">✕</button>
       <a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="embed-card flex flex-col sm:flex-row rounded-xl overflow-hidden border transition-all duration-150 group">
         <div class="embed-card-content flex-1 p-4 sm:p-5 flex flex-col justify-between">
           <div>
