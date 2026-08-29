@@ -5,7 +5,9 @@ import { FilterTabs } from './FilterTabs';
 import type { FilterOption } from './FilterTabs';
 import { ArticleCard } from './ArticleCard';
 import { Feather, Plus, Clock, Flame } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
+
+
 
 export type SortOption = 'latest' | 'upvotes';
 

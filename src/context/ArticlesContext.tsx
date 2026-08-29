@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import type { Article, Comment } from '../types/article';
 import {
   getStoredArticles,
@@ -18,37 +18,9 @@ import {
 } from '../services/firestoreService';
 import { encryptContent, decryptContent } from '../services/cryptoService';
 import { generateSlug, sanitizeSlug } from '../services/slugService';
-import { useAuth } from './AuthContext';
-
-interface ArticlesContextType {
-  articles: Article[];
-  getArticleById: (id: string) => Article | undefined;
-  getArticleBySlug: (username: string, slug: string) => Article | undefined;
-  findArticleBySlugOrFetch: (username: string, slug: string) => Promise<Article | null>;
-  findArticleByIdOrFetch: (id: string) => Promise<Article | null>;
-  createArticle: (params: {
-    title: string;
-    subtitle?: string;
-    content: string;
-    visibility: 'private' | 'published';
-    slug?: string;
-    tags?: string[];
-    coverImage?: string;
-  }) => Promise<Article>;
-  updateArticle: (
-    id: string,
-    params: Partial<Omit<Article, 'id' | 'createdAt'>>
-  ) => Promise<Article | undefined>;
-  deleteArticle: (id: string) => void;
-  toggleVisibility: (id: string, slug?: string) => Promise<Article | undefined>;
-  clapArticle: (id: string) => void;
-  getCommentsForArticle: (articleId: string) => Comment[];
-  addCommentToArticle: (articleId: string, content: string) => Comment;
-  clapComment: (commentId: string) => void;
-  decryptJournal: (article: Article) => Promise<string>;
-}
-
-const ArticlesContext = createContext<ArticlesContextType | undefined>(undefined);
+import { useAuth } from '../hooks/useAuth';
+import { calculateReadingTime } from '../utils/textMetrics';
+import { ArticlesContext } from './articlesContextState';
 
 export const ArticlesProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
@@ -118,15 +90,7 @@ export const ArticlesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, [articles]);
 
   const findArticleBySlugOrFetch = useCallback(async (username: string, slug: string): Promise<Article | null> => {
-    const cleanUser = username.toLowerCase().replace(/^@/, '');
-    const cleanSlug = slug.toLowerCase();
-
-    // Check in-memory articles first
-    const local = articles.find(
-      (a) =>
-        a.authorUsername.toLowerCase() === cleanUser &&
-        (a.slug?.toLowerCase() === cleanSlug || a.id === cleanSlug)
-    );
+    const local = getArticleBySlug(username, slug);
     if (local) return local;
 
     // Fetch directly from Cloud Firestore
@@ -140,7 +104,7 @@ export const ArticlesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       return cloud;
     }
     return null;
-  }, [articles]);
+  }, [getArticleBySlug]);
 
   const findArticleByIdOrFetch = useCallback(async (id: string): Promise<Article | null> => {
     const local = getArticleById(id);
@@ -157,18 +121,13 @@ export const ArticlesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       return cloud;
     }
     return null;
-  }, [articles, getArticleById]);
-
-  const calculateReadingTime = (text: string) => {
-    const words = text.replace(/<[^>]*>/g, '').trim().split(/\s+/).length;
-    return Math.max(1, Math.ceil(words / 200));
-  };
+  }, [getArticleById]);
 
   const createArticle = async ({
     title,
     subtitle = '',
     content,
-    visibility = 'private',
+    visibility,
     slug,
     tags = [],
     coverImage,
@@ -264,53 +223,63 @@ export const ArticlesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (updatedTarget) {
       setArticles(currentList);
       saveStoredArticles(currentList);
+
+      // Async sync to Cloud Firestore
       await syncArticleToFirestore(updatedTarget);
     }
 
     return updatedTarget;
   };
 
-  const deleteArticle = (id: string) => {
+  const toggleVisibility = async (id: string, customSlug?: string): Promise<Article | undefined> => {
+    const art = getArticleById(id);
+    if (!art) return undefined;
+
+    const newVisibility = art.visibility === 'published' ? 'private' : 'published';
+    const finalSlug = customSlug ? sanitizeSlug(customSlug) : art.slug || generateSlug(art.title);
+
+    let decryptedContent = art.content;
+    if (art.isEncrypted) {
+      decryptedContent = await decryptJournal(art);
+    }
+
+    return updateArticle(id, {
+      visibility: newVisibility,
+      slug: finalSlug,
+      content: decryptedContent,
+    });
+  };
+
+  const deleteArticle = async (id: string) => {
     setArticles((prev) => {
       const next = prev.filter((a) => a.id !== id);
       saveStoredArticles(next);
       return next;
     });
-    deleteArticleFromFirestore(id);
+
+    // Cloud Firestore delete
+    await deleteArticleFromFirestore(id);
   };
 
-  const toggleVisibility = async (id: string, newSlug?: string): Promise<Article | undefined> => {
-    const current = articles.find((a) => a.id === id);
-    if (!current) return undefined;
+  const clapArticle = async (id: string) => {
+    setArticles((prev) =>
+      prev.map((a) => (a.id === id ? { ...a, upvotes: (a.upvotes || 0) + 1 } : a))
+    );
 
-    const nextVisibility = current.visibility === 'private' ? 'published' : 'private';
-    const slug = newSlug || current.slug || generateSlug(current.title);
-
-    return updateArticle(id, {
-      visibility: nextVisibility,
-      slug: sanitizeSlug(slug),
-    });
+    // Atomically increment in Cloud Firestore
+    await clapArticleInFirestore(id);
   };
 
-  const clapArticle = (id: string) => {
-    setArticles((prev) => {
-      const next = prev.map((a) => (a.id === id ? { ...a, upvotes: (a.upvotes || 0) + 1 } : a));
-      saveStoredArticles(next);
-      return next;
-    });
-    clapArticleInFirestore(id);
-  };
-
-  const getCommentsForArticle = (articleId: string) => {
+  const getCommentsForArticle = useCallback((articleId: string) => {
     return comments.filter((c) => c.articleId === articleId);
-  };
+  }, [comments]);
 
   const addCommentToArticle = (articleId: string, content: string): Comment => {
     const newComment: Comment = {
-      id: 'c-' + Date.now() + Math.random().toString(36).substring(2, 5),
+      id: 'c-' + Date.now().toString(36) + Math.random().toString(36).substring(2, 6),
       articleId,
-      authorId: user?.id || 'guest',
-      authorName: user?.name || 'Anonymous Reader',
+      authorId: user?.id || 'guest-reader',
+      authorName: user?.name || 'Fellow Reader',
       authorUsername: user?.username || 'reader',
       authorAvatar: user?.avatarUrl,
       content: content.trim(),
@@ -318,26 +287,27 @@ export const ArticlesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       upvotes: 0,
     };
 
-    const updated = saveComment(newComment);
-    setComments(updated);
+    saveComment(newComment);
+    setComments((prev) => [newComment, ...prev]);
 
-    // Increment local article comment count
     setArticles((prev) =>
       prev.map((a) =>
-        a.id === articleId ? { ...a, commentCount: a.commentCount + 1 } : a
+        a.id === articleId ? { ...a, commentCount: (a.commentCount || 0) + 1 } : a
       )
     );
 
-    // Sync to Firestore
+    // Async sync to Cloud Firestore
     syncCommentToFirestore(newComment);
 
     return newComment;
   };
 
   const clapComment = (commentId: string) => {
-    setComments((prev) =>
-      prev.map((c) => (c.id === commentId ? { ...c, upvotes: c.upvotes + 1 } : c))
+    const updated = comments.map((c) =>
+      c.id === commentId ? { ...c, upvotes: (c.upvotes || 0) + 1 } : c
     );
+    setComments(updated);
+    saveStoredArticles(articles);
   };
 
   const decryptJournal = async (article: Article): Promise<string> => {
@@ -369,12 +339,4 @@ export const ArticlesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       {children}
     </ArticlesContext.Provider>
   );
-};
-
-export const useArticles = () => {
-  const context = useContext(ArticlesContext);
-  if (!context) {
-    throw new Error('useArticles must be used within an ArticlesProvider');
-  }
-  return context;
 };

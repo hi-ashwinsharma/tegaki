@@ -4,7 +4,11 @@ import { WriterHeader } from './WriterHeader';
 import { InlineToolbar } from './InlineToolbar';
 import { PlusMenu } from './PlusMenu';
 import { PublishModal } from './PublishModal';
-import { useArticles } from '../../context/ArticlesContext';
+import { useArticles } from '../../hooks/useArticles';
+import { useAuth } from '../../hooks/useAuth';
+import { useSelectionToolbar } from '../../hooks/useSelectionToolbar';
+import { calculateWordCount, calculateReadingTime } from '../../utils/textMetrics';
+import { generateAndUploadOgImage } from '../../services/ogCanvasService';
 
 interface WriterEditorProps {
   initialArticle?: Article | null;
@@ -17,6 +21,7 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
   onBack,
   onSaved,
 }) => {
+  const { user } = useAuth();
   const { createArticle, updateArticle, decryptJournal } = useArticles();
 
   const [title, setTitle] = useState(initialArticle?.title || '');
@@ -30,16 +35,16 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
 
-  // Floating toolbar state
-  const [toolbarPosition, setToolbarPosition] = useState<{ top: number; left: number } | null>(null);
-
   // Plus menu state
-  const [plusMenuTop, setPlusMenuTop] = useState(0);
+  const [plusMenuTop, setPlusMenuTop] = useState(4);
   const [isPlusMenuOpen, setIsPlusMenuOpen] = useState(false);
 
   const titleRef = useRef<HTMLTextAreaElement>(null);
   const subtitleRef = useRef<HTMLTextAreaElement>(null);
   const editorRef = useRef<HTMLDivElement>(null);
+
+  // Floating toolbar state powered by custom hook
+  const { toolbarPosition } = useSelectionToolbar(editorRef);
 
   // Initial decrypted content loading
   useEffect(() => {
@@ -66,52 +71,54 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
     loadContent();
   }, [initialArticle, decryptJournal]);
 
-  // Track text selection for floating toolbar
-  useEffect(() => {
-    const handleSelection = () => {
-      const selection = window.getSelection();
-      if (!selection || selection.isCollapsed || !editorRef.current) {
-        setToolbarPosition(null);
-        return;
-      }
-
-      // Ensure selection is inside the editor
-      if (!editorRef.current.contains(selection.anchorNode)) {
-        setToolbarPosition(null);
-        return;
-      }
-
-      const range = selection.getRangeAt(0);
-      const rect = range.getBoundingClientRect();
-      if (rect.width > 0) {
-        setToolbarPosition({
-          top: rect.top,
-          left: rect.left + rect.width / 2,
-        });
-      } else {
-        setToolbarPosition(null);
-      }
-    };
-
-    document.addEventListener('selectionchange', handleSelection);
-    return () => document.removeEventListener('selectionchange', handleSelection);
-  }, []);
-
   // Track cursor position for plus menu
   const updatePlusMenuPosition = useCallback(() => {
     const selection = window.getSelection();
     if (!selection || !editorRef.current) return;
 
-    if (selection.rangeCount > 0) {
-      const range = selection.getRangeAt(0);
-      const rect = range.getBoundingClientRect();
-      const editorRect = editorRef.current.getBoundingClientRect();
+    if (selection.rangeCount === 0) return;
+    if (!editorRef.current.contains(selection.anchorNode)) return;
 
-      if (rect.top >= editorRect.top && rect.bottom <= editorRect.bottom + 500) {
-        setPlusMenuTop(rect.top - editorRect.top + 2);
+    const range = selection.getRangeAt(0);
+    const editorRect = editorRef.current.getBoundingClientRect();
+    let rect = range.getBoundingClientRect();
+
+    // Fallback if range bounding rect is collapsed/zero (e.g. empty line or fresh focus)
+    if (rect.height === 0 || (rect.top === 0 && rect.bottom === 0)) {
+      const clientRects = range.getClientRects();
+      if (clientRects.length > 0) {
+        rect = clientRects[0];
+      } else {
+        let node: Node | null = selection.anchorNode;
+        if (node?.nodeType === Node.TEXT_NODE) {
+          node = node.parentElement;
+        }
+        if (node && node instanceof HTMLElement && node !== editorRef.current && editorRef.current.contains(node)) {
+          rect = node.getBoundingClientRect();
+        }
       }
     }
+
+    if (rect.height > 0 && rect.top >= editorRect.top - 100 && rect.bottom <= editorRect.bottom + 500) {
+      // Center the 28px button vertically with the line of text
+      const computedTop = rect.top - editorRect.top + (rect.height - 28) / 2;
+      setPlusMenuTop(Math.max(0, computedTop));
+    } else {
+      setPlusMenuTop(4);
+    }
   }, []);
+
+  // Listen to document selection change to reposition plus menu dynamically
+  useEffect(() => {
+    const handleSelectionChange = () => {
+      const selection = window.getSelection();
+      if (selection && editorRef.current && editorRef.current.contains(selection.anchorNode)) {
+        updatePlusMenuPosition();
+      }
+    };
+    document.addEventListener('selectionchange', handleSelectionChange);
+    return () => document.removeEventListener('selectionchange', handleSelectionChange);
+  }, [updatePlusMenuPosition]);
 
   const adjustTitleHeight = () => {
     if (titleRef.current) {
@@ -151,10 +158,9 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
   };
 
   const calculateWords = () => {
-    const text = (title + ' ' + subtitle + ' ' + content).replace(/<[^>]*>/g, '').trim();
-    if (!text) return 0;
-    return text.split(/\s+/).length;
+    return calculateWordCount(title + ' ' + subtitle + ' ' + content);
   };
+
 
   // Formatting actions
   const handleFormat = (command: string, value: string = '') => {
@@ -250,24 +256,54 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
   }) => {
     setIsSaving(true);
     try {
+      const finalTitle = title.trim() || 'Untitled Thought';
+      const finalSubtitle = params.subtitle || subtitle.trim();
+      const targetId = initialArticle?.id || 'art-' + Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
+
+      let coverImageUrl = initialArticle?.coverImage;
+
+      // Automatically generate & upload OpenGraph preview card if published
+      if (params.visibility === 'published') {
+        const readingTime = calculateReadingTime(content);
+
+        const uploadedUrl = await generateAndUploadOgImage(
+
+          {
+            title: finalTitle,
+            subtitle: finalSubtitle,
+            authorName: user?.name || initialArticle?.authorName || 'Anonymous Writer',
+            authorUsername: user?.username || initialArticle?.authorUsername || 'writer',
+            readingTimeMinutes: readingTime,
+            tags: params.tags,
+          },
+          targetId
+        );
+
+        if (uploadedUrl) {
+          coverImageUrl = uploadedUrl;
+        }
+      }
+
       if (initialArticle) {
         const updated = await updateArticle(initialArticle.id, {
-          title: title.trim() || 'Untitled Thought',
-          subtitle: params.subtitle || subtitle.trim(),
+          title: finalTitle,
+          subtitle: finalSubtitle,
           content: content,
           visibility: params.visibility,
           slug: params.slug,
           tags: params.tags,
+          coverImage: coverImageUrl,
         });
         if (updated) onSaved(updated);
       } else {
         const created = await createArticle({
-          title: title.trim() || 'Untitled Thought',
-          subtitle: params.subtitle || subtitle.trim(),
+          title: finalTitle,
+          subtitle: finalSubtitle,
           content: content,
           visibility: params.visibility,
           slug: params.slug,
           tags: params.tags,
+          coverImage: coverImageUrl,
         });
         onSaved(created);
       }
@@ -276,6 +312,7 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
       setIsSaving(false);
     }
   };
+
 
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--color-bg)' }}>
@@ -299,18 +336,7 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
       />
 
       {/* Main Distraction-Free Canvas */}
-      <main className="flex-grow max-w-3xl w-full mx-auto px-5 sm:px-12 py-8 sm:py-12 relative">
-        {/* Empty Line Plus Menu */}
-        <PlusMenu
-          top={plusMenuTop}
-          isOpen={isPlusMenuOpen}
-          onToggle={() => setIsPlusMenuOpen(!isPlusMenuOpen)}
-          onInsertImage={handleInsertImage}
-          onInsertEmbed={handleInsertEmbed}
-          onInsertCode={handleInsertCode}
-          onInsertDivider={handleInsertDivider}
-        />
-
+      <main className="flex-grow max-w-3xl w-full mx-auto px-5 sm:px-12 py-8 sm:py-12">
         {/* Title */}
         <textarea
           ref={titleRef}
@@ -337,18 +363,32 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
         {/* Medium-style Divider */}
         <div className="w-full h-px my-3 sm:my-4 mb-6 sm:mb-8" style={{ backgroundColor: 'var(--color-border-soft)' }} />
 
-        {/* Body Canvas in Newsreader Editorial Typography */}
-        <div
-          ref={editorRef}
-          contentEditable
-          suppressContentEditableWarning
-          onInput={handleEditorInput}
-          onClick={updatePlusMenuPosition}
-          onKeyUp={updatePlusMenuPosition}
-          data-placeholder="Begin in solitude. No one is watching..."
-          className="editorial-canvas font-editorial text-base sm:text-xl leading-relaxed min-h-[400px] sm:min-h-[500px] focus:outline-none pb-32"
-          style={{ color: 'var(--color-text-primary)' }}
-        />
+        {/* Body Canvas in Newsreader Editorial Typography with Plus Menu */}
+        <div className="relative">
+          {/* Empty Line Plus Menu */}
+          <PlusMenu
+            top={plusMenuTop}
+            isOpen={isPlusMenuOpen}
+            onToggle={() => setIsPlusMenuOpen(!isPlusMenuOpen)}
+            onInsertImage={handleInsertImage}
+            onInsertEmbed={handleInsertEmbed}
+            onInsertCode={handleInsertCode}
+            onInsertDivider={handleInsertDivider}
+          />
+
+          <div
+            ref={editorRef}
+            contentEditable
+            suppressContentEditableWarning
+            onInput={handleEditorInput}
+            onClick={updatePlusMenuPosition}
+            onKeyUp={updatePlusMenuPosition}
+            onFocus={updatePlusMenuPosition}
+            data-placeholder="Begin in solitude. No one is watching..."
+            className="editorial-canvas font-editorial text-base sm:text-xl leading-relaxed min-h-[400px] sm:min-h-[500px] focus:outline-none pb-32"
+            style={{ color: 'var(--color-text-primary)' }}
+          />
+        </div>
       </main>
 
       {/* Custom Slug & Publication Modal */}

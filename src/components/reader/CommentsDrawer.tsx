@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import { X, Send, Heart, MessageSquare } from 'lucide-react';
 import type { Comment } from '../../types/article';
 import { UserAvatar } from '../common/UserAvatar';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
+
+
 
 interface CommentsDrawerProps {
   isOpen: boolean;

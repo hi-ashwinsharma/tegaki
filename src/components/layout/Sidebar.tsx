@@ -2,7 +2,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import { CircularLogoIcon } from '../common/Icons';
 import { ThemeSelector } from '../common/ThemeSelector';
 import { UserAvatar } from '../common/UserAvatar';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
+
+
 import { Home, Feather, User, LogOut } from 'lucide-react';
 
 interface SidebarProps {

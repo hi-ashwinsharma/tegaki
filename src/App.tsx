@@ -1,20 +1,40 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { Sidebar } from './components/layout/Sidebar';
-import { LandingHero } from './components/landing/LandingHero';
-import { ArticleList } from './components/dashboard/ArticleList';
-import { WriterEditor } from './components/writer/WriterEditor';
-import { PublicationReader } from './components/reader/PublicationReader';
-import { AuthModal } from './components/auth/AuthModal';
-import { ShareModal } from './components/reader/ShareModal';
 import { Toast } from './components/common/Toast';
 import type { ToastMessage } from './components/common/Toast';
-import { useArticles } from './context/ArticlesContext';
-import { useAuth } from './context/AuthContext';
+import { useArticles } from './hooks/useArticles';
+import { useAuth } from './hooks/useAuth';
 import type { Article } from './types/article';
 import { buildArticlePath } from './services/slugService';
 import { Feather, ArrowLeft } from 'lucide-react';
 
+// Route-based code-splitting for optimal initial load speed
+const LandingHero = lazy(() => import('./components/landing/LandingHero').then((m) => ({ default: m.LandingHero })));
+const ArticleList = lazy(() => import('./components/dashboard/ArticleList').then((m) => ({ default: m.ArticleList })));
+const WriterEditor = lazy(() => import('./components/writer/WriterEditor').then((m) => ({ default: m.WriterEditor })));
+const PublicationReader = lazy(() => import('./components/reader/PublicationReader').then((m) => ({ default: m.PublicationReader })));
+const AuthModal = lazy(() => import('./components/auth/AuthModal').then((m) => ({ default: m.AuthModal })));
+const ShareModal = lazy(() => import('./components/reader/ShareModal').then((m) => ({ default: m.ShareModal })));
+
 type ViewMode = 'landing' | 'home' | 'writer' | 'reader';
+
+const ViewLoadingFallback = () => (
+  <div className="max-w-2xl mx-auto px-6 py-24 text-center select-none space-y-4">
+    <div
+      className="w-10 h-10 mx-auto rounded-full flex items-center justify-center animate-pulse"
+      style={{
+        backgroundColor: 'var(--color-bg-subtle)',
+        border: '1px solid var(--color-border-soft)',
+        color: 'var(--color-text-tertiary)',
+      }}
+    >
+      <Feather size={18} />
+    </div>
+    <p className="font-serif text-sm italic" style={{ color: 'var(--color-text-secondary)' }}>
+      The page is unfolding...
+    </p>
+  </div>
+);
 
 export const App: React.FC = () => {
   const { isAuthenticated } = useAuth();
@@ -195,124 +215,132 @@ export const App: React.FC = () => {
         />
       )}
 
-      {/* Main View Area */}
+      {/* Main View Area with Suspense for lazy loaded modules */}
       <div className={`flex-grow w-full ${currentView === 'home' ? 'pb-20 md:pb-0 md:pl-20' : ''}`}>
-        {currentView === 'landing' && (
-          <LandingHero
-            onStartWriting={() => {
-              if (isAuthenticated) {
-                setEditingArticle(null);
-                navigateTo('writer');
-              } else {
-                handleOpenAuth('signup');
-              }
-            }}
-            onExplorePublic={() => navigateTo('home')}
-            onOpenAuth={handleOpenAuth}
-          />
-        )}
+        <Suspense fallback={<ViewLoadingFallback />}>
+          {currentView === 'landing' && (
+            <LandingHero
+              onStartWriting={() => {
+                if (isAuthenticated) {
+                  setEditingArticle(null);
+                  navigateTo('writer');
+                } else {
+                  handleOpenAuth('signup');
+                }
+              }}
+              onExplorePublic={() => navigateTo('home')}
+              onOpenAuth={handleOpenAuth}
+            />
+          )}
 
-        {currentView === 'home' && (
-          <ArticleList
-            articles={articles}
-            onRead={handleReadArticle}
-            onEdit={handleEditArticle}
-            onDelete={handleDeleteArticle}
-            onClap={(id) => clapArticle(id)}
-            onShare={(art) => setSharingArticle(art)}
-            onNewStory={() => {
-              if (isAuthenticated) {
-                setEditingArticle(null);
-                navigateTo('writer');
-              } else {
-                handleOpenAuth('signin');
-              }
-            }}
-          />
-        )}
+          {currentView === 'home' && (
+            <ArticleList
+              articles={articles}
+              onRead={handleReadArticle}
+              onEdit={handleEditArticle}
+              onDelete={handleDeleteArticle}
+              onClap={(id) => clapArticle(id)}
+              onShare={(art) => setSharingArticle(art)}
+              onNewStory={() => {
+                if (isAuthenticated) {
+                  setEditingArticle(null);
+                  navigateTo('writer');
+                } else {
+                  handleOpenAuth('signin');
+                }
+              }}
+            />
+          )}
 
-        {currentView === 'writer' && (
-          <WriterEditor
-            initialArticle={editingArticle}
-            onBack={() => navigateTo(isAuthenticated ? 'home' : 'landing')}
-            onSaved={handleSavedStory}
-          />
-        )}
+          {currentView === 'writer' && (
+            <WriterEditor
+              initialArticle={editingArticle}
+              onBack={() => navigateTo(isAuthenticated ? 'home' : 'landing')}
+              onSaved={handleSavedStory}
+            />
+          )}
 
-        {currentView === 'reader' && (
-          isLoadingArticle ? (
-            /* Literary Loading Skeleton */
-            <div className="max-w-2xl mx-auto px-6 py-24 text-center select-none space-y-4">
-              <div
-                className="w-10 h-10 mx-auto rounded-full flex items-center justify-center animate-pulse"
-                style={{
-                  backgroundColor: 'var(--color-bg-subtle)',
-                  border: '1px solid var(--color-border-soft)',
-                  color: 'var(--color-text-tertiary)',
-                }}
-              >
-                <Feather size={18} />
-              </div>
-              <p className="font-serif text-sm italic" style={{ color: 'var(--color-text-secondary)' }}>
-                The page is unfolding...
-              </p>
-            </div>
-          ) : articleNotFound ? (
-            /* Story Not Found Screen */
-            <div className="max-w-2xl mx-auto px-6 py-24 text-center select-none space-y-4">
-              <div
-                className="w-12 h-12 mx-auto rounded-full flex items-center justify-center"
-                style={{
-                  backgroundColor: 'var(--color-bg-subtle)',
-                  border: '1px solid var(--color-border-soft)',
-                  color: 'var(--color-text-tertiary)',
-                }}
-              >
-                <Feather size={20} />
-              </div>
-              <h2 className="text-2xl font-serif font-bold" style={{ color: 'var(--color-text-primary)' }}>
-                Essay Not Found
-              </h2>
-              <p className="text-xs font-serif max-w-sm mx-auto leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
-                This piece may have been returned to a private notebook or moved to a new title.
-              </p>
-              <div className="pt-2">
-                <button
-                  onClick={() => navigateTo(isAuthenticated ? 'home' : 'landing')}
-                  className="px-5 py-2 text-xs font-medium rounded-full inline-flex items-center gap-2 transition-transform hover:scale-105 active:scale-95 cursor-pointer"
+          {currentView === 'reader' && (
+            isLoadingArticle ? (
+              /* Literary Loading Skeleton */
+              <div className="max-w-2xl mx-auto px-6 py-24 text-center select-none space-y-4">
+                <div
+                  className="w-10 h-10 mx-auto rounded-full flex items-center justify-center animate-pulse"
                   style={{
-                    backgroundColor: 'var(--color-text-primary)',
-                    color: 'var(--color-bg)',
-                    border: '1px solid var(--color-text-primary)',
+                    backgroundColor: 'var(--color-bg-subtle)',
+                    border: '1px solid var(--color-border-soft)',
+                    color: 'var(--color-text-tertiary)',
                   }}
                 >
-                  <ArrowLeft size={13} />
-                  <span>Return to {isAuthenticated ? 'The Desk' : 'Home'}</span>
-                </button>
+                  <Feather size={18} />
+                </div>
+                <p className="font-serif text-sm italic" style={{ color: 'var(--color-text-secondary)' }}>
+                  The page is unfolding...
+                </p>
               </div>
-            </div>
-          ) : activeArticle ? (
-            <PublicationReader
-              article={activeArticle}
-              onBack={() => navigateTo(isAuthenticated ? 'home' : 'landing')}
-              onEdit={handleEditArticle}
-            />
-          ) : null
-        )}
+            ) : articleNotFound ? (
+              /* Story Not Found Screen */
+              <div className="max-w-2xl mx-auto px-6 py-24 text-center select-none space-y-4">
+                <div
+                  className="w-12 h-12 mx-auto rounded-full flex items-center justify-center"
+                  style={{
+                    backgroundColor: 'var(--color-bg-subtle)',
+                    border: '1px solid var(--color-border-soft)',
+                    color: 'var(--color-text-tertiary)',
+                  }}
+                >
+                  <Feather size={20} />
+                </div>
+                <h2 className="text-2xl font-serif font-bold" style={{ color: 'var(--color-text-primary)' }}>
+                  Essay Not Found
+                </h2>
+                <p className="text-xs font-serif max-w-sm mx-auto leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
+                  This piece may have been returned to a private notebook or moved to a new title.
+                </p>
+                <div className="pt-2">
+                  <button
+                    onClick={() => navigateTo(isAuthenticated ? 'home' : 'landing')}
+                    className="px-5 py-2 text-xs font-medium rounded-full inline-flex items-center gap-2 transition-transform hover:scale-105 active:scale-95 cursor-pointer"
+                    style={{
+                      backgroundColor: 'var(--color-text-primary)',
+                      color: 'var(--color-bg)',
+                      border: '1px solid var(--color-text-primary)',
+                    }}
+                  >
+                    <ArrowLeft size={13} />
+                    <span>Return to {isAuthenticated ? 'The Desk' : 'Home'}</span>
+                  </button>
+                </div>
+              </div>
+            ) : activeArticle ? (
+              <PublicationReader
+                article={activeArticle}
+                onBack={() => navigateTo(isAuthenticated ? 'home' : 'landing')}
+                onEdit={handleEditArticle}
+              />
+            ) : null
+          )}
+        </Suspense>
       </div>
 
-      {/* Global Modals */}
-      <AuthModal
-        isOpen={isAuthOpen}
-        onClose={() => setIsAuthOpen(false)}
-        initialMode={authInitialMode}
-      />
+      {/* Global Modals (Lazy Loaded) */}
+      <Suspense fallback={null}>
+        {isAuthOpen && (
+          <AuthModal
+            isOpen={isAuthOpen}
+            onClose={() => setIsAuthOpen(false)}
+            initialMode={authInitialMode}
+          />
+        )}
 
-      <ShareModal
-        isOpen={!!sharingArticle}
-        onClose={() => setSharingArticle(null)}
-        article={sharingArticle}
-      />
+        {sharingArticle && (
+          <ShareModal
+            isOpen={!!sharingArticle}
+            onClose={() => setSharingArticle(null)}
+            article={sharingArticle}
+          />
+        )}
+      </Suspense>
 
       <Toast toast={toast} onClose={() => setToast(null)} />
     </div>

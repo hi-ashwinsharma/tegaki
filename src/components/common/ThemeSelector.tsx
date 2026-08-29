@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useTheme } from '../../context/ThemeContext';
+import { useTheme } from '../../hooks/useTheme';
 import type { ThemeMode } from '../../types/theme';
+
 import { Check, SunMedium, Moon } from 'lucide-react';
 
 interface ThemeSelectorProps {

@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import type { Article } from '../../types/article';
 import { UserAvatar } from '../common/UserAvatar';
 import { MessageSquare, Edit3, Trash2, Globe, ExternalLink, Lock, Flame, SlidersHorizontal } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
-import { useArticles } from '../../context/ArticlesContext';
+import { useAuth } from '../../hooks/useAuth';
+import { useArticles } from '../../hooks/useArticles';
+
 import { DeleteConfirmModal } from '../common/DeleteConfirmModal';
 import { PublishModal } from '../writer/PublishModal';
 

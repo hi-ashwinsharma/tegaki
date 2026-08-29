@@ -1,0 +1,16 @@
+{
+  "rewrites": [
+    {
+      "source": "/@:username/:slug",
+      "destination": "/api/meta?username=:username&slug=:slug"
+    },
+    {
+      "source": "/story/:id",
+      "destination": "/api/meta?id=:id"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { UserProfile } from '../types/auth';
 import { authenticateWithPasskey, registerPasskey } from '../services/passkeyService';
 import {
@@ -11,25 +11,12 @@ import {
   updateProfile,
 } from 'firebase/auth';
 import { auth, googleProvider, isFirebaseConfigured } from '../services/firebase';
-
-interface AuthContextType {
-  user: UserProfile | null;
-  isAuthenticated: boolean;
-  loginWithGoogle: () => Promise<void>;
-  loginWithPasskey: () => Promise<void>;
-  registerWithPasskey: (username: string, email: string) => Promise<void>;
-  loginWithEmail: (email: string, pass: string) => Promise<void>;
-  registerWithEmail: (name: string, email: string, pass: string) => Promise<void>;
-  resetPassword: (email: string) => Promise<boolean>;
-  logout: () => void;
-  updateBio: (bio: string) => void;
-}
+import { AuthContext } from './authContextState';
 
 const AUTH_STORAGE_KEY = 'tegaki_current_user_v2';
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+
   const [user, setUser] = useState<UserProfile | null>(() => {
     try {
       const saved = localStorage.getItem(AUTH_STORAGE_KEY);
@@ -229,10 +216,3 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
 };
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};

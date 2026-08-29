@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, Mail, CheckCircle2 } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 
 interface ForgotPasswordModalProps {
   isOpen: boolean;

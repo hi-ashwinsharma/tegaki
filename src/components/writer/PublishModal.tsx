@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { X, Globe, Lock, Check } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 import { generateSlug, sanitizeSlug, formatSlugInput } from '../../services/slugService';
+
 
 interface PublishModalProps {
   isOpen: boolean;

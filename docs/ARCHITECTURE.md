@@ -99,20 +99,26 @@ Tegaki adheres to a strict design mandate: **Zero Gradients. Zero Shadows. 1px H
 
 ```
 tegaki/
+├── api/                    # Vercel Serverless crawler & OpenGraph metadata injection (api/meta.ts)
 ├── src/
-│   ├── components/
-│   │   ├── auth/           # Firebase Auth & WebAuthn modals
+│   ├── components/         # Decomposed modular UI components with barrel exports
+│   │   ├── auth/           # Firebase Auth & WebAuthn passkey modals
 │   │   ├── common/         # Avatars, toast, themes, search bar, icons
 │   │   ├── dashboard/      # Desk feed, filter tabs, article cards, sorting
-│   │   ├── landing/        # Full-height interactive landing experience
+│   │   ├── landing/        # Decomposed landing sections (Header, Hero, Paper, Spheres, Themes, Manifesto)
 │   │   ├── layout/         # Minimalist hairline sidebar
-│   │   ├── reader/         # Publication reader, claps, comments drawer
-│   │   └── writer/         # Distraction-free canvas, floating bubble, plus menu
-│   ├── context/            # AuthContext, ArticlesContext, ThemeContext
-│   ├── services/           # Firebase SDK, Firestore service, Crypto, Storage, Slugs
+│   │   ├── reader/         # Publication reader, claps, comments drawer, share modal
+│   │   └── writer/         # Distraction-free canvas, floating bubble, plus menu, publish modal
+│   ├── context/            # Pure context providers & states (Auth, Articles, Theme)
+│   ├── hooks/              # Custom reusable hooks (useAuth, useArticles, useTheme, useSelectionToolbar, useDocumentMeta)
+│   ├── services/           # Firebase SDK, Firestore, Crypto (AES-256), OpenGraph Canvas, Storage, Slugs
 │   ├── styles/             # Tailwind CSS 4 & Strict Minimalist theme tokens
-│   └── types/              # TypeScript definitions for Articles, Themes, Auth
+│   ├── types/              # TypeScript definitions for Articles, Themes, Auth
+│   └── utils/              # Text metrics, word counts, reading time calculators
+├── storage.rules           # Cloud Storage security rules for public OpenGraph cards
 ├── firestore.rules         # Hardened production Firestore security rules
 ├── firestore.indexes.json  # Cloud Firestore composite indexes
-└── firebase.json           # Firebase project manifest
+├── firebase.json           # Firebase project manifest (Firestore & Storage)
+└── vercel.json             # Vercel deployment rewrites for dynamic OpenGraph previews
+
 ```

@@ -63,7 +63,7 @@ export const PlusMenu: React.FC<PlusMenuProps> = ({
   return (
     <>
       <div
-        className="absolute left-0 sm:left-[-48px] md:left-[-52px] z-20 flex items-center transition-all duration-150 select-none"
+        className="absolute left-[-32px] sm:left-[-44px] md:left-[-48px] z-20 flex items-center transition-all duration-150 select-none"
         style={{ top: top || 0 }}
       >
         {/* The Left-Side Plus (+) Button */}

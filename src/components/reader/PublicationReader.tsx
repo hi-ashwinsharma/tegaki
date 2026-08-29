@@ -6,8 +6,9 @@ import { ShareModal } from './ShareModal';
 import { UserAvatar } from '../common/UserAvatar';
 import { ArrowLeft, MessageSquare, Share2, Edit3, Lock, Trash2, SlidersHorizontal, Globe } from 'lucide-react';
 import { ThemeSelector } from '../common/ThemeSelector';
-import { useArticles } from '../../context/ArticlesContext';
-import { useAuth } from '../../context/AuthContext';
+import { useArticles } from '../../hooks/useArticles';
+import { useAuth } from '../../hooks/useAuth';
+import { useDocumentMeta } from '../../hooks/useDocumentMeta';
 import { DeleteConfirmModal } from '../common/DeleteConfirmModal';
 import { PublishModal } from '../writer/PublishModal';
 import { buildArticlePath } from '../../services/slugService';
@@ -41,6 +42,9 @@ export const PublicationReader: React.FC<PublicationReaderProps> = ({
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
 
+  // Sync dynamic document title
+  useDocumentMeta(currentArticle.title);
+
   useEffect(() => {
     setCurrentArticle(article);
   }, [article]);
@@ -59,6 +63,8 @@ export const PublicationReader: React.FC<PublicationReaderProps> = ({
     }
     loadDecrypted();
   }, [currentArticle, decryptJournal]);
+
+
 
   const formattedDate = new Date(currentArticle.createdAt).toLocaleDateString('en-US', {
     month: 'long',
