@@ -331,7 +331,27 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
   const handleToggleQuote = () => {
     const selection = window.getSelection();
     if (!selection || !editorRef.current) return;
-    document.execCommand('formatBlock', false, '<blockquote>');
+
+    let node: Node | null = selection.anchorNode;
+    if (node?.nodeType === Node.TEXT_NODE) {
+      node = node.parentElement;
+    }
+
+    const quoteEl = node instanceof HTMLElement ? (node.closest('blockquote') as HTMLElement | null) : null;
+
+    if (quoteEl) {
+      // Toggle off: replace blockquote with regular paragraph
+      const p = document.createElement('p');
+      p.innerHTML = quoteEl.innerHTML.trim() ? quoteEl.innerHTML : '<br>';
+      quoteEl.parentNode?.replaceChild(p, quoteEl);
+      const range = document.createRange();
+      range.selectNodeContents(p);
+      selection.removeAllRanges();
+      selection.addRange(range);
+    } else {
+      document.execCommand('formatBlock', false, '<blockquote>');
+    }
+
     if (editorRef.current) {
       setContent(editorRef.current.innerHTML);
       setHasUnsavedChanges(true);
@@ -414,6 +434,115 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
           setContent(editorRef.current.innerHTML);
           setHasUnsavedChanges(true);
           return;
+        }
+      }
+    }
+
+    // Handle blockquote navigation and breakout
+    const quoteEl = node instanceof HTMLElement ? (node.closest('blockquote') as HTMLElement | null) : null;
+    if (quoteEl && editorRef.current.contains(quoteEl)) {
+      const isQuoteEmpty = !quoteEl.textContent || quoteEl.textContent.trim() === '';
+
+      if (e.key === 'Enter' && !e.shiftKey) {
+        if (isQuoteEmpty) {
+          e.preventDefault();
+          const p = document.createElement('p');
+          p.innerHTML = '<br>';
+          quoteEl.parentNode?.replaceChild(p, quoteEl);
+          const range = document.createRange();
+          range.setStart(p, 0);
+          range.collapse(true);
+          selection.removeAllRanges();
+          selection.addRange(range);
+          setContent(editorRef.current.innerHTML);
+          setHasUnsavedChanges(true);
+          return;
+        }
+
+        // Check if cursor is on an empty line within the blockquote
+        let currentNode: Node | null = selection.anchorNode;
+        if (currentNode?.nodeType === Node.TEXT_NODE) {
+          currentNode = currentNode.parentElement;
+        }
+
+        const isCurrentLineEmpty =
+          currentNode &&
+          currentNode !== quoteEl &&
+          quoteEl.contains(currentNode) &&
+          (!currentNode.textContent || currentNode.textContent.trim() === '');
+
+        if (isCurrentLineEmpty) {
+          e.preventDefault();
+          if (currentNode instanceof HTMLElement && quoteEl.contains(currentNode)) {
+            currentNode.remove();
+          }
+          const p = document.createElement('p');
+          p.innerHTML = '<br>';
+          if (quoteEl.nextSibling) {
+            quoteEl.parentNode?.insertBefore(p, quoteEl.nextSibling);
+          } else {
+            quoteEl.parentNode?.appendChild(p);
+          }
+          const range = document.createRange();
+          range.setStart(p, 0);
+          range.collapse(true);
+          selection.removeAllRanges();
+          selection.addRange(range);
+          setContent(editorRef.current.innerHTML);
+          setHasUnsavedChanges(true);
+          return;
+        }
+      }
+
+      if (e.key === 'Backspace') {
+        if (isQuoteEmpty) {
+          e.preventDefault();
+          const prev = quoteEl.previousElementSibling;
+          if (prev) {
+            quoteEl.remove();
+            const range = document.createRange();
+            range.selectNodeContents(prev);
+            range.collapse(false);
+            selection.removeAllRanges();
+            selection.addRange(range);
+          } else {
+            const p = document.createElement('p');
+            p.innerHTML = '<br>';
+            quoteEl.parentNode?.replaceChild(p, quoteEl);
+            const range = document.createRange();
+            range.setStart(p, 0);
+            range.collapse(true);
+            selection.removeAllRanges();
+            selection.addRange(range);
+          }
+          setContent(editorRef.current.innerHTML);
+          setHasUnsavedChanges(true);
+          return;
+        }
+
+        // If cursor is at the very beginning of the quote block, unwrap it to <p>
+        if (selection.isCollapsed && selection.anchorNode) {
+          try {
+            const range = document.createRange();
+            range.setStart(quoteEl, 0);
+            range.setEnd(selection.anchorNode, selection.anchorOffset);
+            if (range.toString().length === 0) {
+              e.preventDefault();
+              const p = document.createElement('p');
+              p.innerHTML = quoteEl.innerHTML.trim() ? quoteEl.innerHTML : '<br>';
+              quoteEl.parentNode?.replaceChild(p, quoteEl);
+              const newRange = document.createRange();
+              newRange.setStart(p, 0);
+              newRange.collapse(true);
+              selection.removeAllRanges();
+              selection.addRange(newRange);
+              setContent(editorRef.current.innerHTML);
+              setHasUnsavedChanges(true);
+              return;
+            }
+          } catch {
+            // Range fallback
+          }
         }
       }
     }
