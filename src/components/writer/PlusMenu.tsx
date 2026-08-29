@@ -81,6 +81,7 @@ export const PlusMenu: React.FC<PlusMenuProps> = ({
         {/* The Left-Side Plus (+) Button */}
         <button
           type="button"
+          onMouseDown={(e) => e.preventDefault()}
           onClick={onToggle}
           title="Add block"
           className="w-7 h-7 rounded-full flex items-center justify-center transition-transform hover:opacity-85 cursor-pointer shadow-sm sm:shadow-none"
@@ -99,6 +100,7 @@ export const PlusMenu: React.FC<PlusMenuProps> = ({
           <div className="flex items-center gap-2 ml-2.5 animate-fade-in bg-surface/90 sm:bg-transparent p-1 sm:p-0 rounded-full">
             <button
               type="button"
+              onMouseDown={(e) => e.preventDefault()}
               onClick={() => setModalType('image')}
               title="Add Image"
               className="w-7 h-7 rounded-full flex items-center justify-center transition-colors hover:opacity-80 cursor-pointer"
@@ -113,6 +115,7 @@ export const PlusMenu: React.FC<PlusMenuProps> = ({
 
             <button
               type="button"
+              onMouseDown={(e) => e.preventDefault()}
               onClick={() => setModalType('embed')}
               title="Embed Web Card"
               className="w-7 h-7 rounded-full flex items-center justify-center transition-colors hover:opacity-80 cursor-pointer"
@@ -127,6 +130,7 @@ export const PlusMenu: React.FC<PlusMenuProps> = ({
 
             <button
               type="button"
+              onMouseDown={(e) => e.preventDefault()}
               onClick={() => setModalType('code')}
               title="Add Code Block"
               className="w-7 h-7 rounded-full flex items-center justify-center transition-colors hover:opacity-80 cursor-pointer"
@@ -141,6 +145,7 @@ export const PlusMenu: React.FC<PlusMenuProps> = ({
 
             <button
               type="button"
+              onMouseDown={(e) => e.preventDefault()}
               onClick={() => {
                 onInsertDivider();
                 onToggle();

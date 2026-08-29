@@ -81,6 +81,7 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
   const titleRef = useRef<HTMLTextAreaElement>(null);
   const subtitleRef = useRef<HTMLTextAreaElement>(null);
   const editorRef = useRef<HTMLDivElement>(null);
+  const savedRangeRef = useRef<Range | null>(null);
 
   // Floating toolbar state powered by custom hook
   const { toolbarPosition } = useSelectionToolbar(editorRef);
@@ -219,6 +220,7 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
     if (!editorRef.current.contains(selection.anchorNode)) return;
 
     const range = selection.getRangeAt(0);
+    savedRangeRef.current = range.cloneRange();
     const editorRect = editorRef.current.getBoundingClientRect();
     let rect = range.getBoundingClientRect();
 
@@ -415,12 +417,71 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
 
   // Plus menu insertions
   const insertHtmlAtCursor = (html: string) => {
-    if (editorRef.current) {
-      editorRef.current.focus();
-      document.execCommand('insertHTML', false, html);
+    if (!editorRef.current) return;
+    editorRef.current.focus();
+
+    const selection = window.getSelection();
+    if (!selection) return;
+
+    // Restore the exact saved range if available
+    if (savedRangeRef.current && editorRef.current.contains(savedRangeRef.current.commonAncestorContainer)) {
+      selection.removeAllRanges();
+      selection.addRange(savedRangeRef.current);
+    }
+
+    if (selection.rangeCount === 0) {
+      editorRef.current.insertAdjacentHTML('beforeend', html);
       setContent(editorRef.current.innerHTML);
       setHasUnsavedChanges(true);
+      return;
     }
+
+    const range = selection.getRangeAt(0);
+    let node: Node | null = range.startContainer;
+    if (node?.nodeType === Node.TEXT_NODE) {
+      node = node.parentElement;
+    }
+
+    const targetBlock =
+      node instanceof HTMLElement && node !== editorRef.current && editorRef.current.contains(node)
+        ? (node.closest('p, div, blockquote, h1, h2, h3, figure') as HTMLElement | null)
+        : null;
+
+    const isCurrentBlockEmpty =
+      targetBlock &&
+      targetBlock !== editorRef.current &&
+      (!targetBlock.textContent || targetBlock.textContent.trim() === '');
+
+    if (isCurrentBlockEmpty && targetBlock && targetBlock.parentNode) {
+      const temp = document.createElement('div');
+      temp.innerHTML = html;
+
+      const parent = targetBlock.parentNode;
+      let lastInserted: Node | null = null;
+
+      while (temp.firstChild) {
+        lastInserted = temp.firstChild;
+        parent.insertBefore(temp.firstChild, targetBlock);
+      }
+      targetBlock.remove();
+
+      if (lastInserted && lastInserted instanceof HTMLElement) {
+        const trailingP = lastInserted.nodeName === 'P' ? lastInserted : lastInserted.querySelector('p');
+        if (trailingP) {
+          const newRange = document.createRange();
+          newRange.setStart(trailingP, 0);
+          newRange.collapse(true);
+          selection.removeAllRanges();
+          selection.addRange(newRange);
+        }
+      }
+    } else {
+      document.execCommand('insertHTML', false, html);
+    }
+
+    savedRangeRef.current = null;
+    setContent(editorRef.current.innerHTML);
+    setHasUnsavedChanges(true);
   };
 
   const handleInsertImage = (url: string, caption?: string) => {
