@@ -209,26 +209,29 @@ export const PublicationReader: React.FC<PublicationReaderProps> = ({
             </>
           )}
 
-          <button
-            onClick={() => setIsShareOpen(true)}
-            className="p-2 rounded-full hover:opacity-75 cursor-pointer"
-            style={{
-              backgroundColor: 'var(--color-bg-surface)',
-              border: '1px solid var(--color-border-soft)',
-              color: 'var(--color-text-secondary)',
-            }}
-            title="Share story"
-          >
-            <Share2 size={15} />
-          </button>
+          {/* Top Navbar Share only for published stories */}
+          {currentArticle.visibility === 'published' && (
+            <button
+              onClick={() => setIsShareOpen(true)}
+              className="p-2 rounded-full hover:opacity-75 cursor-pointer"
+              style={{
+                backgroundColor: 'var(--color-bg-surface)',
+                border: '1px solid var(--color-border-soft)',
+                color: 'var(--color-text-secondary)',
+              }}
+              title="Share story"
+            >
+              <Share2 size={15} />
+            </button>
+          )}
         </div>
       </header>
 
-      {/* Main Article Reading Container */}
-      <main className="flex-grow max-w-2xl sm:max-w-3xl w-full mx-auto px-4 sm:px-10 py-6 sm:py-12">
+      {/* Main Content Area */}
+      <main className="flex-grow max-w-3xl w-full mx-auto px-4 sm:px-12 py-8 sm:py-16">
         {/* Title */}
         <h1
-          className="text-2xl sm:text-4xl md:text-5xl font-serif font-bold tracking-tight mb-3 sm:mb-4 leading-tight"
+          className="text-3xl sm:text-5xl font-serif font-bold tracking-tight mb-3 sm:mb-4 leading-tight"
           style={{ color: 'var(--color-text-primary)' }}
         >
           {currentArticle.title}
@@ -261,7 +264,7 @@ export const PublicationReader: React.FC<PublicationReaderProps> = ({
                 {currentArticle.isEncrypted && (
                   <span className="inline-flex items-center gap-1 text-[11px] font-normal" style={{ color: 'var(--color-text-tertiary)' }}>
                     <Lock size={11} />
-                    <span>Private</span>
+                    <span>Private Journal</span>
                   </span>
                 )}
               </div>
@@ -273,21 +276,28 @@ export const PublicationReader: React.FC<PublicationReaderProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-3 self-end sm:self-auto">
-            <ClapButton count={currentArticle.upvotes} onClap={() => clapArticle(currentArticle.id)} />
-            <button
-              onClick={() => setIsCommentsOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs transition-opacity hover:opacity-80 cursor-pointer"
-              style={{
-                backgroundColor: 'var(--color-bg-surface)',
-                border: '1px solid var(--color-border-soft)',
-                color: 'var(--color-text-secondary)',
-              }}
-            >
-              <MessageSquare size={13} />
-              <span>{currentArticle.commentCount}</span>
-            </button>
-          </div>
+          {currentArticle.visibility === 'published' ? (
+            <div className="flex items-center gap-3 self-end sm:self-auto">
+              <ClapButton count={currentArticle.upvotes} onClap={() => clapArticle(currentArticle.id)} />
+              <button
+                onClick={() => setIsCommentsOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs transition-opacity hover:opacity-80 cursor-pointer"
+                style={{
+                  backgroundColor: 'var(--color-bg-surface)',
+                  border: '1px solid var(--color-border-soft)',
+                  color: 'var(--color-text-secondary)',
+                }}
+              >
+                <MessageSquare size={13} />
+                <span>{currentArticle.commentCount}</span>
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 self-end sm:self-auto text-xs px-3 py-1.5 rounded-full" style={{ backgroundColor: 'var(--color-bg-surface)', border: '1px solid var(--color-border-soft)', color: 'var(--color-text-secondary)' }}>
+              <Lock size={12} style={{ color: 'var(--color-accent)' }} />
+              <span>Encrypted on Device</span>
+            </div>
+          )}
         </div>
 
         {/* Cover Image if present */}
@@ -324,40 +334,67 @@ export const PublicationReader: React.FC<PublicationReaderProps> = ({
           </div>
         )}
 
-        {/* Bottom Claps & Responses Bar */}
-        <div
-          className="flex flex-wrap items-center justify-between gap-3 py-4 sm:py-6 mt-8 sm:mt-12"
-          style={{ borderTop: '1px solid var(--color-border-soft)' }}
-        >
-          <div className="flex items-center gap-3 sm:gap-4">
-            <ClapButton count={currentArticle.upvotes} onClap={() => clapArticle(currentArticle.id)} />
+        {/* Bottom Bar: Claps & Responses for Published, Encryption Notice & Edit for Private */}
+        {currentArticle.visibility === 'published' ? (
+          <div
+            className="flex flex-wrap items-center justify-between gap-3 py-4 sm:py-6 mt-8 sm:mt-12"
+            style={{ borderTop: '1px solid var(--color-border-soft)' }}
+          >
+            <div className="flex items-center gap-3 sm:gap-4">
+              <ClapButton count={currentArticle.upvotes} onClap={() => clapArticle(currentArticle.id)} />
+              <button
+                onClick={() => setIsCommentsOpen(true)}
+                className="flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-full text-xs transition-opacity hover:opacity-80 cursor-pointer"
+                style={{
+                  backgroundColor: 'var(--color-bg-surface)',
+                  border: '1px solid var(--color-border-soft)',
+                  color: 'var(--color-text-secondary)',
+                }}
+              >
+                <MessageSquare size={15} />
+                <span>Responses ({currentArticle.commentCount})</span>
+              </button>
+            </div>
+
             <button
-              onClick={() => setIsCommentsOpen(true)}
-              className="flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-full text-xs transition-opacity hover:opacity-80 cursor-pointer"
+              onClick={() => setIsShareOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 rounded-full text-xs transition-opacity hover:opacity-80 cursor-pointer ml-auto sm:ml-0"
               style={{
                 backgroundColor: 'var(--color-bg-surface)',
                 border: '1px solid var(--color-border-soft)',
                 color: 'var(--color-text-secondary)',
               }}
             >
-              <MessageSquare size={15} />
-              <span>Responses ({currentArticle.commentCount})</span>
+              <Share2 size={15} />
+              <span>Share</span>
             </button>
           </div>
-
-          <button
-            onClick={() => setIsShareOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-full text-xs transition-opacity hover:opacity-80 cursor-pointer ml-auto sm:ml-0"
-            style={{
-              backgroundColor: 'var(--color-bg-surface)',
-              border: '1px solid var(--color-border-soft)',
-              color: 'var(--color-text-secondary)',
-            }}
+        ) : (
+          <div
+            className="flex flex-wrap items-center justify-between gap-3 py-4 sm:py-6 mt-8 sm:mt-12"
+            style={{ borderTop: '1px solid var(--color-border-soft)' }}
           >
-            <Share2 size={15} />
-            <span>Share</span>
-          </button>
-        </div>
+            <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
+              <Lock size={14} style={{ color: 'var(--color-accent)' }} />
+              <span>Private Journal • End-to-end encrypted with AES-GCM on your device</span>
+            </div>
+
+            {isOwner && (
+              <button
+                onClick={() => onEdit(currentArticle)}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-medium transition-opacity hover:opacity-80 cursor-pointer"
+                style={{
+                  backgroundColor: 'var(--color-bg-surface)',
+                  border: '1px solid var(--color-border-soft)',
+                  color: 'var(--color-text-primary)',
+                }}
+              >
+                <Edit3 size={13} />
+                <span>Edit Journal</span>
+              </button>
+            )}
+          </div>
+        )}
       </main>
 
       {/* Response Comments Drawer */}

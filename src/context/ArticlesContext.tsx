@@ -80,12 +80,19 @@ export const ArticlesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, [articles]);
 
   const getArticleBySlug = useCallback((username: string, slug: string) => {
-    const cleanUser = username.toLowerCase().replace(/^@/, '');
-    const cleanSlug = slug.toLowerCase();
-    return articles.find(
-      (a) =>
-        a.authorUsername.toLowerCase() === cleanUser &&
-        (a.slug?.toLowerCase() === cleanSlug || a.id === cleanSlug)
+    const cleanUser = decodeURIComponent(username).toLowerCase().replace(/^@/, '').trim();
+    const cleanSlug = decodeURIComponent(slug).toLowerCase().trim();
+    return (
+      articles.find(
+        (a) =>
+          (a.authorUsername.toLowerCase() === cleanUser || a.authorId === cleanUser || cleanUser === 'writer' || cleanUser === 'me') &&
+          (a.slug?.toLowerCase() === cleanSlug || a.id.toLowerCase() === cleanSlug)
+      ) ||
+      articles.find(
+        (a) =>
+          a.slug?.toLowerCase() === cleanSlug ||
+          a.id.toLowerCase() === cleanSlug
+      )
     );
   }, [articles]);
 
@@ -93,8 +100,34 @@ export const ArticlesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const local = getArticleBySlug(username, slug);
     if (local) return local;
 
+    // Direct check in localStorage cache to prevent render timing race conditions
+    const stored = getStoredArticles();
+    const cleanUser = decodeURIComponent(username).toLowerCase().replace(/^@/, '').trim();
+    const cleanSlug = decodeURIComponent(slug).toLowerCase().trim();
+    const matchedStored =
+      stored.find(
+        (a) =>
+          (a.authorUsername.toLowerCase() === cleanUser || a.authorId === cleanUser || cleanUser === 'writer' || cleanUser === 'me') &&
+          (a.slug?.toLowerCase() === cleanSlug || a.id.toLowerCase() === cleanSlug)
+      ) ||
+      stored.find(
+        (a) =>
+          a.slug?.toLowerCase() === cleanSlug ||
+          a.id.toLowerCase() === cleanSlug
+      );
+
+    if (matchedStored) {
+      setArticles((prev) => {
+        if (!prev.some((p) => p.id === matchedStored.id)) {
+          return [matchedStored, ...prev];
+        }
+        return prev;
+      });
+      return matchedStored;
+    }
+
     // Fetch directly from Cloud Firestore
-    const cloud = await fetchArticleBySlugFromFirestore(username, slug);
+    const cloud = await fetchArticleBySlugFromFirestore(cleanUser, cleanSlug);
     if (cloud) {
       setArticles((prev) => {
         const next = [cloud, ...prev.filter((a) => a.id !== cloud.id)];
@@ -109,6 +142,19 @@ export const ArticlesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const findArticleByIdOrFetch = useCallback(async (id: string): Promise<Article | null> => {
     const local = getArticleById(id);
     if (local) return local;
+
+    const stored = getStoredArticles();
+    const cleanId = decodeURIComponent(id).trim();
+    const matchedStored = stored.find((a) => a.id === cleanId || a.slug?.toLowerCase() === cleanId.toLowerCase());
+    if (matchedStored) {
+      setArticles((prev) => {
+        if (!prev.some((p) => p.id === matchedStored.id)) {
+          return [matchedStored, ...prev];
+        }
+        return prev;
+      });
+      return matchedStored;
+    }
 
     // Fetch directly from Cloud Firestore
     const cloud = await fetchArticleByIdFromFirestore(id);

@@ -92,12 +92,26 @@ export const App: React.FC = () => {
 
       if (path.startsWith('/@') || path.startsWith('/story/')) {
         const parts = path.split('/').filter(Boolean);
-        setIsLoadingArticle(true);
-        setArticleNotFound(false);
 
         if (parts.length === 2 && parts[0].startsWith('@')) {
-          const username = parts[0].replace('@', '');
-          const slug = parts[1];
+          const username = decodeURIComponent(parts[0].replace('@', ''));
+          const slug = decodeURIComponent(parts[1]);
+
+          // If activeArticle is already this story, retain it cleanly
+          if (
+            activeArticle &&
+            (activeArticle.slug?.toLowerCase() === slug.toLowerCase() ||
+              activeArticle.id.toLowerCase() === slug.toLowerCase())
+          ) {
+            setCurrentView('reader');
+            setIsLoadingArticle(false);
+            setArticleNotFound(false);
+            return;
+          }
+
+          setIsLoadingArticle(true);
+          setArticleNotFound(false);
+
           const found = await findArticleBySlugOrFetch(username, slug);
           if (!isMounted) return;
 
@@ -113,7 +127,19 @@ export const App: React.FC = () => {
             return;
           }
         } else if (parts.length === 2 && parts[0] === 'story') {
-          const found = await findArticleByIdOrFetch(parts[1]);
+          const id = decodeURIComponent(parts[1]);
+
+          if (activeArticle && activeArticle.id === id) {
+            setCurrentView('reader');
+            setIsLoadingArticle(false);
+            setArticleNotFound(false);
+            return;
+          }
+
+          setIsLoadingArticle(true);
+          setArticleNotFound(false);
+
+          const found = await findArticleByIdOrFetch(id);
           if (!isMounted) return;
 
           if (found) {

@@ -40,16 +40,20 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
   const snippet = article.subtitle || article.content.replace(/<[^>]*>/g, '').slice(0, 160) + '...';
 
   const handleUpdateSettings = async (params: {
+    title: string;
     slug: string;
     visibility: 'private' | 'published';
     tags: string[];
     subtitle: string;
+    coverImage?: string;
   }) => {
     await updateArticle(article.id, {
+      title: params.title || article.title,
       slug: params.slug,
       visibility: params.visibility,
       tags: params.tags,
       subtitle: params.subtitle,
+      coverImage: params.coverImage,
     });
     setIsSettingsModalOpen(false);
   };
@@ -206,36 +210,43 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
             ))}
           </div>
 
-          <div className="flex items-center gap-3.5 sm:gap-4 ml-auto sm:ml-0 flex-shrink-0">
-            <button
-              onClick={() => onClap(article.id)}
-              className="flex items-center gap-1.5 hover:opacity-80 transition-opacity cursor-pointer text-xs"
-              style={{ color: article.upvotes > 0 ? 'var(--color-text-primary)' : 'var(--color-text-secondary)' }}
-              title="Applaud"
-            >
-              <Flame size={14} strokeWidth={1.8} />
-              <span>{article.upvotes}</span>
-            </button>
+          {article.visibility === 'published' ? (
+            <div className="flex items-center gap-3.5 sm:gap-4 ml-auto sm:ml-0 flex-shrink-0">
+              <button
+                onClick={() => onClap(article.id)}
+                className="flex items-center gap-1.5 hover:opacity-80 transition-opacity cursor-pointer text-xs"
+                style={{ color: article.upvotes > 0 ? 'var(--color-text-primary)' : 'var(--color-text-secondary)' }}
+                title="Applaud"
+              >
+                <Flame size={14} strokeWidth={1.8} />
+                <span>{article.upvotes}</span>
+              </button>
 
-            <button
-              onClick={() => onRead(article)}
-              className="flex items-center gap-1.5 hover:opacity-80 transition-opacity cursor-pointer text-xs"
-              style={{ color: 'var(--color-text-secondary)' }}
-              title="Responses"
-            >
-              <MessageSquare size={14} strokeWidth={1.8} />
-              <span>{article.commentCount}</span>
-            </button>
+              <button
+                onClick={() => onRead(article)}
+                className="flex items-center gap-1.5 hover:opacity-80 transition-opacity cursor-pointer text-xs"
+                style={{ color: 'var(--color-text-secondary)' }}
+                title="Responses"
+              >
+                <MessageSquare size={14} strokeWidth={1.8} />
+                <span>{article.commentCount}</span>
+              </button>
 
-            <button
-              onClick={() => onShare(article)}
-              className="p-1 hover:opacity-80 transition-opacity cursor-pointer"
-              style={{ color: 'var(--color-text-secondary)' }}
-              title="Share"
-            >
-              <ExternalLink size={14} strokeWidth={1.8} />
-            </button>
-          </div>
+              <button
+                onClick={() => onShare(article)}
+                className="p-1 hover:opacity-80 transition-opacity cursor-pointer"
+                style={{ color: 'var(--color-text-secondary)' }}
+                title="Share"
+              >
+                <ExternalLink size={14} strokeWidth={1.8} />
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 ml-auto sm:ml-0 flex-shrink-0 text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
+              <Lock size={12} strokeWidth={1.8} />
+              <span>Encrypted Journal</span>
+            </div>
+          )}
         </div>
       </article>
 
@@ -253,11 +264,14 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
         onClose={() => setIsSettingsModalOpen(false)}
         title={article.title}
         subtitle={article.subtitle || ''}
+        content={article.content}
         initialSlug={article.slug}
         initialVisibility={article.visibility}
         initialTags={article.tags}
+        initialCoverImage={article.coverImage}
         onConfirmPublish={handleUpdateSettings}
       />
     </>
   );
 };
+
