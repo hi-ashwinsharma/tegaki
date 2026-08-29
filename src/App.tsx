@@ -46,11 +46,21 @@ export const App: React.FC = () => {
     clapArticle,
   } = useArticles();
 
-  // Initial view is 'landing' if not authenticated and at root, otherwise 'home' or 'reader'
+  // Initial view supports direct hash routing (e.g. #writer, #home)
   const [currentView, setCurrentView] = useState<ViewMode>(() => {
+    const hash = window.location.hash.replace(/^#/, '');
     const path = window.location.pathname;
     if (path.startsWith('/@') || path.startsWith('/story/')) {
       return 'reader';
+    }
+    if (hash === 'writer') {
+      return 'writer';
+    }
+    if (hash === 'home' || hash === 'feed') {
+      return 'home';
+    }
+    if (hash === 'landing') {
+      return 'landing';
     }
     return isAuthenticated ? 'home' : 'landing';
   });
@@ -67,9 +77,7 @@ export const App: React.FC = () => {
 
   // Sync when authentication status changes
   useEffect(() => {
-    if (!isAuthenticated && currentView === 'writer') {
-      setCurrentView('landing');
-    } else if (isAuthenticated && currentView === 'landing') {
+    if (isAuthenticated && currentView === 'landing') {
       setCurrentView('home');
     }
   }, [isAuthenticated, currentView]);
@@ -221,12 +229,8 @@ export const App: React.FC = () => {
           {currentView === 'landing' && (
             <LandingHero
               onStartWriting={() => {
-                if (isAuthenticated) {
-                  setEditingArticle(null);
-                  navigateTo('writer');
-                } else {
-                  handleOpenAuth('signup');
-                }
+                setEditingArticle(null);
+                navigateTo('writer');
               }}
               onExplorePublic={() => navigateTo('home')}
               onOpenAuth={handleOpenAuth}
