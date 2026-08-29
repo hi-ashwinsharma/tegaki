@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { X, Globe, Lock, Check, Upload, Image as ImageIcon, Trash2, Link2, ShieldCheck } from 'lucide-react';
+import { X, Globe, Lock, Check, Upload, Image as ImageIcon, Trash2, Link2, ShieldCheck, Loader2 } from 'lucide-react';
 import { generateSlug, sanitizeSlug, formatSlugInput } from '../../services/slugService';
+import { uploadImageFile } from '../../services/imageUploadService';
 
 const POPULAR_TAGS = ['Writing', 'Notes', 'Technology', 'Philosophy', 'Design', 'Personal', 'Ideas', 'Engineering'];
 
@@ -43,6 +44,7 @@ export const PublishModal: React.FC<PublishModalProps> = ({
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
   const [coverImage, setCoverImage] = useState('');
+  const [isUploadingCover, setIsUploadingCover] = useState(false);
   const [showUrlInput, setShowUrlInput] = useState(false);
   const [imageUrlInput, setImageUrlInput] = useState('');
 
@@ -98,16 +100,17 @@ export const PublishModal: React.FC<PublishModalProps> = ({
     setTags(tags.filter((t) => t !== tToRemove));
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (loadEvt) => {
-        const base64 = loadEvt.target?.result as string;
-        setCoverImage(base64);
+      setIsUploadingCover(true);
+      try {
+        const downloadUrl = await uploadImageFile(file, 'covers');
+        setCoverImage(downloadUrl);
         setShowUrlInput(false);
-      };
-      reader.readAsDataURL(file);
+      } finally {
+        setIsUploadingCover(false);
+      }
     }
   };
 
@@ -253,11 +256,12 @@ export const PublishModal: React.FC<PublishModalProps> = ({
                       backgroundColor: 'var(--color-bg-surface)',
                       borderColor: 'var(--color-border-soft)',
                       color: 'var(--color-text-primary)',
+                      opacity: isUploadingCover ? 0.7 : 1,
                     }}
                   >
-                    <Upload size={13} />
-                    <span>Upload Image</span>
-                    <input type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
+                    {isUploadingCover ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
+                    <span>{isUploadingCover ? 'Uploading...' : 'Upload Image'}</span>
+                    <input type="file" accept="image/*" disabled={isUploadingCover} onChange={handleFileUpload} className="hidden" />
                   </label>
 
                   <button

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Image as ImageIcon, Link2, Code2, Minus, Upload, X, Loader2, Globe } from 'lucide-react';
 import { CODE_LANGUAGES } from '../../utils/codeLanguages';
 import { fetchUrlPreview, type UrlPreviewMetadata } from '../../services/embedService';
+import { uploadImageFile } from '../../services/imageUploadService';
 
 interface PlusMenuProps {
   top: number;
@@ -25,6 +26,7 @@ export const PlusMenu: React.FC<PlusMenuProps> = ({
   const [modalType, setModalType] = useState<'image' | 'embed' | 'code' | null>(null);
   const [inputUrl, setInputUrl] = useState('');
   const [inputCaption, setInputCaption] = useState('');
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [inputCodeTitle, setInputCodeTitle] = useState('');
   const [selectedLanguage, setSelectedLanguage] = useState('javascript');
 
@@ -99,16 +101,17 @@ export const PlusMenu: React.FC<PlusMenuProps> = ({
     onToggle();
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (loadEvt) => {
-        const base64 = loadEvt.target?.result as string;
-        onInsertImage(base64, file.name);
+      setIsUploadingImage(true);
+      try {
+        const downloadUrl = await uploadImageFile(file, 'article_images');
+        onInsertImage(downloadUrl, inputCaption.trim() || file.name);
         resetState();
-      };
-      reader.readAsDataURL(file);
+      } finally {
+        setIsUploadingImage(false);
+      }
     }
   };
 
@@ -506,11 +509,12 @@ export const PlusMenu: React.FC<PlusMenuProps> = ({
                       backgroundColor: 'var(--color-bg-surface)',
                       borderColor: 'var(--color-border-hover)',
                       color: 'var(--color-accent)',
+                      opacity: isUploadingImage ? 0.7 : 1,
                     }}
                   >
-                    <Upload size={14} />
-                    <span>Choose Image File</span>
-                    <input type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
+                    {isUploadingImage ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+                    <span>{isUploadingImage ? 'Uploading Image...' : 'Choose Image File'}</span>
+                    <input type="file" accept="image/*" disabled={isUploadingImage} onChange={handleFileUpload} className="hidden" />
                   </label>
                 </div>
 
