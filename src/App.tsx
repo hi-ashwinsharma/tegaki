@@ -196,7 +196,7 @@ export const App: React.FC = () => {
       )}
 
       {/* Main View Area */}
-      <div className={`flex-grow ${currentView === 'home' ? 'pl-16 md:pl-20' : ''}`}>
+      <div className={`flex-grow w-full ${currentView === 'home' ? 'pb-20 md:pb-0 md:pl-20' : ''}`}>
         {currentView === 'landing' && (
           <LandingHero
             onStartWriting={() => {

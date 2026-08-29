@@ -27,12 +27,15 @@ export const InlineToolbar: React.FC<InlineToolbarProps> = ({
     }
   };
 
+  const clampedLeft = Math.max(140, Math.min(window.innerWidth - 140, position.left));
+  const clampedTop = Math.max(60, position.top);
+
   return (
     <div
-      className="fixed z-50 transform -translate-x-1/2 -translate-y-full mb-3 flex items-center px-1.5 py-1 rounded-lg select-none animate-fade-in"
+      className="fixed z-50 transform -translate-x-1/2 -translate-y-full mb-3 flex items-center px-1.5 py-1 rounded-lg select-none animate-fade-in max-w-[calc(100vw-24px)] overflow-x-auto"
       style={{
-        top: position.top - 8,
-        left: position.left,
+        top: clampedTop - 8,
+        left: clampedLeft,
         backgroundColor: 'var(--color-bg-surface)',
         border: '1px solid var(--color-border-soft)',
         color: 'var(--color-text-primary)',

@@ -21,7 +21,7 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
       <div className="fixed inset-0 bg-black/40 backdrop-blur-none" onClick={onClose} />
 
       <div
-        className="relative w-full max-w-md p-6 rounded-2xl z-10 animate-fade-in select-none"
+        className="relative w-full max-w-md p-5 sm:p-6 rounded-2xl z-10 animate-fade-in select-none max-h-[90vh] overflow-y-auto"
         style={{
           backgroundColor: 'var(--color-bg)',
           border: '1px solid var(--color-border-soft)',

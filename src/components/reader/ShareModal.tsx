@@ -49,7 +49,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, article
       <div className="fixed inset-0 bg-black/40 backdrop-blur-none" onClick={onClose} />
 
       <div
-        className="relative w-full max-w-md p-6 rounded-xl z-10 animate-fade-in"
+        className="relative w-full max-w-md p-5 sm:p-6 rounded-xl z-10 animate-fade-in max-h-[90vh] overflow-y-auto"
         style={{
           backgroundColor: 'var(--color-bg)',
           border: '1px solid var(--color-border-soft)',
@@ -63,10 +63,10 @@ export const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, article
           <X size={18} />
         </button>
 
-        <h3 className="text-xl font-serif font-bold mb-1" style={{ color: 'var(--color-text-primary)' }}>
+        <h3 className="text-lg sm:text-xl font-serif font-bold mb-1" style={{ color: 'var(--color-text-primary)' }}>
           Share this story
         </h3>
-        <p className="text-xs mb-5" style={{ color: 'var(--color-text-secondary)' }}>
+        <p className="text-xs mb-4 sm:mb-5" style={{ color: 'var(--color-text-secondary)' }}>
           Direct link with personalized author slug:
         </p>
 
@@ -99,7 +99,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, article
         </div>
 
         {/* Quick Social Buttons */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
           <button
             onClick={handleXShare}
             className="flex items-center justify-center gap-2 py-2 px-3 text-xs font-medium rounded-lg transition-opacity hover:opacity-80 cursor-pointer"

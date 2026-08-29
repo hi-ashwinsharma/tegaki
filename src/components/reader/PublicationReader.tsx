@@ -95,16 +95,16 @@ export const PublicationReader: React.FC<PublicationReaderProps> = ({
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--color-bg)' }}>
       {/* Top Reading Navigation */}
       <header
-        className="sticky top-0 z-30 flex items-center justify-between px-4 sm:px-8 py-3.5 backdrop-blur-none"
+        className="sticky top-0 z-30 flex items-center justify-between px-3 sm:px-8 py-2.5 sm:py-3.5 backdrop-blur-none"
         style={{
           backgroundColor: 'var(--color-bg)',
           borderBottom: '1px solid var(--color-border-soft)',
         }}
       >
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <button
             onClick={onBack}
-            className="p-1.5 rounded-full hover:opacity-75 transition-opacity cursor-pointer"
+            className="p-1.5 rounded-full hover:opacity-75 transition-opacity cursor-pointer flex-shrink-0"
             style={{ color: 'var(--color-text-secondary)' }}
             title="Back to all writings"
           >
@@ -116,21 +116,21 @@ export const PublicationReader: React.FC<PublicationReaderProps> = ({
           </span>
 
           {currentArticle.slug && (
-            <span className="hidden md:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-mono" style={{ backgroundColor: 'var(--color-bg-surface)', border: '1px solid var(--color-border-soft)', color: 'var(--color-text-secondary)' }}>
-              <Globe size={11} />
-              <span>/@{currentArticle.authorUsername}/{currentArticle.slug}</span>
+            <span className="hidden md:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-mono max-w-[240px] truncate" style={{ backgroundColor: 'var(--color-bg-surface)', border: '1px solid var(--color-border-soft)', color: 'var(--color-text-secondary)' }}>
+              <Globe size={11} className="flex-shrink-0" />
+              <span className="truncate">/@{currentArticle.authorUsername}/{currentArticle.slug}</span>
             </span>
           )}
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
           <ThemeSelector compact />
 
           {isOwner && (
             <>
               <button
                 onClick={() => setIsSettingsModalOpen(true)}
-                className="px-3 py-1.5 text-xs font-medium rounded-full flex items-center gap-1.5 transition-colors cursor-pointer"
+                className="p-2 sm:px-3 sm:py-1.5 text-xs font-medium rounded-full flex items-center gap-1.5 transition-colors cursor-pointer"
                 style={{
                   backgroundColor: 'var(--color-bg-surface)',
                   border: '1px solid var(--color-border-soft)',
@@ -144,15 +144,16 @@ export const PublicationReader: React.FC<PublicationReaderProps> = ({
 
               <button
                 onClick={() => onEdit(currentArticle)}
-                className="px-3.5 py-1.5 text-xs font-medium rounded-full flex items-center gap-1.5 transition-colors cursor-pointer"
+                className="p-2 sm:px-3.5 sm:py-1.5 text-xs font-medium rounded-full flex items-center gap-1.5 transition-colors cursor-pointer"
                 style={{
                   backgroundColor: 'var(--color-bg-surface)',
                   border: '1px solid var(--color-border-soft)',
                   color: 'var(--color-text-primary)',
                 }}
+                title="Edit story"
               >
                 <Edit3 size={13} />
-                <span>Edit</span>
+                <span className="hidden sm:inline">Edit</span>
               </button>
 
               <button
@@ -186,10 +187,10 @@ export const PublicationReader: React.FC<PublicationReaderProps> = ({
       </header>
 
       {/* Main Article Reading Container */}
-      <main className="flex-grow max-w-2xl sm:max-w-3xl w-full mx-auto px-6 sm:px-10 py-12">
+      <main className="flex-grow max-w-2xl sm:max-w-3xl w-full mx-auto px-4 sm:px-10 py-6 sm:py-12">
         {/* Title */}
         <h1
-          className="text-3xl sm:text-5xl font-serif font-bold tracking-tight mb-4 leading-tight"
+          className="text-2xl sm:text-4xl md:text-5xl font-serif font-bold tracking-tight mb-3 sm:mb-4 leading-tight"
           style={{ color: 'var(--color-text-primary)' }}
         >
           {currentArticle.title}
@@ -198,7 +199,7 @@ export const PublicationReader: React.FC<PublicationReaderProps> = ({
         {/* Subtitle */}
         {currentArticle.subtitle && (
           <p
-            className="text-lg sm:text-xl font-serif leading-relaxed mb-6"
+            className="text-base sm:text-xl font-serif leading-relaxed mb-4 sm:mb-6"
             style={{ color: 'var(--color-text-secondary)' }}
           >
             {currentArticle.subtitle}
@@ -207,7 +208,7 @@ export const PublicationReader: React.FC<PublicationReaderProps> = ({
 
         {/* Author Header Row */}
         <div
-          className="flex items-center justify-between py-4 my-6"
+          className="flex flex-col sm:flex-row gap-3 sm:items-center justify-between py-3.5 sm:py-4 my-4 sm:my-6"
           style={{
             borderTop: '1px solid var(--color-border-soft)',
             borderBottom: '1px solid var(--color-border-soft)',
@@ -234,7 +235,7 @@ export const PublicationReader: React.FC<PublicationReaderProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 self-end sm:self-auto">
             <ClapButton count={currentArticle.upvotes} onClap={() => clapArticle(currentArticle.id)} />
             <button
               onClick={() => setIsCommentsOpen(true)}
@@ -253,21 +254,21 @@ export const PublicationReader: React.FC<PublicationReaderProps> = ({
 
         {/* Cover Image if present */}
         {currentArticle.coverImage && (
-          <div className="my-8 rounded-lg overflow-hidden">
+          <div className="my-6 sm:my-8 rounded-lg overflow-hidden">
             <img src={currentArticle.coverImage} alt={currentArticle.title} referrerPolicy="no-referrer" className="w-full max-h-[480px] object-cover" />
           </div>
         )}
 
         {/* Story Body in Medium Editorial Typography */}
         <div
-          className="font-editorial text-lg sm:text-xl leading-relaxed space-y-6 pt-2"
+          className="font-editorial text-base sm:text-xl leading-relaxed space-y-5 sm:space-y-6 pt-2"
           style={{ color: 'var(--color-text-primary)' }}
           dangerouslySetInnerHTML={{ __html: decryptedHtml }}
         />
 
         {/* Tags */}
         {currentArticle.tags && currentArticle.tags.length > 0 && (
-          <div className="flex flex-wrap gap-2 pt-12">
+          <div className="flex flex-wrap gap-2 pt-8 sm:pt-12">
             {currentArticle.tags.map((t) => (
               <span
                 key={t}
@@ -286,14 +287,14 @@ export const PublicationReader: React.FC<PublicationReaderProps> = ({
 
         {/* Bottom Claps & Responses Bar */}
         <div
-          className="flex items-center justify-between py-6 mt-12"
+          className="flex flex-wrap items-center justify-between gap-3 py-4 sm:py-6 mt-8 sm:mt-12"
           style={{ borderTop: '1px solid var(--color-border-soft)' }}
         >
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 sm:gap-4">
             <ClapButton count={currentArticle.upvotes} onClap={() => clapArticle(currentArticle.id)} />
             <button
               onClick={() => setIsCommentsOpen(true)}
-              className="flex items-center gap-2 px-4 py-2 rounded-full text-xs transition-opacity hover:opacity-80 cursor-pointer"
+              className="flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-full text-xs transition-opacity hover:opacity-80 cursor-pointer"
               style={{
                 backgroundColor: 'var(--color-bg-surface)',
                 border: '1px solid var(--color-border-soft)',
@@ -307,7 +308,7 @@ export const PublicationReader: React.FC<PublicationReaderProps> = ({
 
           <button
             onClick={() => setIsShareOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-full text-xs transition-opacity hover:opacity-80 cursor-pointer"
+            className="flex items-center gap-2 px-4 py-2 rounded-full text-xs transition-opacity hover:opacity-80 cursor-pointer ml-auto sm:ml-0"
             style={{
               backgroundColor: 'var(--color-bg-surface)',
               border: '1px solid var(--color-border-soft)',

@@ -63,7 +63,7 @@ export const PlusMenu: React.FC<PlusMenuProps> = ({
   return (
     <>
       <div
-        className="absolute left-[-44px] sm:left-[-52px] z-20 flex items-center transition-all duration-150 select-none"
+        className="absolute left-0 sm:left-[-48px] md:left-[-52px] z-20 flex items-center transition-all duration-150 select-none"
         style={{ top: top || 0 }}
       >
         {/* The Left-Side Plus (+) Button */}
@@ -71,7 +71,7 @@ export const PlusMenu: React.FC<PlusMenuProps> = ({
           type="button"
           onClick={onToggle}
           title="Add block"
-          className="w-7 h-7 rounded-full flex items-center justify-center transition-transform hover:opacity-85 cursor-pointer"
+          className="w-7 h-7 rounded-full flex items-center justify-center transition-transform hover:opacity-85 cursor-pointer shadow-sm sm:shadow-none"
           style={{
             border: '1px solid var(--color-border-soft)',
             backgroundColor: 'var(--color-bg)',
@@ -84,7 +84,7 @@ export const PlusMenu: React.FC<PlusMenuProps> = ({
 
         {/* Medium-style 4-tool expansion palette */}
         {isOpen && (
-          <div className="flex items-center gap-2 ml-2.5 animate-fade-in">
+          <div className="flex items-center gap-2 ml-2.5 animate-fade-in bg-surface/90 sm:bg-transparent p-1 sm:p-0 rounded-full">
             <button
               type="button"
               onClick={() => setModalType('image')}
@@ -154,7 +154,7 @@ export const PlusMenu: React.FC<PlusMenuProps> = ({
       {modalType && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
           <div
-            className="w-full max-w-md p-6 rounded-lg relative animate-fade-in"
+            className="w-full max-w-md p-5 sm:p-6 rounded-lg relative animate-fade-in max-h-[90vh] overflow-y-auto"
             style={{
               backgroundColor: 'var(--color-bg)',
               border: '1px solid var(--color-border-soft)',

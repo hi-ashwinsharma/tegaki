@@ -299,7 +299,7 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
       />
 
       {/* Main Distraction-Free Canvas */}
-      <main className="flex-grow max-w-3xl w-full mx-auto px-6 sm:px-12 py-12 relative">
+      <main className="flex-grow max-w-3xl w-full mx-auto px-5 sm:px-12 py-8 sm:py-12 relative">
         {/* Empty Line Plus Menu */}
         <PlusMenu
           top={plusMenuTop}
@@ -319,7 +319,7 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
           onChange={handleTitleChange}
           onKeyDown={handleTitleKeyDown}
           placeholder="Title of this reflection..."
-          className="w-full bg-transparent resize-none overflow-hidden text-3xl sm:text-5xl font-serif font-bold tracking-tight mb-3 focus:outline-none placeholder:opacity-30 leading-tight"
+          className="w-full bg-transparent resize-none overflow-hidden text-2xl sm:text-4xl md:text-5xl font-serif font-bold tracking-tight mb-2 sm:mb-3 focus:outline-none placeholder:opacity-30 leading-tight"
           style={{ color: 'var(--color-text-primary)' }}
         />
 
@@ -330,12 +330,12 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
           value={subtitle}
           onChange={handleSubtitleChange}
           placeholder="An opening line or subtitle (optional)..."
-          className="w-full bg-transparent resize-none overflow-hidden text-lg sm:text-xl font-serif mb-6 focus:outline-none placeholder:opacity-30 leading-relaxed"
+          className="w-full bg-transparent resize-none overflow-hidden text-base sm:text-xl font-serif mb-4 sm:mb-6 focus:outline-none placeholder:opacity-30 leading-relaxed"
           style={{ color: 'var(--color-text-secondary)' }}
         />
 
         {/* Medium-style Divider */}
-        <div className="w-full h-px my-4 mb-8" style={{ backgroundColor: 'var(--color-border-soft)' }} />
+        <div className="w-full h-px my-3 sm:my-4 mb-6 sm:mb-8" style={{ backgroundColor: 'var(--color-border-soft)' }} />
 
         {/* Body Canvas in Newsreader Editorial Typography */}
         <div
@@ -346,7 +346,7 @@ export const WriterEditor: React.FC<WriterEditorProps> = ({
           onClick={updatePlusMenuPosition}
           onKeyUp={updatePlusMenuPosition}
           data-placeholder="Begin in solitude. No one is watching..."
-          className="editorial-canvas font-editorial text-lg sm:text-xl leading-relaxed min-h-[500px] focus:outline-none pb-32"
+          className="editorial-canvas font-editorial text-base sm:text-xl leading-relaxed min-h-[400px] sm:min-h-[500px] focus:outline-none pb-32"
           style={{ color: 'var(--color-text-primary)' }}
         />
       </main>

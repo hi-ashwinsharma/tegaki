@@ -33,7 +33,7 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({
   if (compact) {
     const dropdownPositionClasses =
       placement === 'sidebar'
-        ? 'left-12 bottom-0'
+        ? 'bottom-full mb-3 -left-20 sm:-left-16 md:left-12 md:bottom-0 md:mb-0'
         : 'right-0 top-full mt-2';
 
     return (

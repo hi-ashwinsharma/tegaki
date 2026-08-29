@@ -36,7 +36,7 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
         onClick={onClose}
       />
       <div
-        className="relative w-full max-w-md p-8 rounded-lg z-10 animate-fade-in"
+        className="relative w-full max-w-md p-5 sm:p-8 rounded-lg z-10 animate-fade-in max-h-[90vh] overflow-y-auto"
         style={{
           backgroundColor: 'var(--color-bg)',
           border: '1px solid var(--color-border-soft)',
@@ -44,7 +44,7 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
       >
         <button
           onClick={onClose}
-          className="absolute top-5 right-5 p-1 rounded-md hover:opacity-75"
+          className="absolute top-4 right-4 sm:top-5 sm:right-5 p-1 rounded-md hover:opacity-75 cursor-pointer"
           style={{ color: 'var(--color-text-tertiary)' }}
         >
           <X size={18} />

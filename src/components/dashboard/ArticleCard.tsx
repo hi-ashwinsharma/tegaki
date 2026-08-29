@@ -56,56 +56,29 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
   return (
     <>
       <article
-        className="py-7 group transition-all"
+        className="py-6 sm:py-7 group transition-all"
         style={{
           borderBottom: '1px solid var(--color-border-soft)',
         }}
       >
-        {/* Author Bar */}
+        {/* Author Header Bar: Single-line on mobile & desktop */}
         <div className="flex items-center justify-between mb-2.5 text-xs">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 min-w-0">
             <UserAvatar src={article.authorAvatar} name={article.authorName} size="xs" />
 
-            <span className="font-medium" style={{ color: 'var(--color-text-primary)' }}>
+            <span className="font-medium truncate max-w-[130px] sm:max-w-[220px]" style={{ color: 'var(--color-text-primary)' }}>
               {article.authorName}
             </span>
 
-            <span style={{ color: 'var(--color-text-tertiary)' }}>•</span>
+            <span className="opacity-60" style={{ color: 'var(--color-text-tertiary)' }}>•</span>
 
-            <span style={{ color: 'var(--color-text-secondary)' }}>{formattedDate}</span>
-
-            {article.isEncrypted && (
-              <span
-                className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px]"
-                style={{
-                  backgroundColor: 'var(--color-bg-subtle)',
-                  border: '1px solid var(--color-border-soft)',
-                  color: 'var(--color-text-secondary)',
-                }}
-                title="Private Journal"
-              >
-                <Lock size={11} strokeWidth={1.8} />
-                <span>Private</span>
-              </span>
-            )}
-
-            {article.visibility === 'published' && article.slug && (
-              <span
-                className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-mono"
-                style={{
-                  backgroundColor: 'var(--color-bg-subtle)',
-                  border: '1px solid var(--color-border-soft)',
-                  color: 'var(--color-accent)',
-                }}
-              >
-                <Globe size={11} strokeWidth={1.8} />
-                <span>/@{article.authorUsername}/{article.slug}</span>
-              </span>
-            )}
+            <span className="whitespace-nowrap text-[11px] sm:text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+              {formattedDate}
+            </span>
           </div>
 
           {/* Action Controls */}
-          <div className="flex items-center gap-2 opacity-80 group-hover:opacity-100 transition-opacity">
+          <div className="flex items-center gap-1 sm:gap-2 opacity-90 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-2">
             {isOwner && (
               <>
                 <button
@@ -149,26 +122,27 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
         {/* Main Content Clickable Area */}
         <div
           onClick={() => onRead(article)}
-          className="cursor-pointer grid grid-cols-1 md:grid-cols-12 gap-6 items-start"
+          className="cursor-pointer grid grid-cols-1 md:grid-cols-12 gap-3 sm:gap-6 items-start"
         >
           <div className={article.coverImage ? 'md:col-span-8' : 'md:col-span-12'}>
             <h2
-              className="text-xl sm:text-2xl font-serif font-bold tracking-tight mb-2 leading-snug hover:opacity-90 transition-opacity"
+              className="text-lg sm:text-2xl font-serif font-bold tracking-tight mb-1.5 sm:mb-2 leading-snug hover:opacity-90 transition-opacity"
               style={{ color: 'var(--color-text-primary)' }}
             >
               {article.title}
             </h2>
 
             <p
-              className="text-sm font-serif line-clamp-2 leading-relaxed mb-4"
+              className="text-xs sm:text-sm font-serif line-clamp-2 leading-relaxed mb-2.5 sm:mb-4"
               style={{ color: 'var(--color-text-secondary)' }}
             >
               {snippet}
             </p>
           </div>
 
+          {/* Cover image: 16:9 banner on mobile, 4-col thumbnail on desktop */}
           {article.coverImage && (
-            <div className="md:col-span-4 aspect-video sm:aspect-[16/10] overflow-hidden rounded">
+            <div className="w-full md:col-span-4 aspect-[16/9] sm:aspect-[16/10] overflow-hidden rounded mb-2 sm:mb-0">
               <img
                 src={article.coverImage}
                 alt={article.title}
@@ -179,17 +153,47 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
           )}
         </div>
 
-        {/* Footer Metrics & Tags */}
-        <div className="flex flex-wrap items-center justify-between gap-3 mt-4 text-xs">
-          <div className="flex items-center gap-3">
-            <span style={{ color: 'var(--color-text-tertiary)' }}>
+        {/* Footer Metrics, Tags & Truncated Slug Pill */}
+        <div className="flex flex-wrap items-center justify-between gap-2.5 sm:gap-3 mt-3 text-xs">
+          <div className="flex flex-wrap items-center gap-2 min-w-0">
+            <span className="whitespace-nowrap text-[11px] sm:text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
               {article.readingTimeMinutes} min read
             </span>
 
-            {article.tags?.slice(0, 3).map((t) => (
+            {article.isEncrypted && (
+              <span
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] sm:text-[11px]"
+                style={{
+                  backgroundColor: 'var(--color-bg-subtle)',
+                  border: '1px solid var(--color-border-soft)',
+                  color: 'var(--color-text-secondary)',
+                }}
+                title="Private Journal"
+              >
+                <Lock size={10} strokeWidth={1.8} />
+                <span>Private</span>
+              </span>
+            )}
+
+            {article.visibility === 'published' && article.slug && (
+              <span
+                title={`/@${article.authorUsername}/${article.slug}`}
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] sm:text-[11px] font-mono max-w-[150px] sm:max-w-[220px] truncate"
+                style={{
+                  backgroundColor: 'var(--color-bg-subtle)',
+                  border: '1px solid var(--color-border-soft)',
+                  color: 'var(--color-accent)',
+                }}
+              >
+                <Globe size={10} strokeWidth={1.8} className="flex-shrink-0" />
+                <span className="truncate">/@{article.authorUsername}/{article.slug}</span>
+              </span>
+            )}
+
+            {article.tags?.slice(0, 2).map((t) => (
               <span
                 key={t}
-                className="px-2.5 py-0.8 rounded-full"
+                className="px-2 sm:px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs whitespace-nowrap"
                 style={{
                   backgroundColor: 'var(--color-bg-subtle)',
                   color: 'var(--color-text-secondary)',
@@ -201,10 +205,10 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
             ))}
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3.5 sm:gap-4 ml-auto sm:ml-0 flex-shrink-0">
             <button
               onClick={() => onClap(article.id)}
-              className="flex items-center gap-1.5 hover:opacity-80 transition-opacity cursor-pointer"
+              className="flex items-center gap-1.5 hover:opacity-80 transition-opacity cursor-pointer text-xs"
               style={{ color: article.upvotes > 0 ? 'var(--color-text-primary)' : 'var(--color-text-secondary)' }}
               title="Applaud"
             >
@@ -214,7 +218,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
 
             <button
               onClick={() => onRead(article)}
-              className="flex items-center gap-1.5 hover:opacity-80 transition-opacity cursor-pointer"
+              className="flex items-center gap-1.5 hover:opacity-80 transition-opacity cursor-pointer text-xs"
               style={{ color: 'var(--color-text-secondary)' }}
               title="Responses"
             >

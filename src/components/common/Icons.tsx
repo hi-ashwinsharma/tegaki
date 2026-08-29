@@ -2,7 +2,6 @@ import React from 'react';
 import {
   Home,
   Feather,
-  Sparkles,
   Lock,
   Globe,
   Palette,
@@ -27,6 +26,7 @@ import {
   Copy,
   ExternalLink,
   BookOpen,
+  Clock,
 } from 'lucide-react';
 
 // Minimalist Clean Circular Logo
@@ -77,18 +77,36 @@ export const PeacockFeatherIcon: React.FC<{ size?: number; className?: string; a
   />
 );
 
-// Upvote / Claps Icon
-export const MediumClapIcon: React.FC<{ size?: number; className?: string; active?: boolean }> = ({
-  size = 18,
+// Authentic Minimalist Clapping Hands Icon
+export const ClapIcon: React.FC<{ size?: number; className?: string; strokeWidth?: number }> = ({
+  size = 16,
   className = '',
-  active = false,
+  strokeWidth = 1.75,
 }) => (
-  <Sparkles
-    size={size}
-    strokeWidth={active ? 2 : 1.6}
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={strokeWidth}
+    strokeLinecap="round"
+    strokeLinejoin="round"
     className={className}
-  />
+  >
+    {/* Clapping Palms & Fingers Geometry */}
+    <path d="M14.5 17.5L9.5 22.5c-.8.8-2 .8-2.8 0l-.7-.7c-.8-.8-.8-2 0-2.8l5.5-5.5" />
+    <path d="M8.5 13.5l4-4a2 2 0 0 1 2.8 0l.7.7c.8.8.8 2 0 2.8l-4 4" />
+    <path d="M11.5 10.5l3.5-3.5a2 2 0 0 1 2.8 0l.7.7c.8.8.8 2 0 2.8l-3.5 3.5" />
+    <path d="M14.5 7.5l2.5-2.5a2 2 0 0 1 2.8 0l.7.7c.8.8.8 2 0 2.8L17 12" />
+    {/* Motion burst */}
+    <path d="M4 6l2 2" opacity="0.6" />
+    <path d="M2 11h2.5" opacity="0.6" />
+    <path d="M6.5 3l1 2.5" opacity="0.6" />
+  </svg>
 );
+
+export const MediumClapIcon = ClapIcon;
 
 export {
   Lock,
@@ -115,4 +133,5 @@ export {
   Copy,
   ExternalLink,
   BookOpen,
+  Clock,
 };

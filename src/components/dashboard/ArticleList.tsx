@@ -98,9 +98,9 @@ export const ArticleList: React.FC<ArticleListProps> = ({
   }, [articles, user]);
 
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-8 py-10">
+    <div className="max-w-3xl mx-auto px-4 sm:px-8 py-6 sm:py-10">
       {/* Row 1: Search & New Entry */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 mb-6 sm:mb-8">
         <TopSearchBar
           value={searchQuery}
           onChange={setSearchQuery}
@@ -109,7 +109,7 @@ export const ArticleList: React.FC<ArticleListProps> = ({
 
         <button
           onClick={onNewStory}
-          className="w-full sm:w-auto px-5 py-2 rounded-full text-xs font-medium flex items-center justify-center gap-2 transition-opacity hover:opacity-90 whitespace-nowrap cursor-pointer select-none"
+          className="w-full sm:w-auto px-5 py-2.5 sm:py-2 rounded-full text-xs font-medium flex items-center justify-center gap-2 transition-opacity hover:opacity-90 whitespace-nowrap cursor-pointer select-none"
           style={{
             backgroundColor: 'var(--color-text-primary)',
             color: 'var(--color-bg)',
@@ -128,17 +128,17 @@ export const ArticleList: React.FC<ArticleListProps> = ({
 
       {/* Row 3: Quiet Secondary Meta & Sort Bar */}
       <div
-        className="flex items-center justify-between text-xs py-2 mb-4 select-none"
+        className="flex flex-wrap items-center justify-between gap-2 text-xs py-2 mb-3 sm:mb-4 select-none"
         style={{ color: 'var(--color-text-tertiary)' }}
       >
         <span className="font-mono text-[11px]">
           {processedArticles.length} {processedArticles.length === 1 ? 'thought' : 'thoughts'}
         </span>
 
-        <div className="flex items-center gap-2">
-          <span className="text-[11px] opacity-75">Sort:</span>
+        <div className="flex items-center gap-1.5 sm:gap-2 ml-auto sm:ml-0">
+          <span className="text-[11px] opacity-75 hidden sm:inline">Sort:</span>
           <div
-            className="flex items-center p-1 rounded-full"
+            className="flex items-center p-0.5 sm:p-1 rounded-full"
             style={{
               backgroundColor: 'var(--color-bg-surface)',
               border: '1px solid var(--color-border-soft)',
@@ -146,7 +146,7 @@ export const ArticleList: React.FC<ArticleListProps> = ({
           >
             <button
               onClick={() => setSortBy('latest')}
-              className="px-3.5 py-1.5 text-xs rounded-full transition-all cursor-pointer flex items-center gap-1.5"
+              className="px-2.5 sm:px-3.5 py-1 sm:py-1.5 text-xs rounded-full transition-all cursor-pointer flex items-center gap-1 sm:gap-1.5"
               style={{
                 backgroundColor: sortBy === 'latest' ? 'var(--color-bg)' : 'transparent',
                 border: sortBy === 'latest' ? '1px solid var(--color-border-soft)' : '1px solid transparent',
@@ -160,7 +160,7 @@ export const ArticleList: React.FC<ArticleListProps> = ({
 
             <button
               onClick={() => setSortBy('upvotes')}
-              className="px-3.5 py-1.5 text-xs rounded-full transition-all cursor-pointer flex items-center gap-1.5"
+              className="px-2.5 sm:px-3.5 py-1 sm:py-1.5 text-xs rounded-full transition-all cursor-pointer flex items-center gap-1 sm:gap-1.5"
               style={{
                 backgroundColor: sortBy === 'upvotes' ? 'var(--color-bg)' : 'transparent',
                 border: sortBy === 'upvotes' ? '1px solid var(--color-border-soft)' : '1px solid transparent',

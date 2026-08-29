@@ -12,12 +12,12 @@ interface FilterTabsProps {
 export const FilterTabs: React.FC<FilterTabsProps> = ({ current, onChange, counts }) => {
   return (
     <div
-      className="flex items-center gap-1 sm:gap-2 pb-px overflow-x-auto select-none"
+      className="flex items-center gap-1 sm:gap-2 pb-px overflow-x-auto select-none whitespace-nowrap"
       style={{ borderBottom: '1px solid var(--color-border-soft)' }}
     >
       <button
         onClick={() => onChange('all')}
-        className="flex items-center gap-2 px-3 sm:px-4 py-2.5 text-xs font-medium transition-colors relative cursor-pointer"
+        className="flex items-center gap-2 px-3 sm:px-4 py-2.5 text-xs font-medium transition-colors relative cursor-pointer flex-shrink-0"
         style={{
           color: current === 'all' ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
         }}
@@ -43,7 +43,7 @@ export const FilterTabs: React.FC<FilterTabsProps> = ({ current, onChange, count
 
       <button
         onClick={() => onChange('private')}
-        className="flex items-center gap-2 px-3 sm:px-4 py-2.5 text-xs font-medium transition-colors relative cursor-pointer"
+        className="flex items-center gap-2 px-3 sm:px-4 py-2.5 text-xs font-medium transition-colors relative cursor-pointer flex-shrink-0"
         style={{
           color: current === 'private' ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
         }}
@@ -69,7 +69,7 @@ export const FilterTabs: React.FC<FilterTabsProps> = ({ current, onChange, count
 
       <button
         onClick={() => onChange('published')}
-        className="flex items-center gap-2 px-3 sm:px-4 py-2.5 text-xs font-medium transition-colors relative cursor-pointer"
+        className="flex items-center gap-2 px-3 sm:px-4 py-2.5 text-xs font-medium transition-colors relative cursor-pointer flex-shrink-0"
         style={{
           color: current === 'published' ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
         }}

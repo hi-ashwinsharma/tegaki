@@ -44,7 +44,7 @@ export const CommentsDrawer: React.FC<CommentsDrawerProps> = ({
       >
         {/* Drawer Header */}
         <div
-          className="flex items-center justify-between px-6 py-4"
+          className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4"
           style={{ borderBottom: '1px solid var(--color-border-soft)' }}
         >
           <div className="flex items-center gap-2">
@@ -63,7 +63,7 @@ export const CommentsDrawer: React.FC<CommentsDrawerProps> = ({
         </div>
 
         {/* Comment Input */}
-        <div className="p-6" style={{ borderBottom: '1px solid var(--color-border-soft)' }}>
+        <div className="p-4 sm:p-6" style={{ borderBottom: '1px solid var(--color-border-soft)' }}>
           <form onSubmit={handleSubmit} className="space-y-3">
             <div className="flex items-center gap-2 mb-2 text-xs">
               <UserAvatar
@@ -111,7 +111,7 @@ export const CommentsDrawer: React.FC<CommentsDrawerProps> = ({
         </div>
 
         {/* Comments Feed */}
-        <div className="flex-grow overflow-y-auto p-6 space-y-6">
+        <div className="flex-grow overflow-y-auto p-4 sm:p-6 space-y-5 sm:space-y-6">
           {comments.length > 0 ? (
             comments.map((c) => (
               <div

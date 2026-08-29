@@ -80,7 +80,7 @@ export const PublishModal: React.FC<PublishModalProps> = ({
       <div className="fixed inset-0 bg-black/40 backdrop-blur-none" onClick={onClose} />
 
       <div
-        className="relative w-full max-w-lg p-7 rounded-xl z-10 animate-fade-in"
+        className="relative w-full max-w-lg p-5 sm:p-7 rounded-xl z-10 animate-fade-in max-h-[90vh] overflow-y-auto"
         style={{
           backgroundColor: 'var(--color-bg)',
           border: '1px solid var(--color-border-soft)',
@@ -88,16 +88,16 @@ export const PublishModal: React.FC<PublishModalProps> = ({
       >
         <button
           onClick={onClose}
-          className="absolute top-5 right-5 p-1 rounded-md hover:opacity-75 cursor-pointer"
+          className="absolute top-4 right-4 sm:top-5 sm:right-5 p-1 rounded-md hover:opacity-75 cursor-pointer"
           style={{ color: 'var(--color-text-tertiary)' }}
         >
           <X size={18} />
         </button>
 
-        <h2 className="text-xl font-serif font-bold mb-1" style={{ color: 'var(--color-text-primary)' }}>
+        <h2 className="text-lg sm:text-xl font-serif font-bold mb-1" style={{ color: 'var(--color-text-primary)' }}>
           {visibility === 'published' ? 'Publishing Settings' : 'Save Private Journal'}
         </h2>
-        <p className="text-xs mb-5" style={{ color: 'var(--color-text-secondary)' }}>
+        <p className="text-xs mb-4 sm:mb-5" style={{ color: 'var(--color-text-secondary)' }}>
           Configure visibility, URL link, and tags.
         </p>
 
@@ -107,7 +107,7 @@ export const PublishModal: React.FC<PublishModalProps> = ({
             <label className="block text-[11px] uppercase tracking-wider mb-2 font-medium" style={{ color: 'var(--color-text-tertiary)' }}>
               Visibility
             </label>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
               <button
                 type="button"
                 onClick={() => setVisibility('published')}

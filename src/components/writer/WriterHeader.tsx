@@ -25,33 +25,33 @@ export const WriterHeader: React.FC<WriterHeaderProps> = ({
 }) => {
   return (
     <header
-      className="sticky top-0 z-30 flex items-center justify-between px-6 sm:px-12 py-3.5 backdrop-blur-none select-none"
+      className="sticky top-0 z-30 flex items-center justify-between px-3 sm:px-12 py-2.5 sm:py-3.5 backdrop-blur-none select-none"
       style={{
         backgroundColor: 'var(--color-bg)',
         borderBottom: '1px solid var(--color-border-soft)',
       }}
     >
       {/* Left Back and Status */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
         <button
           onClick={onBack}
           title="Return to the desk"
-          className="p-1.5 rounded-full hover:opacity-75 transition-opacity cursor-pointer"
+          className="p-1.5 rounded-full hover:opacity-75 transition-opacity cursor-pointer flex-shrink-0"
           style={{ color: 'var(--color-text-secondary)' }}
         >
           <ArrowLeft size={18} />
         </button>
 
         {/* Quiet Save Status */}
-        <div className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
+        <div className="flex items-center gap-1.5 text-xs truncate" style={{ color: 'var(--color-text-tertiary)' }}>
           {isSaving ? (
             <span>Inking...</span>
           ) : hasUnsavedChanges ? (
-            <span>Unsaved draft</span>
+            <span className="text-[11px] sm:text-xs">Unsaved</span>
           ) : (
             <span className="flex items-center gap-1">
               <Check size={13} style={{ color: 'var(--color-accent)' }} />
-              <span>Preserved</span>
+              <span className="hidden sm:inline">Preserved</span>
             </span>
           )}
         </div>
@@ -63,7 +63,7 @@ export const WriterHeader: React.FC<WriterHeaderProps> = ({
       </div>
 
       {/* Right Controls */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
         {/* Privacy Selector Pill */}
         <div
           className="flex items-center p-0.5 rounded-full"
@@ -75,7 +75,7 @@ export const WriterHeader: React.FC<WriterHeaderProps> = ({
           <button
             onClick={() => onToggleVisibility('private')}
             title="Private Notebook: Kept confidential and encrypted"
-            className="flex items-center gap-1.5 px-3 py-1 text-xs rounded-full transition-colors cursor-pointer"
+            className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 text-xs rounded-full transition-colors cursor-pointer"
             style={{
               backgroundColor: visibility === 'private' ? 'var(--color-bg)' : 'transparent',
               color: visibility === 'private' ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
@@ -83,13 +83,13 @@ export const WriterHeader: React.FC<WriterHeaderProps> = ({
             }}
           >
             <Lock size={12} strokeWidth={1.8} />
-            <span>Private</span>
+            <span className="hidden sm:inline">Private</span>
           </button>
 
           <button
             onClick={() => onToggleVisibility('published')}
             title="Public Story: Released with your custom slug"
-            className="flex items-center gap-1.5 px-3 py-1 text-xs rounded-full transition-colors cursor-pointer"
+            className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 text-xs rounded-full transition-colors cursor-pointer"
             style={{
               backgroundColor: visibility === 'published' ? 'var(--color-bg)' : 'transparent',
               color: visibility === 'published' ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
@@ -97,7 +97,7 @@ export const WriterHeader: React.FC<WriterHeaderProps> = ({
             }}
           >
             <Globe size={12} strokeWidth={1.8} />
-            <span>Public</span>
+            <span className="hidden sm:inline">Public</span>
           </button>
         </div>
 
@@ -106,7 +106,7 @@ export const WriterHeader: React.FC<WriterHeaderProps> = ({
         {visibility === 'published' ? (
           <button
             onClick={onPublishClick}
-            className="px-4 py-1.5 text-xs font-medium rounded-full transition-opacity hover:opacity-90 cursor-pointer"
+            className="px-3.5 sm:px-4 py-1.5 text-xs font-medium rounded-full transition-opacity hover:opacity-90 cursor-pointer"
             style={{
               backgroundColor: 'var(--color-accent)',
               color: '#FFFFFF',
@@ -118,7 +118,7 @@ export const WriterHeader: React.FC<WriterHeaderProps> = ({
         ) : (
           <button
             onClick={onSaveJournal}
-            className="px-4 py-1.5 text-xs font-medium rounded-full transition-opacity hover:opacity-90 cursor-pointer"
+            className="px-3.5 sm:px-4 py-1.5 text-xs font-medium rounded-full transition-opacity hover:opacity-90 cursor-pointer"
             style={{
               backgroundColor: 'var(--color-text-primary)',
               color: 'var(--color-bg)',

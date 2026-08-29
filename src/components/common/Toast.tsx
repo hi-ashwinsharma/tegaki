@@ -19,7 +19,7 @@ export const Toast: React.FC<{ toast: ToastMessage | null; onClose: () => void }
 
   return (
     <div
-      className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 text-sm rounded-md transition-all animate-fade-in"
+      className="fixed bottom-20 left-4 right-4 sm:left-auto sm:right-6 sm:bottom-6 z-50 flex items-center justify-between sm:justify-start gap-2.5 px-4 py-3 text-sm rounded-lg transition-all animate-fade-in shadow-sm sm:shadow-none"
       style={{
         backgroundColor: 'var(--color-bg-surface)',
         border: '1px solid var(--color-border-soft)',
